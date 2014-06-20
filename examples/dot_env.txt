@@ -1,0 +1,10 @@
+# Normally you'd name this file '.env' and place it in
+# the root of your project's directoryo
+#
+# Then you'd specify your database options like so:
+SEQUELIZER_ADAPTER=postgres
+SEQUELIZER_USERNAME=my_username
+SEQUELIZER_PASSWORD=super_secret_password
+SEQUELIZER_DATABASE=name_of_database
+SEQUELIZER_HOST=localhost
+SEQUELIZER_SEARCH_PATH=list,of,schemas

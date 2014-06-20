@@ -1,0 +1,15 @@
+# A normal database.yml file contains a file with many different database
+# configurations specified, one for each "environment".
+#
+# This is a Rails convention, but frankly, most of the time I have a single
+# environment in my one-off scripts and don't want to bother with specifying
+# different environments.
+#
+# So I can just define my database options like so:
+---
+adapter: postgres # Note: postgresql also works, but Sequel prefers postgres
+database: my_database
+host: localhost
+username: my_user
+password: my_great_password
+

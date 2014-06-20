@@ -1,0 +1,30 @@
+# An example of a database.yml file that is very much like the kind we'd
+# find in a Rails app.
+#
+# There are three environments defined.
+#
+# Sequelizer will look for which environment to use by reading the contents
+# of your environment variables in the following order:
+# SEQUELIZER_ENV
+# RAILS_ENV
+# RACK_ENV
+#
+# If all of those are nil, we'll default to development
+common: &common
+  adapter: postgresql
+  host: localhost
+  username: my_username
+  password: my_password
+  schema_search_path: list,of,schemas
+
+development:
+  <<: *common
+  database: dev_database
+
+test:
+  adapter: sqlite
+  database: test.sqlite
+
+production:
+  <<: *common
+  database: production_database
