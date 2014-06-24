@@ -21,6 +21,11 @@ module Sequelizer
   #            If no options are provided, options are read from
   #            config/database.yml or from .env or from environment variables.
   def new_db(options = nil)
-    ConnectionMaker.new(options).connection
+    cm = ConnectionMaker.new(options)
+    conn = cm.connection
+    conn.define_singleton_method(:sequelizer_options) do
+      cm.options
+    end
+    conn
   end
 end
