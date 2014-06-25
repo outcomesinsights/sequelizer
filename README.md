@@ -2,9 +2,9 @@
 
 I was tired of writing the code to bootstrap a connection to my databases.
 
-Sequel provides an easy mechanism for connecting to a database, but I didn't
-want to store my username/password/other sensitive information in the scripts
-I was writing.
+[Sequel](https://github.com/jeremyevans/sequel/) provides an easy mechanism for
+connecting to a database, but I didn't want to store my username/password/other
+sensitive information in the scripts I was writing.
 
 So I wrote this gem that lets me store my database configuration options in
 either config/database.yml or .env and then lets me call `db` to get a
@@ -76,7 +76,7 @@ please let me know!
 
 ## Contributing
 
-1. Fork it ( http://github.com/<my-github-username>/sequelizer/fork )
+1. Fork it ( http://github.com/outcomesinsights/sequelizer/fork )
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
@@ -84,5 +84,8 @@ please let me know!
 
 ## Thanks
 
-Many thanks to Outcomes Insights, Inc. for allowing me to release a portion
-of my work as Open Source Software!
+- [Outcomes Insights, Inc.](http://outins.com)
+    - Many thanks for allowing me to release a portion of my work asu
+    Open Source Software!
+- Jeremy Evans
+    - For writing Sequel!
