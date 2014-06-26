@@ -1,4 +1,4 @@
-require 'minitest/autorun'
+require_relative '../test_helper'
 require_relative '../../lib/sequelizer/yaml_config'
 
 
@@ -11,18 +11,17 @@ class TestYamlConfig < Minitest::Test
     mock = Minitest::Mock.new
     file_mock = Minitest::Mock.new
 
-    Sequelizer::YamlConfig.send(:const_set, :Psych, mock)
+    stub_const(Sequelizer::YamlConfig, :Psych, mock) do
+      mock.expect :load_file, { 'adapter' => 'sqlite' }, [file_mock]
+      file_mock.expect :exist?, true
 
-    mock.expect :load_file, { 'adapter' => 'sqlite' }, [file_mock]
-    file_mock.expect :exist?, true
+      @yaml_config.stub :config_file, file_mock do
+        assert_equal({ 'adapter' => 'sqlite' }, @yaml_config.options)
+      end
 
-    @yaml_config.stub :config_file, file_mock do
-      assert_equal({ 'adapter' => 'sqlite' }, @yaml_config.options)
+      file_mock.verify
+      mock.verify
     end
-
-    file_mock.verify
-    mock.verify
-    Sequelizer::YamlConfig.send(:remove_const, :Psych)
   end
 
   def test_loads_by_environment_if_present
@@ -42,9 +41,9 @@ class TestYamlConfig < Minitest::Test
     env_mock.expect :[], nil, ['RAILS_ENV']
     env_mock.expect :[], nil, ['RACK_ENV']
 
-    Sequelizer::YamlConfig.send(:const_set, :ENV, env_mock)
-    assert_equal 'development', @yaml_config.environment
-    Sequelizer::YamlConfig.send(:remove_const, :ENV)
+    stub_const(Sequelizer::YamlConfig, :ENV, env_mock) do
+      assert_equal 'development', @yaml_config.environment
+    end
 
     env_mock.verify
   end

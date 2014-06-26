@@ -1,19 +1,17 @@
-require 'minitest/autorun'
+require_relative '../test_helper'
 require_relative '../../lib/sequelizer'
-
-Sequel = Minitest::Mock.new
 
 class TestConnectionMaker < Minitest::Test
   def setup
     @options = { 'adapter' => 'sqlite' }
     @sequel_mock = Minitest::Mock.new
-    Sequelizer::ConnectionMaker.send(:const_set, :Sequel, @sequel_mock)
+    stub_const(Sequelizer::ConnectionMaker, :Sequel, @sequel_mock)
     @sequel_mock.expect :connect, :connection, [@options]
   end
 
   def teardown
     @sequel_mock.verify
-    Sequelizer::ConnectionMaker.send(:remove_const, :Sequel)
+    remove_stubbed_const(Sequelizer::ConnectionMaker, :Sequel)
   end
 
   def test_accepts_options_as_params

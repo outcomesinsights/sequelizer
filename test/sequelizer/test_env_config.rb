@@ -1,4 +1,4 @@
-require 'minitest/autorun'
+require_relative '../test_helper'
 require_relative '../../lib/sequelizer/env_config'
 
 
@@ -8,11 +8,11 @@ class TestEnvConfig < Minitest::Test
   end
   def test_loads_dotenv
     mock = Minitest::Mock.new
-    Sequelizer::EnvConfig.send(:const_set, :Dotenv, mock)
-    mock.expect :load, nil
-    @env_config.options
-    mock.verify
-    Sequelizer::EnvConfig.send(:remove_const, :Dotenv)
+    stub_const(Sequelizer::EnvConfig, :Dotenv, mock) do
+      mock.expect :load, nil
+      @env_config.options
+      mock.verify
+    end
   end
 
   def test_converts_sequelizer_vars_to_options
