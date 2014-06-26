@@ -25,4 +25,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'sequel'
   spec.add_dependency 'dotenv'
   spec.add_dependency 'pry'
+  spec.add_dependency 'thor'
 end
