@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
   spec.summary       = %q{Sequel database connections via config/database.yml or .env}
   spec.description   = %q{Easily establish a connection to a database via Sequel gem using options specified in config/database.yml or .env files}
   spec.homepage      = ''
-  spec.license       = 'MIT'
+  spec.license       = 'Apache License, Version 2.0'
 
   spec.files         = `git ls-files -z`.split("\x0")
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
