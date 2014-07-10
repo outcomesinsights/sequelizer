@@ -18,5 +18,6 @@ class TestEnvConfig < Minitest::Test
   def test_converts_sequelizer_vars_to_options
     ENV['SEQUELIZER_ADAPTER'] = 'sqlite'
     assert_equal({ 'adapter' => 'sqlite' }, @env_config.options)
+    ENV.delete('SEQUELIZER_ADAPTER')
   end
 end
