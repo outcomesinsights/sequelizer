@@ -1,4 +1,5 @@
 require 'thor'
+require 'pp'
 require_relative 'gemfile_modifier'
 
 module Sequelizer
@@ -8,6 +9,11 @@ module Sequelizer
     option 'skip-bundle', type: :boolean, desc: "Don't run `bundle install` after modifying Gemfile"
     def update_gemfile
       GemfileModifier.new(options).modify
+    end
+
+    desc 'config', 'prints out the connection parameters'
+    def config
+      pp Options.new.to_hash
     end
   end
 end
