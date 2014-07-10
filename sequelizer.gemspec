@@ -10,8 +10,8 @@ Gem::Specification.new do |spec|
   spec.email         = ['aguynamedryan@gmail.com']
   spec.summary       = %q{Sequel database connections via config/database.yml or .env}
   spec.description   = %q{Easily establish a connection to a database via Sequel gem using options specified in config/database.yml or .env files}
-  spec.homepage      = ''
-  spec.license       = 'Apache License, Version 2.0'
+  spec.homepage      = 'https://github.com/outcomesinsights/sequelizer'
+  spec.license       = 'MIT'
 
   spec.files         = `git ls-files -z`.split("\x0")
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
@@ -19,11 +19,10 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.add_development_dependency 'bundler', '~> 1.5'
-  spec.add_development_dependency 'guard'
-  spec.add_development_dependency 'guard-minitest'
-  spec.add_development_dependency 'minitest'
-  spec.add_dependency 'sequel'
-  spec.add_dependency 'dotenv'
-  spec.add_dependency 'pry'
-  spec.add_dependency 'thor'
+  spec.add_development_dependency 'guard', '~> 2.0'
+  spec.add_development_dependency 'guard-minitest', '~> 2.3'
+  spec.add_development_dependency 'minitest', '~> 5.3'
+  spec.add_dependency 'sequel', '~> 4.12'
+  spec.add_dependency 'dotenv', '~> 0.11'
+  spec.add_dependency 'thor', '~> 0.19'
 end
