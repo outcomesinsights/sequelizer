@@ -26,9 +26,17 @@ Or install it yourself as:
 
 To get the most out of Sequelizer, you'll need to create a config/database.yml file or a .env file and specify your database configuration options in that file.
 
-You'll also need to make sure the gem for your database is installed.  You can do this by adding a the gem to your application's Gemfile.
+Sequelizer comes with a handy command that will print out your connection parameters.  Just run:
 
-Sequelizer comes with a handy command that will update your Gemfile for you.  Once you've specified your database configuration, run `bundle exec sequelizer update_gemfile`.  The command will look up the right gem to use with the adapter you've specified, add a line to your Gemfile specifying that gem, and run `bundle install` to install the gem for you.
+    bundle exec sequelizer config
+
+You'll also need to make sure the gem for your database is installed.  You can do this by adding the gem to your application's Gemfile.
+
+Sequelizer comes with a handy command that will update your Gemfile for you.  Once you've specified your database configuration, run
+
+    bundle exec sequelizer update_gemfile
+
+The command will look up the right gem to use with the adapter you've specified, add a line to your Gemfile specifying that gem, and run `bundle install` to install the gem for you.
 
 Once you've specified your options and made sure your database's gem is installed, simply include the Sequelizer module in any class that needs a database connection and you'll get two handy-dandy methods: `db` and `new_db`
 
