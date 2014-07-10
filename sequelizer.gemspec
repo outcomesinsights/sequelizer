@@ -25,4 +25,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'sequel', '~> 4.12'
   spec.add_dependency 'dotenv', '~> 0.11'
   spec.add_dependency 'thor', '~> 0.19'
+  spec.add_dependency 'hashie', '~> 3.2'
 end

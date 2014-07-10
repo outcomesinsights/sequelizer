@@ -51,7 +51,11 @@ end
 
 `new_db` will create a new connection to the database on each call.
 
-Both take a hash of database options if you don't want to create a config/database.yml or .env file, or simply wish to override those options.  The options you pass in aren't merged against any other configuration files you might have set up.
+Both take a hash of database options if you don't want to create a config/database.yml or .env file, or simply wish to override those options.  Options are merged together from all sources with the following precedence:
+
+    passed_options > .env > manually defined environment variables > config/database.yml
+
+So if config/database.yml specifies a connection, you can set an environment variable (either manually, or through .env) to override one of those options.  Similarly, if you pass an option to the method directly, that option will override the YAML and ENV-based options.  See #3 for further discussion.
 
 Take a look at the examples directory for a few ways you can specify your database configuration options.
 

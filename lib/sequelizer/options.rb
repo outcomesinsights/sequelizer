@@ -1,17 +1,18 @@
 require 'sequelizer/yaml_config'
 require 'sequelizer/env_config'
+require 'sequelizer/options_hash'
 
 module Sequelizer
   class Options
     def initialize(options = nil)
-      @options = fix_options(options || db_config)
+      @options = fix_options(options)
     end
 
     def to_hash
       @options
     end
 
-    %w(adapter database username password search_path).each do |name|
+    %w(adapter database username password schema_search_path).each do |name|
       define_method(name) do
         @options[name]
       end
@@ -24,13 +25,18 @@ module Sequelizer
     #
     # If fed anything, like a string that represents the URL for a DB,
     # the string is returned without modification
-    def fix_options(sequelizer_options)
-      return sequelizer_options unless sequelizer_options.is_a?(Hash)
+    def fix_options(passed_options)
+      return passed_options unless passed_options.nil? || passed_options.is_a?(Hash)
+      sequelizer_options = db_config.merge((passed_options || {}).to_hash)
 
-      search_path = sequelizer_options['search_path'] || sequelizer_options['schema_search_path']
-      sequelizer_options['adapter'] = 'postgres' if sequelizer_options['adapter'] =~ /^postgres/
-      if search_path && sequelizer_options['adapter'] =~ /postgres/i
-        sequelizer_options['after_connect'] = after_connect(search_path)
+      if sequelizer_options[:adapter] =~ /^postgres/
+        sequelizer_options[:adapter] = 'postgres'
+        paths = %w(schema_search_path search_path schema).map { |key| sequelizer_options.delete(key) }.compact
+
+        unless paths.empty?
+          sequelizer_options[:schema_search_path] = paths.first
+          sequelizer_options[:after_connect] = after_connect(paths.first)
+        end
       end
 
       sequelizer_options
@@ -41,7 +47,9 @@ module Sequelizer
     #  - environment variables (also reads from .env)
     def db_config
       @db_config ||= begin
-        YamlConfig.new.options || EnvConfig.new.options
+        opts = OptionsHash.new(YamlConfig.new.options || {})
+        opts.merge!(EnvConfig.new.options || {})
+        opts
       end
     end
 
