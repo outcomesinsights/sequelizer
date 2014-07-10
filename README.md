@@ -51,7 +51,7 @@ end
 
 `new_db` will create a new connection to the database on each call.
 
-Both take a set of database options if you don't want to create a config/database.yml or .env file, or simply wish to override those options.
+Both take a hash of database options if you don't want to create a config/database.yml or .env file, or simply wish to override those options.  The options you pass in aren't merged against any other configuration files you might have set up.
 
 Take a look at the examples directory for a few ways you can specify your database configuration options.
 
@@ -70,7 +70,6 @@ I can't seem to figure out a way to avoid having to specify the database gem in 
 ## Thanks
 
 - [Outcomes Insights, Inc.](http://outins.com)
-    - Many thanks for allowing me to release a portion of my work asu
-    Open Source Software!
+    - Many thanks for allowing me to release a portion of my work as Open Source Software!
 - Jeremy Evans
     - For writing Sequel!
