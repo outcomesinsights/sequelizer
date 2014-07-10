@@ -73,3 +73,6 @@ I can't seem to figure out a way to avoid having to specify the database gem in 
     - Many thanks for allowing me to release a portion of my work as Open Source Software!
 - Jeremy Evans
     - For writing Sequel!
+
+## License
+Released under the MIT license, Copyright (c) 2014 Outcomes Insights, Inc.
