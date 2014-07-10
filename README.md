@@ -61,7 +61,7 @@ Take a look at the examples directory for a few ways you can specify your databa
 
 ## Frustrations
 
-I can't seem to figure out a way to avoid having to specify the database gem in the a user's bundler file.  If anyone has ideas on how to automagically load the correct database gem based on the database options fed to Sequelizer, please let me know!
+I can't seem to figure out a way to avoid having to specify the database gem in the a user's bundler file.  If anyone has ideas on how to automagically load the correct database gem based on the database options fed to Sequelizer, please let me know (#1)!
 
 ## Contributing
 
