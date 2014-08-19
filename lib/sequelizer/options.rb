@@ -31,7 +31,7 @@ module Sequelizer
 
       if sequelizer_options[:adapter] =~ /^postgres/
         sequelizer_options[:adapter] = 'postgres'
-        paths = %w(schema_search_path search_path schema).map { |key| sequelizer_options.delete(key) }.compact
+        paths = %w(search_path schema_search_path schema).map { |key| sequelizer_options.delete(key) }.compact
 
         unless paths.empty?
           sequelizer_options[:schema_search_path] = paths.first

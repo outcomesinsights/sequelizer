@@ -29,6 +29,12 @@ class TestOptions < Minitest::Test
     assert_equal('path', options.schema_search_path)
   end
 
+  def test_prefers_schema_path_over_schema_search_path
+    options = Sequelizer::Options.new(Sequelizer::OptionsHash.new(adapter: 'postgres', search_path: 'path', schema_search_path: 'path2'))
+
+    assert_equal('path', options.schema_search_path)
+  end
+
   def test_returns_a_hash_even_if_given_nil
     options = Sequelizer::Options.new
     assert_equal({}, options.to_hash)
