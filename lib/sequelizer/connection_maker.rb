@@ -22,7 +22,12 @@ module Sequelizer
 
     # Returns a Sequel connection to the database
     def connection
-      Sequel.connect(options.to_hash)
+      conn = Sequel.connect(options.to_hash)
+      cm = self
+      conn.define_singleton_method(:sequelizer_options) do
+        cm.options
+      end
+      conn
     end
   end
 end
