@@ -1,6 +1,21 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 0.0.5 - 2014-08-29
+
+### Added
+- Support for TinyTDS (SQL Server) in update_gemfile command
+
+### Deprecated
+- Nothing.
+
+### Removed
+- Nothing.
+
+### Fixed
+- timeout is always converted to integer before passing to Sequel.connect
+
+
 ## 0.0.4 - 2014-08-18
 
 ### Added
@@ -15,6 +30,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Nothing.
+
 
 ## 0.0.3 - 2014-07-10
 
