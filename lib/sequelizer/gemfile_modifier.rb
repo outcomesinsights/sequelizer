@@ -36,6 +36,8 @@ module Sequelizer
         'sqlite3'
       when 'mysql'
         'mysql2'
+      when 'tinytds'
+        'tiny_tds'
       when nil
         raise "No database adapter defined in your Sequelizer configuration"
       else
