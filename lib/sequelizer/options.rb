@@ -12,7 +12,7 @@ module Sequelizer
       @options
     end
 
-    %w(adapter database username password schema_search_path).each do |name|
+    %w(adapter database username password search_path).each do |name|
       define_method(name) do
         @options[name]
       end
@@ -34,9 +34,16 @@ module Sequelizer
         paths = %w(search_path schema_search_path schema).map { |key| sequelizer_options.delete(key) }.compact
 
         unless paths.empty?
-          sequelizer_options[:schema_search_path] = paths.first
+          sequelizer_options[:search_path] = paths.first
           sequelizer_options[:after_connect] = after_connect(paths.first)
         end
+      end
+
+      if sequelizer_options[:timeout]
+        # I'm doing a merge! here because the indifferent access part
+        # of OptionsHash seemed to not work when I tried
+        # sequelizer_options[:timeout] = sequelizer_options[:timeout].to_i
+        sequelizer_options.merge!(timeout: sequelizer_options[:timeout].to_i)
       end
 
       sequelizer_options

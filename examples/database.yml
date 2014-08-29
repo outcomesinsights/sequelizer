@@ -11,7 +11,7 @@
 #
 # If all of those are nil, we'll default to development
 common: &common
-  adapter: postgresql
+  adapter: postgres
   host: localhost
   username: my_username
   password: my_password
