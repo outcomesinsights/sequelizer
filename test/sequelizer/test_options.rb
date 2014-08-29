@@ -11,28 +11,28 @@ class TestOptions < Minitest::Test
     assert_equal('postgres', options.to_hash['adapter'])
   end
 
-  def test_finds_schema_as_search_path
+  def test_finds_search_path_as_search_path
     options = Sequelizer::Options.new(Sequelizer::OptionsHash.new(adapter: 'postgres', search_path: 'path'))
 
-    assert_equal('path', options.schema_search_path)
+    assert_equal('path', options.search_path)
   end
 
-  def test_finds_schema_as_schema
+  def test_finds_schema_as_search_path
     options = Sequelizer::Options.new(Sequelizer::OptionsHash.new(adapter: 'postgres', schema: 'path'))
 
-    assert_equal('path', options.schema_search_path)
+    assert_equal('path', options.search_path)
   end
 
-  def test_finds_schema_as_schema_search_path
+  def test_finds_schema_search_path_as_search_path
     options = Sequelizer::Options.new(Sequelizer::OptionsHash.new(adapter: 'postgres', schema_search_path: 'path'))
 
-    assert_equal('path', options.schema_search_path)
+    assert_equal('path', options.search_path)
   end
 
-  def test_prefers_schema_path_over_schema_search_path
+  def test_prefers_search_path_over_schema_search_path
     options = Sequelizer::Options.new(Sequelizer::OptionsHash.new(adapter: 'postgres', search_path: 'path', schema_search_path: 'path2'))
 
-    assert_equal('path', options.schema_search_path)
+    assert_equal('path', options.search_path)
   end
 
   def test_returns_a_hash_even_if_given_nil
