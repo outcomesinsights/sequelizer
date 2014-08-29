@@ -35,6 +35,11 @@ class TestOptions < Minitest::Test
     assert_equal('path', options.search_path)
   end
 
+  def test_returns_timeout_as_an_integer_even_if_given_string
+    options = Sequelizer::Options.new({timeout: "30"})
+    assert_equal(30, options.to_hash[:timeout])
+  end
+
   def test_returns_a_hash_even_if_given_nil
     options = Sequelizer::Options.new
     assert_equal({}, options.to_hash)

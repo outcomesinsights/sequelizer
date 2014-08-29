@@ -39,6 +39,13 @@ module Sequelizer
         end
       end
 
+      if sequelizer_options[:timeout]
+        # I'm doing a merge! here because the indifferent access part
+        # of OptionsHash seemed to not work when I tried
+        # sequelizer_options[:timeout] = sequelizer_options[:timeout].to_i
+        sequelizer_options.merge!(timeout: sequelizer_options[:timeout].to_i)
+      end
+
       sequelizer_options
     end
 
