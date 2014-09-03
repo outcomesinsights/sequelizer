@@ -1,6 +1,21 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Added
+- Support for ruby-oci8 (Oracle) in update_gemfile command
+
+### Deprecated
+- Nothing.
+
+### Removed
+- Nothing.
+
+### Fixed
+- Nothing.
+
+
 ## 0.0.5 - 2014-08-29
 
 ### Added
