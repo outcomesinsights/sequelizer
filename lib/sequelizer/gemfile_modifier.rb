@@ -38,6 +38,8 @@ module Sequelizer
         'mysql2'
       when 'tinytds'
         'tiny_tds'
+      when 'oracle'
+        'ruby-oci8'
       when nil
         raise "No database adapter defined in your Sequelizer configuration"
       else
