@@ -13,7 +13,7 @@ All notable changes to this project will be documented in this file.
 - Nothing.
 
 ### Fixed
-- Nothing.
+- Bug where options passed as symbols where sometimes ignored.
 
 
 ## 0.0.5 - 2014-08-29
