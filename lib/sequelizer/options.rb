@@ -27,7 +27,7 @@ module Sequelizer
     # the string is returned without modification
     def fix_options(passed_options)
       return passed_options unless passed_options.nil? || passed_options.is_a?(Hash)
-      sequelizer_options = db_config.merge((passed_options || {}).to_hash)
+      sequelizer_options = db_config.merge(OptionsHash.new(passed_options || {}).to_hash)
 
       if sequelizer_options[:adapter] =~ /^postgres/
         sequelizer_options[:adapter] = 'postgres'

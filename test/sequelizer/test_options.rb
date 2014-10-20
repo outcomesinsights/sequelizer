@@ -44,5 +44,10 @@ class TestOptions < Minitest::Test
     options = Sequelizer::Options.new
     assert_equal({}, options.to_hash)
   end
+
+  def test_handles_symbolized_search_path
+    options = Sequelizer::Options.new(search_path: 'passed', adapter: 'postgres')
+    assert_equal 'passed', options.search_path
+  end
 end
 
