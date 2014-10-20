@@ -1,4 +1,5 @@
 require 'psych'
+require 'pathname'
 
 module Sequelizer
   class YamlConfig
