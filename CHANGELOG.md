@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - Support for ruby-oci8 (Oracle) in update_gemfile command
+- Read configuration from ~/.config/sequelizer.yml
 
 ### Deprecated
 - Nothing.
