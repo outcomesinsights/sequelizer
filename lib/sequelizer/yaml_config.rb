@@ -3,6 +3,12 @@ require 'pathname'
 
 module Sequelizer
   class YamlConfig
+    attr_reader :path
+
+    def initialize(path = nil)
+      @path = Pathname.new(path || Pathname.pwd + "config")
+    end
+
     # Returns a set of options pulled from config/database.yml
     # or +nil+ if config/database.yml doesn't exist
     def options
@@ -28,7 +34,7 @@ module Sequelizer
     # The Pathname to config/database.yml
     def config_file
       @config_file ||= begin
-        root + 'config' + 'database.yml'
+        path + 'database.yml'
       end
     end
 

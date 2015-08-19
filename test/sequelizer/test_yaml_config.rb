@@ -39,6 +39,18 @@ class TestYamlConfig < Minitest::Test
     assert_equal(@yaml_config.options, {})
   end
 
+  def test_path_defaults_to_pwd_config
+    assert_equal(@yaml_config.path, Pathname.pwd + 'config')
+  end
+
+  def test_path_can_be_fed_pathanem_from_initialize
+    assert_equal(Sequelizer::YamlConfig.new(Pathname.new("~") + ".config").path, Pathname.new("~") + ".config")
+  end
+
+  def test_path_can_be_fed_string_from_initialize
+    assert_equal(Sequelizer::YamlConfig.new("~/.config").path, Pathname.new("~") + ".config")
+  end
+
   def test_environment_checks_environment_variables
     env_mock = Minitest::Mock.new
     env_mock.expect :[], nil, ['SEQUELIZER_ENV']
