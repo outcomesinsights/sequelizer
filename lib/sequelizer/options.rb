@@ -50,11 +50,13 @@ module Sequelizer
     end
 
     # Grabs the database options from
+    #  - ~/.config/sequelizer.yml if it exists
     #  - config/database.yml if it exists
     #  - environment variables (also reads from .env)
     def db_config
       @db_config ||= begin
-        opts = OptionsHash.new(YamlConfig.new.options)
+        opts = OptionsHash.new(YamlConfig.home.options)
+        opts.merge!(YamlConfig.pwd.options)
         opts.merge!(EnvConfig.new.options)
         opts
       end

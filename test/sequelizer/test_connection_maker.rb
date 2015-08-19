@@ -21,6 +21,7 @@ class TestConnectionMaker < Minitest::Test
   def test_reads_options_from_yaml_config
     yaml_config = Minitest::Mock.new
     yaml_config.expect :options, @options
+    yaml_config.expect :options, @options
 
     Sequelizer::YamlConfig.stub :new, yaml_config do
       assert_equal :connection, Sequelizer::ConnectionMaker.new.connection
@@ -31,6 +32,7 @@ class TestConnectionMaker < Minitest::Test
 
   def test_reads_options_from_env_config_if_no_yaml_config
     yaml_config = Minitest::Mock.new
+    yaml_config.expect :options, {}
     yaml_config.expect :options, {}
 
     env_config = Minitest::Mock.new
