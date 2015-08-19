@@ -5,6 +5,16 @@ module Sequelizer
   class YamlConfig
     attr_reader :path
 
+    class << self
+      def pwd
+        new
+      end
+
+      def home
+        new(Pathname.new("~") + ".config")
+      end
+    end
+
     def initialize(path = nil)
       @path = Pathname.new(path || Pathname.pwd + "config")
     end

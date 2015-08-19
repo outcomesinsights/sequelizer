@@ -51,6 +51,14 @@ class TestYamlConfig < Minitest::Test
     assert_equal(Sequelizer::YamlConfig.new("~/.config").path, Pathname.new("~") + ".config")
   end
 
+  def test_pwd_is_current_directory
+    assert_equal(Sequelizer::YamlConfig.pwd.path, Pathname.pwd + 'config')
+  end
+
+  def test_home_uses_home_directory
+    assert_equal(Sequelizer::YamlConfig.home.path, Pathname.new("~") + ".config")
+  end
+
   def test_environment_checks_environment_variables
     env_mock = Minitest::Mock.new
     env_mock.expect :[], nil, ['SEQUELIZER_ENV']
