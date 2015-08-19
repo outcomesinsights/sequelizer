@@ -15,7 +15,7 @@ class TestYamlConfig < Minitest::Test
       mock.expect :load_file, { 'adapter' => 'sqlite' }, [file_mock]
       file_mock.expect :exist?, true
 
-      @yaml_config.stub :config_file, file_mock do
+      @yaml_config.stub :config_file_path, file_mock do
         assert_equal({ 'adapter' => 'sqlite' }, @yaml_config.options)
       end
 
@@ -27,7 +27,7 @@ class TestYamlConfig < Minitest::Test
   def test_loads_by_environment_if_present
     file_mock = Minitest::Mock.new
     file_mock.expect :exist?, true
-    @yaml_config.stub :config_file, file_mock do
+    @yaml_config.stub :config_file_path, file_mock do
       @yaml_config.stub :config, {'development' => { 'adapter' => 'sqlite' }} do
         assert_equal({ 'adapter' => 'sqlite' }, @yaml_config.options)
       end
@@ -40,23 +40,23 @@ class TestYamlConfig < Minitest::Test
   end
 
   def test_path_defaults_to_pwd_config
-    assert_equal(@yaml_config.path, Pathname.pwd + 'config')
+    assert_equal(@yaml_config.config_file_path, Pathname.pwd + "config" + "database.yml")
   end
 
   def test_path_can_be_fed_pathanem_from_initialize
-    assert_equal(Sequelizer::YamlConfig.new(Pathname.new("~") + ".config").path, Pathname.new("~") + ".config")
+    assert_equal(Sequelizer::YamlConfig.new(Pathname.new("~") + ".config").config_file_path, Pathname.new("~") + ".config")
   end
 
   def test_path_can_be_fed_string_from_initialize
-    assert_equal(Sequelizer::YamlConfig.new("~/.config").path, Pathname.new("~") + ".config")
+    assert_equal(Sequelizer::YamlConfig.new("~/.config").config_file_path, Pathname.new("~") + ".config")
   end
 
   def test_pwd_is_current_directory
-    assert_equal(Sequelizer::YamlConfig.pwd.path, Pathname.pwd + 'config')
+    assert_equal(Sequelizer::YamlConfig.pwd.config_file_path, Pathname.pwd + "config" + "database.yml")
   end
 
   def test_home_uses_home_directory
-    assert_equal(Sequelizer::YamlConfig.home.path, Pathname.new("~") + ".config")
+    assert_equal(Sequelizer::YamlConfig.home.config_file_path, Pathname.new("~") + ".config" + "sequelizer.yml")
   end
 
   def test_environment_checks_environment_variables

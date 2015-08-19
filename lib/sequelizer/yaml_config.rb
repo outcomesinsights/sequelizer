@@ -3,7 +3,7 @@ require 'pathname'
 
 module Sequelizer
   class YamlConfig
-    attr_reader :path
+    attr_reader :config_file_path
 
     class << self
       def pwd
@@ -11,18 +11,18 @@ module Sequelizer
       end
 
       def home
-        new(Pathname.new("~") + ".config")
+        new(Pathname.new("~") + ".config" + "sequelizer.yml")
       end
     end
 
-    def initialize(path = nil)
-      @path = Pathname.new(path || Pathname.pwd + "config")
+    def initialize(config_file_path = nil)
+      @config_file_path = Pathname.new(config_file_path || Pathname.pwd + "config" + "database.yml")
     end
 
     # Returns a set of options pulled from config/database.yml
     # or +nil+ if config/database.yml doesn't exist
     def options
-      return {} unless config_file.exist?
+      return {} unless config_file_path.exist?
       config['adapter'] ? config : config[environment]
     end
 
@@ -41,21 +41,9 @@ module Sequelizer
 
     private
 
-    # The Pathname to config/database.yml
-    def config_file
-      @config_file ||= begin
-        path + 'database.yml'
-      end
-    end
-
-    # The root directory to search for config/database.yml
-    def root
-      @root ||= Pathname.pwd
-    end
-
     # The config as read from config/database.yml
     def config
-      @config ||= Psych.load_file(config_file)
+      @config ||= Psych.load_file(config_file_path)
     end
   end
 end
