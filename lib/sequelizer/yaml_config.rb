@@ -6,7 +6,7 @@ module Sequelizer
     # Returns a set of options pulled from config/database.yml
     # or +nil+ if config/database.yml doesn't exist
     def options
-      return nil unless config_file.exist?
+      return {} unless config_file.exist?
       config['adapter'] ? config : config[environment]
     end
 

@@ -35,6 +35,10 @@ class TestYamlConfig < Minitest::Test
     file_mock.verify
   end
 
+  def test_options_default_to_empty_hash
+    assert_equal(@yaml_config.options, {})
+  end
+
   def test_environment_checks_environment_variables
     env_mock = Minitest::Mock.new
     env_mock.expect :[], nil, ['SEQUELIZER_ENV']
