@@ -14,7 +14,7 @@ module Sequelizer
         config[new_key] = ENV[key]
         config
       end
-      env_config.empty? ? nil : env_config
+      env_config.empty? ? {} : env_config
     end
   end
 end

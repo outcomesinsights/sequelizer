@@ -6,6 +6,7 @@ class TestEnvConfig < Minitest::Test
   def setup
     @env_config = Sequelizer::EnvConfig.new
   end
+
   def test_loads_dotenv
     mock = Minitest::Mock.new
     stub_const(Sequelizer::EnvConfig, :Dotenv, mock) do
@@ -13,6 +14,10 @@ class TestEnvConfig < Minitest::Test
       @env_config.options
       mock.verify
     end
+  end
+
+  def test_options_default_to_empty_hash
+    assert_equal(@env_config.options, {})
   end
 
   def test_converts_sequelizer_vars_to_options
