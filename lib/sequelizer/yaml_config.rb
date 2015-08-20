@@ -11,12 +11,12 @@ module Sequelizer
       end
 
       def home
-        new(Pathname.new("~") + ".config" + "sequelizer.yml")
+        new(Pathname.new("~") + ".config" + "sequelizer" + "database.yml")
       end
     end
 
     def initialize(config_file_path = nil)
-      @config_file_path = Pathname.new(config_file_path || Pathname.pwd + "config" + "database.yml")
+      @config_file_path = Pathname.new(config_file_path || Pathname.pwd + "config" + "database.yml").expand_path
     end
 
     # Returns a set of options pulled from config/database.yml
