@@ -23,7 +23,7 @@ module Sequelizer
     # or +nil+ if config/database.yml doesn't exist
     def options
       return {} unless config_file_path.exist?
-      config['adapter'] ? config : config[environment]
+      config['adapter'] || config[:adapter] ? config : config[environment]
     end
 
     # The environment to load from database.yml
