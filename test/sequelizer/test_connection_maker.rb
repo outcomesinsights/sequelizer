@@ -15,7 +15,9 @@ class TestConnectionMaker < Minitest::Test
   end
 
   def test_accepts_options_as_params
-    assert_equal :connection, Sequelizer::ConnectionMaker.new(@options).connection
+    Sequelizer::YamlConfig.stub :user_config_path, Pathname.new('/completely/made/up/path/that/does/not/exist') do
+      assert_equal :connection, Sequelizer::ConnectionMaker.new(@options).connection
+    end
   end
 
   def test_reads_options_from_yaml_config

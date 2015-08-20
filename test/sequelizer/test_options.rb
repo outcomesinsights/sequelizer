@@ -41,8 +41,10 @@ class TestOptions < Minitest::Test
   end
 
   def test_returns_a_hash_even_if_given_nil
-    options = Sequelizer::Options.new
-    assert_equal({}, options.to_hash)
+    Sequelizer::YamlConfig.stub :user_config_path, Pathname.new('/completely/made/up/path/that/does/not/exist') do
+      options = Sequelizer::Options.new
+      assert_equal({}, options.to_hash)
+    end
   end
 
   def test_handles_symbolized_search_path
