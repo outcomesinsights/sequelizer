@@ -55,8 +55,8 @@ module Sequelizer
     #  - environment variables (also reads from .env)
     def db_config
       @db_config ||= begin
-        opts = OptionsHash.new(YamlConfig.home.options)
-        opts.merge!(YamlConfig.pwd.options)
+        opts = OptionsHash.new(YamlConfig.user_config.options)
+        opts.merge!(YamlConfig.local_config.options)
         opts.merge!(EnvConfig.new.options)
         opts
       end

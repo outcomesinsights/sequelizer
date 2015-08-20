@@ -39,7 +39,7 @@ class TestYamlConfig < Minitest::Test
     assert_equal(@yaml_config.options, {})
   end
 
-  def test_path_defaults_to_pwd_config
+  def test_path_defaults_to_local_config
     assert_equal(@yaml_config.config_file_path, Pathname.pwd + "config" + "database.yml")
   end
 
@@ -51,12 +51,12 @@ class TestYamlConfig < Minitest::Test
     assert_equal(Sequelizer::YamlConfig.new("~/.config").config_file_path, Pathname.new("~").expand_path + ".config")
   end
 
-  def test_pwd_is_current_directory
-    assert_equal(Sequelizer::YamlConfig.pwd.config_file_path, Pathname.pwd + "config" + "database.yml")
+  def test_local_is_current_directory
+    assert_equal(Sequelizer::YamlConfig.local_config.config_file_path, Pathname.pwd + "config" + "database.yml")
   end
 
   def test_home_uses_home_directory
-    assert_equal(Sequelizer::YamlConfig.home.config_file_path, Pathname.new("~").expand_path + ".config" + "sequelizer" + "database.yml")
+    assert_equal(Sequelizer::YamlConfig.user_config.config_file_path, Pathname.new("~").expand_path + ".config" + "sequelizer" + "database.yml")
   end
 
   def test_environment_checks_environment_variables

@@ -6,12 +6,16 @@ module Sequelizer
     attr_reader :config_file_path
 
     class << self
-      def pwd
+      def local_config
         new
       end
 
-      def home
-        new(Pathname.new("~") + ".config" + "sequelizer" + "database.yml")
+      def user_config
+        new(user_config_path)
+      end
+
+      def user_config_path
+        Pathname.new("~") + ".config" + "sequelizer" + "database.yml"
       end
     end
 
