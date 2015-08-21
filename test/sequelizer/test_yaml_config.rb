@@ -15,7 +15,7 @@ class TestYamlConfig < Minitest::Test
       mock.expect :load_file, { 'adapter' => 'sqlite' }, [file_mock]
       file_mock.expect :exist?, true
 
-      @yaml_config.stub :config_file, file_mock do
+      @yaml_config.stub :config_file_path, file_mock do
         assert_equal({ 'adapter' => 'sqlite' }, @yaml_config.options)
       end
 
@@ -27,12 +27,36 @@ class TestYamlConfig < Minitest::Test
   def test_loads_by_environment_if_present
     file_mock = Minitest::Mock.new
     file_mock.expect :exist?, true
-    @yaml_config.stub :config_file, file_mock do
+    @yaml_config.stub :config_file_path, file_mock do
       @yaml_config.stub :config, {'development' => { 'adapter' => 'sqlite' }} do
         assert_equal({ 'adapter' => 'sqlite' }, @yaml_config.options)
       end
     end
     file_mock.verify
+  end
+
+  def test_options_default_to_empty_hash
+    assert_equal(@yaml_config.options, {})
+  end
+
+  def test_path_defaults_to_local_config
+    assert_equal(@yaml_config.config_file_path, Pathname.pwd + "config" + "database.yml")
+  end
+
+  def test_path_can_be_fed_pathanem_from_initialize
+    assert_equal(Sequelizer::YamlConfig.new(Pathname.new("~") + ".config").config_file_path, Pathname.new("~").expand_path + ".config")
+  end
+
+  def test_path_can_be_fed_string_from_initialize
+    assert_equal(Sequelizer::YamlConfig.new("~/.config").config_file_path, Pathname.new("~").expand_path + ".config")
+  end
+
+  def test_local_is_current_directory
+    assert_equal(Sequelizer::YamlConfig.local_config.config_file_path, Pathname.pwd + "config" + "database.yml")
+  end
+
+  def test_home_uses_home_directory
+    assert_equal(Sequelizer::YamlConfig.user_config.config_file_path, Pathname.new("~").expand_path + ".config" + "sequelizer" + "database.yml")
   end
 
   def test_environment_checks_environment_variables

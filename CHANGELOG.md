@@ -1,6 +1,22 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Added
+- Support for ruby-oci8 (Oracle) in update_gemfile command
+- Read configuration from ~/.config/sequelizer/database.yml
+
+### Deprecated
+- Nothing.
+
+### Removed
+- Nothing.
+
+### Fixed
+- Bug where options passed as symbols where sometimes ignored.
+
+
 ## 0.0.5 - 2014-08-29
 
 ### Added
