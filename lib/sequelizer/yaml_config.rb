@@ -20,7 +20,7 @@ module Sequelizer
     end
 
     def initialize(config_file_path = nil)
-      @config_file_path = Pathname.new(config_file_path || Pathname.pwd + "config" + "database.yml").expand_path
+      @config_file_path = Pathname.new(config_file_path || Pathname.pwd + "config" + "sequelizer.yml").expand_path
     end
 
     # Returns a set of options pulled from config/database.yml
