@@ -40,7 +40,7 @@ class TestYamlConfig < Minitest::Test
   end
 
   def test_path_defaults_to_local_config
-    assert_equal(@yaml_config.config_file_path, Pathname.pwd + "config" + "database.yml")
+    assert_equal(@yaml_config.config_file_path, Pathname.pwd + "config" + "sequelizer.yml")
   end
 
   def test_path_can_be_fed_pathanem_from_initialize
@@ -52,7 +52,7 @@ class TestYamlConfig < Minitest::Test
   end
 
   def test_local_is_current_directory
-    assert_equal(Sequelizer::YamlConfig.local_config.config_file_path, Pathname.pwd + "config" + "database.yml")
+    assert_equal(Sequelizer::YamlConfig.local_config.config_file_path, Pathname.pwd + "config" + "sequelizer.yml")
   end
 
   def test_home_uses_home_directory
