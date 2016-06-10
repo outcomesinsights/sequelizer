@@ -11,8 +11,8 @@ class TestYamlConfig < Minitest::Test
     mock = Minitest::Mock.new
     file_mock = Minitest::Mock.new
 
-    stub_const(Sequelizer::YamlConfig, :Psych, mock) do
-      mock.expect :load_file, { 'adapter' => 'sqlite' }, [file_mock]
+    stub_const(Sequelizer::YamlConfig, :File, mock) do
+      mock.expect :read, 'adapter: <%= "sqlite" %>', [file_mock]
       file_mock.expect :exist?, true
 
       @yaml_config.stub :config_file_path, file_mock do
