@@ -1,5 +1,6 @@
 require 'psych'
 require 'pathname'
+require 'erb'
 
 module Sequelizer
   class YamlConfig
@@ -47,7 +48,7 @@ module Sequelizer
 
     # The config as read from config/database.yml
     def config
-      @config ||= Psych.load_file(config_file_path)
+      @config ||= Psych.load(ERB.new(File.read(config_file_path)).result)
     end
   end
 end
