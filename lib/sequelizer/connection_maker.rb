@@ -22,7 +22,12 @@ module Sequelizer
 
     # Returns a Sequel connection to the database
     def connection
-      Sequel.connect(options.to_hash)
+      opts = options.to_hash
+      if url = (opts.delete(:uri) || opts.delete(:url))
+        Sequel.connect(url, opts)
+      else
+        Sequel.connect(options.to_hash)
+      end
     end
   end
 end
