@@ -28,7 +28,8 @@ module Sequelizer
     # or +nil+ if config/database.yml doesn't exist
     def options
       return {} unless config_file_path.exist?
-      config['adapter'] || config[:adapter] ? config : config[environment]
+      single_level = (config.keys & [:adapter, :url, :uri, 'adapter', 'url', 'uri']).any?
+      single_level ? config : config[environment]
     end
 
     # The environment to load from database.yml
@@ -48,7 +49,7 @@ module Sequelizer
 
     # The config as read from config/database.yml
     def config
-      @config ||= Psych.load(ERB.new(File.read(config_file_path)).result)
+      @config ||= Psych.load(ERB.new(File.read(config_file_path)).result).tap { |c| p c }
     end
   end
 end
