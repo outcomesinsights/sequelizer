@@ -28,8 +28,7 @@ module Sequelizer
     # or +nil+ if config/database.yml doesn't exist
     def options
       return {} unless config_file_path.exist?
-      single_level = (config.keys & [:adapter, :url, :uri, 'adapter', 'url', 'uri']).any?
-      single_level ? config : config[environment]
+      config[environment] || config
     end
 
     # The environment to load from database.yml
