@@ -20,7 +20,14 @@ module Sequelizer
   # options :: an optional set of database connection options.
   #            If no options are provided, options are read from
   #            config/database.yml or from .env or from environment variables.
-    ConnectionMaker.new(options).connection
   def new_db(options = {})
+    cached = find_cached(options)
+    return cached if cached && !options[:force_new]
+    @cache[options] = ConnectionMaker.new(options).connection
+  end
+
+  def find_cached(options)
+    @cache ||= {}
+    @cache[options]
   end
 end
