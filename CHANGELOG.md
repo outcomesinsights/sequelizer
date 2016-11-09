@@ -1,10 +1,17 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [0.1.0] - 2016-11-08
 
 ### Added
 - Connections are cached by options to avoid over-allocation
+- URL or URI option represent connection string
+- sequelizer.yml is passed through ERB
+
+### Changed
+- Format of this [CHANGELOG](http://keepachangelog.com/en/0.3.0/)
+- Prefer environment variables over other options
+- Use config/sequelizer.yml instead of config/database.yml
 
 ## [0.0.6] - 2015-08-21
 
