@@ -16,7 +16,8 @@ module Sequelizer
       end
 
       def user_config_path
-        Pathname.new("~") + ".config" + "sequelizer" + "database.yml"
+        return nil unless ENV['HOME']
+        Pathname.new(ENV['HOME']) + ".config" + "sequelizer" + "database.yml"
       end
     end
 
