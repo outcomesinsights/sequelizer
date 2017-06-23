@@ -3,20 +3,12 @@ require_relative '../../lib/sequelizer'
 
 class TestConnectionMaker < Minitest::Test
   def setup
-    @options = { 'adapter' => 'sqlite' }
-    @sequel_mock = Minitest::Mock.new
-    stub_const(Sequelizer::ConnectionMaker, :Sequel, @sequel_mock)
-    @sequel_mock.expect :connect, :connection, [@options]
-  end
-
-  def teardown
-    @sequel_mock.verify
-    remove_stubbed_const(Sequelizer::ConnectionMaker, :Sequel)
+    @options = { 'adapter' => 'mock', "host" => "postgres" }
   end
 
   def test_accepts_options_as_params
     Sequelizer::YamlConfig.stub :user_config_path, Pathname.new('/completely/made/up/path/that/does/not/exist') do
-      assert_equal :connection, Sequelizer::ConnectionMaker.new(@options).connection
+      assert_equal :postgres, Sequelizer::ConnectionMaker.new(@options).connection.database_type
     end
   end
 
@@ -26,7 +18,7 @@ class TestConnectionMaker < Minitest::Test
     yaml_config.expect :options, @options
 
     Sequelizer::YamlConfig.stub :new, yaml_config do
-      assert_equal :connection, Sequelizer::ConnectionMaker.new.connection
+      assert_equal :postgres, Sequelizer::ConnectionMaker.new.connection.database_type
     end
 
     yaml_config.verify
@@ -42,11 +34,25 @@ class TestConnectionMaker < Minitest::Test
 
     Sequelizer::YamlConfig.stub :new, yaml_config do
       Sequelizer::EnvConfig.stub :new, env_config do
-        assert_equal :connection, Sequelizer::ConnectionMaker.new.connection
+        assert_equal :postgres, Sequelizer::ConnectionMaker.new.connection.database_type
       end
     end
 
     env_config.verify
     yaml_config.verify
+  end
+
+  def test_applies_configuration_to_connection
+    Sequelizer::YamlConfig.stub :user_config_path, Pathname.new('/completely/made/up/path/that/does/not/exist') do
+      conn = Minitest::Mock.new
+      conn.expect :database_type, :postgres
+      conn.expect :run, nil, ["SET search_path = searchy"]
+      @options.merge!(postgres_db_opt_search_path: "searchy")
+      @options.merge!(impala_db_opt_search_path: "searchy2")
+      Sequel.stub :connect, conn do
+        Sequelizer::ConnectionMaker.new(@options).connection
+      end
+      conn.verify
+    end
   end
 end

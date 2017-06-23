@@ -23,11 +23,36 @@ module Sequelizer
     # Returns a Sequel connection to the database
     def connection
       opts = options.to_hash
-      if url = (opts.delete(:uri) || opts.delete(:url))
+      conn = if url = (opts.delete(:uri) || opts.delete(:url))
         Sequel.connect(url, opts)
       else
         Sequel.connect(options.to_hash)
       end
+      apply_config(conn, opts)
+      conn
+    end
+
+    private
+
+    def apply_config(conn, opts = {})
+      db_opts_from(conn, opts).each do |option, value|
+        conn.run("SET #{option} = #{value}")
+      end
+    end
+
+    def db_opts_from(conn, opts)
+      opt_regexp = /^#{conn.database_type}_db_opt_/i
+
+      matching_opts = opts.select { |k, _| k.to_s.match(opt_regexp) }
+
+      matching_opts.each_with_object({}) do |(k,v), h|
+        new_key = k.sub(opt_regexp, '')
+        h[new_key] = prep_value(k, v)
+      end
+    end
+
+    def prep_value(k, v)
+      v =~ /\W/ ? %Q|"#{v}"| : v
     end
   end
 end

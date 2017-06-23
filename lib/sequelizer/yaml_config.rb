@@ -49,7 +49,7 @@ module Sequelizer
 
     # The config as read from config/database.yml
     def config
-      @config ||= Psych.load(ERB.new(File.read(config_file_path)).result).tap { |c| p c }
+      @config ||= Psych.load(ERB.new(File.read(config_file_path)).result)
     end
   end
 end
