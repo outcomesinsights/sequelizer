@@ -44,15 +44,28 @@ class TestConnectionMaker < Minitest::Test
 
   def test_applies_configuration_to_connection
     Sequelizer::YamlConfig.stub :user_config_path, Pathname.new('/completely/made/up/path/that/does/not/exist') do
-      conn = Minitest::Mock.new
-      conn.expect :database_type, :postgres
-      conn.expect :run, nil, ["SET search_path = searchy"]
       @options.merge!(postgres_db_opt_search_path: "searchy")
       @options.merge!(impala_db_opt_search_path: "searchy2")
-      Sequel.stub :connect, conn do
-        Sequelizer::ConnectionMaker.new(@options).connection
-      end
-      conn.verify
+      conn = Sequelizer::ConnectionMaker.new(@options).connection
+      assert_equal({ search_path: "searchy" }, conn.db_opts.to_hash)
+      assert_equal(["SET search_path=searchy"], conn.db_opts.sql_statements)
+    end
+  end
+
+  def test_applies_nothing_when_no_configuration
+    Sequelizer::YamlConfig.stub :user_config_path, Pathname.new('/completely/made/up/path/that/does/not/exist') do
+      conn = Sequelizer::ConnectionMaker.new(@options).connection
+      assert_equal({}, conn.db_opts.to_hash)
+      assert_equal([], conn.db_opts.sql_statements)
+    end
+  end
+
+  def test_applies_quotes_when_necessary
+    Sequelizer::YamlConfig.stub :user_config_path, Pathname.new('/completely/made/up/path/that/does/not/exist') do
+      @options.merge!(postgres_db_opt_search_path: "searchy,path")
+      conn = Sequelizer::ConnectionMaker.new(@options).connection
+      assert_equal({ search_path: "'searchy,path'" }, conn.db_opts.to_hash)
+      assert_equal(["SET search_path='searchy,path'"], conn.db_opts.sql_statements)
     end
   end
 end
