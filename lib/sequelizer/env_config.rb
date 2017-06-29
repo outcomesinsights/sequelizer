@@ -9,12 +9,20 @@ module Sequelizer
     # as an option for the database
     def options
       Dotenv.load
-      env_config = ENV.keys.select { |key| key =~ /^SEQUELIZER_/ }.inject({}) do |config, key|
+
+      seq_config = ENV.keys.select { |key| key =~ /^SEQUELIZER_/ }.inject({}) do |config, key|
         new_key = key.gsub(/^SEQUELIZER_/, '').downcase
         config[new_key] = ENV[key]
         config
       end
-      env_config.empty? ? {} : env_config
+
+      db_config = ENV.keys.select { |key| key =~ /_DB_OPT_/ }.inject({}) do |config, key|
+        new_key = key.downcase
+        config[new_key] = ENV[key]
+        config
+      end
+
+      db_config.merge(seq_config)
     end
   end
 end

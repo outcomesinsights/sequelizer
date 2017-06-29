@@ -25,4 +25,10 @@ class TestEnvConfig < Minitest::Test
     assert_equal({ 'adapter' => 'sqlite' }, @env_config.options)
     ENV.delete('SEQUELIZER_ADAPTER')
   end
+
+  def test_converts_db_opts_to_options
+    ENV['POSTGRES_DB_OPT_HEY'] = 'there'
+    assert_equal({ 'postgres_db_opt_hey' => 'there' }, @env_config.options)
+    ENV.delete('POSTGRES_DB_OPT_HEY')
+  end
 end
