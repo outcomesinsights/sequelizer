@@ -1,5 +1,5 @@
-require_relative '../test_helper'
-require_relative '../../lib/sequelizer/options'
+require_relative '../../test_helper'
+require 'sequelizer/options'
 
 
 class TestOptions < Minitest::Test

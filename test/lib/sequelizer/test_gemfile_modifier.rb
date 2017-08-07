@@ -1,5 +1,5 @@
-require_relative '../test_helper'
-require_relative '../../lib/sequelizer/gemfile_modifier'
+require_relative '../../test_helper'
+require 'sequelizer/gemfile_modifier'
 
 class TestGemfileModifier < Minitest::Test
   def setup

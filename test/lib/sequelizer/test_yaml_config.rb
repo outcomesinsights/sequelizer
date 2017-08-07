@@ -1,5 +1,5 @@
-require_relative '../test_helper'
-require_relative '../../lib/sequelizer/yaml_config'
+require_relative '../../test_helper'
+require 'sequelizer/yaml_config'
 
 
 class TestYamlConfig < Minitest::Test

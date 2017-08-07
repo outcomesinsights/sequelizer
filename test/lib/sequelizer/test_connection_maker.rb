@@ -1,5 +1,5 @@
-require_relative '../test_helper'
-require_relative '../../lib/sequelizer'
+require_relative '../../test_helper'
+require 'sequelizer'
 
 class TestConnectionMaker < Minitest::Test
   def setup

@@ -1,5 +1,5 @@
-require_relative '../test_helper'
-require_relative '../../lib/sequelizer/env_config'
+require_relative '../../test_helper'
+require 'sequelizer'
 
 
 class TestEnvConfig < Minitest::Test
