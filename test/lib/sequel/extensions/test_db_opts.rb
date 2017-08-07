@@ -35,5 +35,15 @@ class TestDbOpts < Minitest::Test
       db_opts.apply
     end
   end
+
+  def test_should_properly_quote_awkward_values
+    with_fake_database_type_and_options(:postgres, postgres_db_opt_str: "hello there", postgres_db_opt_hyphen: "i-like-hyphens-though-they-are-dumb") do |conn|
+      conn.expect :literal, "hello there", ["hello there"]
+      conn.expect :literal, "i-like-hyphens-though-they-are-dumb", ["i-like-hyphens-though-they-are-dumb"]
+      conn.expect :set, nil, [{ str: "hello there", hyphen: "i-like-hyphens-though-they-are-dumb" }]
+      db_opts = Sequel::DbOpts::DbOptions.new(conn)
+      db_opts.apply
+    end
+  end
 end
 
