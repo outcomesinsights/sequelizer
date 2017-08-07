@@ -1,0 +1,11 @@
+language: ruby
+rvm:
+- 2.3
+sudo: false
+before_install:
+- gem install bundler
+- bundle
+script: bundle exec rake test
+notifications:
+  slack:
+    secure: b+ao+3BuBtM5nj/m1gP5AbrrTIdQiV/HkT1deXvY4gg5xZQDheDeLmOI7wSFP1o67BrwrAY7rpcwIP7S/99fudrU3rKI3+GLn8KoefdAv78Z4tsMs9rodJJ3Z3ZmnEdMK2i2+hCLJ1pzZ9Ae3e+GDHsBPkTz4+TNE1lrOPxDIUo=
