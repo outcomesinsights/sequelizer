@@ -7,6 +7,19 @@ class TestYamlConfig < Minitest::Test
     @yaml_config = Sequelizer::YamlConfig.new
   end
 
+  def with_empty_env
+    env_mock = Minitest::Mock.new
+    env_mock.expect :[], nil, ['SEQUELIZER_ENV']
+    env_mock.expect :[], nil, ['RAILS_ENV']
+    env_mock.expect :[], nil, ['RACK_ENV']
+
+    stub_const(Sequelizer::YamlConfig, :ENV, env_mock) do
+      yield
+    end
+
+    env_mock.verify
+  end
+
   def test_loads_from_yaml_file_if_present
     mock = Minitest::Mock.new
     file_mock = Minitest::Mock.new
@@ -29,7 +42,9 @@ class TestYamlConfig < Minitest::Test
     file_mock.expect :exist?, true
     @yaml_config.stub :config_file_path, file_mock do
       @yaml_config.stub :config, {'development' => { 'adapter' => 'sqlite' }} do
-        assert_equal({ 'adapter' => 'sqlite' }, @yaml_config.options)
+        with_empty_env do
+          assert_equal({ 'adapter' => 'sqlite' }, @yaml_config.options)
+        end
       end
     end
     file_mock.verify
@@ -60,15 +75,8 @@ class TestYamlConfig < Minitest::Test
   end
 
   def test_environment_checks_environment_variables
-    env_mock = Minitest::Mock.new
-    env_mock.expect :[], nil, ['SEQUELIZER_ENV']
-    env_mock.expect :[], nil, ['RAILS_ENV']
-    env_mock.expect :[], nil, ['RACK_ENV']
-
-    stub_const(Sequelizer::YamlConfig, :ENV, env_mock) do
+    with_empty_env do
       assert_equal 'development', @yaml_config.environment
     end
-
-    env_mock.verify
   end
 end
