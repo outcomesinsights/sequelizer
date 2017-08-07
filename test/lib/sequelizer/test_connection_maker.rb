@@ -24,6 +24,19 @@ class TestConnectionMaker < Minitest::Test
     yaml_config.verify
   end
 
+  def with_options(opts = {})
+    Sequelizer::Options.stub :new, opts do
+      yield
+    end
+  end
+
+  def test_applies_settings_if_given
+    with_options({ host: :postgres, adapter: :mock, postgres_db_opt_flim: :flam }) do
+      conn = Sequelizer::ConnectionMaker.new.connection
+      assert_equal(["SET flim=flam"], conn.sqls)
+    end
+  end
+
   def test_reads_options_from_env_config_if_no_yaml_config
     yaml_config = Minitest::Mock.new
     yaml_config.expect :options, {}
