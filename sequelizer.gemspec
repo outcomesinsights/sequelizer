@@ -22,6 +22,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'guard', '~> 2.0'
   spec.add_development_dependency 'guard-minitest', '~> 2.3'
   spec.add_development_dependency 'minitest', '~> 5.3'
+  spec.add_development_dependency 'rake', '~> 12.0'
   spec.add_dependency 'sequel', '~> 4.12'
   spec.add_dependency 'dotenv', '~> 2.1'
   spec.add_dependency 'thor', '~> 0.19'
