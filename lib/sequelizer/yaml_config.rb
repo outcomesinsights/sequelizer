@@ -42,9 +42,7 @@ module Sequelizer
     # Lastly, if none of those environment variables are specified, the
     # environment defaults to 'development'
     def environment
-      require 'pp'
-      pp ENV
-      (ENV['SEQUELIZER_ENV'] || ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'development').tap { |o| p o }
+      ENV['SEQUELIZER_ENV'] || ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'development'
     end
 
     private
