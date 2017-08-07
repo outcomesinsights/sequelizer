@@ -3,9 +3,8 @@ rvm:
 - 2.3
 sudo: false
 before_install:
-  - gem install bundler
-  - bundle
-
+- gem install bundler
+- bundle
 script: bundle exec rake test
 notifications:
   slack:
