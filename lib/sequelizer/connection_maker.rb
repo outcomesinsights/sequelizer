@@ -28,15 +28,7 @@ module Sequelizer
              else
                Sequel.connect(opts)
              end
-      apply_config(conn)
       conn
-    end
-
-    private
-
-    def apply_config(conn)
-      conn.extension :db_opts
-      conn.db_opts.apply
     end
   end
 end

@@ -20,6 +20,16 @@ module Sequelizer
 
     private
 
+    def make_ac(opts)
+      Proc.new do |conn, server|
+        if ac = opts[:after_connect]
+          ac.arity == 2 ? ac.call(conn, server) : ac.call(conn)
+        end
+        conn.db.extension :db_opts
+        conn.db.db_opts.apply(conn)
+      end
+    end
+
     # If passed a hash, scans hash for certain options and sets up hash
     # to be fed to Sequel.connect
     #
@@ -46,7 +56,7 @@ module Sequelizer
         sequelizer_options.merge!(timeout: sequelizer_options[:timeout].to_i)
       end
 
-      sequelizer_options
+      sequelizer_options.merge(after_connect: make_ac(sequelizer_options))
     end
 
     # Grabs the database options from

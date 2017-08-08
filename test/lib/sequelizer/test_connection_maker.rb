@@ -12,54 +12,54 @@ class TestConnectionMaker < Minitest::Test
     end
   end
 
-  def test_reads_options_from_yaml_config
+  def with_yaml_config(options = {})
     yaml_config = Minitest::Mock.new
-    yaml_config.expect :options, @options
-    yaml_config.expect :options, @options
-
+    yaml_config.expect :options, options
+    yaml_config.expect :options, options
     Sequelizer::YamlConfig.stub :new, yaml_config do
-      assert_equal :postgres, Sequelizer::ConnectionMaker.new.connection.database_type
+      yield
     end
-
     yaml_config.verify
   end
 
-  def with_options(opts = {})
-    Sequelizer::Options.stub :new, opts do
+  def with_env_config(options = {})
+    env_config = Minitest::Mock.new
+    env_config.expect :options, options
+    Sequelizer::EnvConfig.stub :new, env_config do
       yield
+    end
+    env_config.verify
+  end
+
+  def test_reads_options_from_yaml_config
+    with_yaml_config(@options) do
+      assert_equal :postgres, Sequelizer::ConnectionMaker.new.connection.database_type
     end
   end
 
   def test_applies_settings_if_given
-    with_options({ host: :postgres, adapter: :mock, postgres_db_opt_flim: :flam }) do
-      conn = Sequelizer::ConnectionMaker.new.connection
-      assert_equal(["SET flim=flam"], conn.sqls)
+    with_yaml_config(@options.merge(postgres_db_opt_flim: :flam)) do
+      with_env_config do
+        conn = Sequelizer::ConnectionMaker.new.connection
+        conn.test_connection
+        assert_equal(["SET flim=flam"], conn.sqls)
+      end
     end
   end
 
   def test_reads_options_from_env_config_if_no_yaml_config
-    yaml_config = Minitest::Mock.new
-    yaml_config.expect :options, {}
-    yaml_config.expect :options, {}
-
-    env_config = Minitest::Mock.new
-    env_config.expect :options, @options
-
-    Sequelizer::YamlConfig.stub :new, yaml_config do
-      Sequelizer::EnvConfig.stub :new, env_config do
+    with_yaml_config do
+      with_env_config(@options) do
         assert_equal :postgres, Sequelizer::ConnectionMaker.new.connection.database_type
       end
     end
-
-    env_config.verify
-    yaml_config.verify
   end
 
   def test_applies_configuration_to_connection
-    Sequelizer::YamlConfig.stub :user_config_path, Pathname.new('/completely/made/up/path/that/does/not/exist') do
-      @options.merge!(postgres_db_opt_search_path: "searchy")
-      @options.merge!(impala_db_opt_search_path: "searchy2")
-      conn = Sequelizer::ConnectionMaker.new(@options).connection
+    opts = @options.merge(postgres_db_opt_search_path: "searchy", impala_db_opt_search_path: "searchy2")
+    with_yaml_config(opts) do
+      conn = Sequelizer::ConnectionMaker.new.connection
+      conn.test_connection
       assert_equal({ search_path: "searchy" }, conn.db_opts.to_hash)
       assert_equal(["SET search_path=searchy"], conn.db_opts.sql_statements)
     end
@@ -68,6 +68,7 @@ class TestConnectionMaker < Minitest::Test
   def test_applies_nothing_when_no_configuration
     Sequelizer::YamlConfig.stub :user_config_path, Pathname.new('/completely/made/up/path/that/does/not/exist') do
       conn = Sequelizer::ConnectionMaker.new(@options).connection
+      conn.test_connection
       assert_equal({}, conn.db_opts.to_hash)
       assert_equal([], conn.db_opts.sql_statements)
     end
@@ -77,6 +78,7 @@ class TestConnectionMaker < Minitest::Test
     Sequelizer::YamlConfig.stub :user_config_path, Pathname.new('/completely/made/up/path/that/does/not/exist') do
       @options.merge!(postgres_db_opt_search_path: "searchy,path")
       conn = Sequelizer::ConnectionMaker.new(@options).connection
+      conn.test_connection
       assert_equal({ search_path: "'searchy,path'" }, conn.db_opts.to_hash)
       assert_equal(["SET search_path='searchy,path'"], conn.db_opts.sql_statements)
     end

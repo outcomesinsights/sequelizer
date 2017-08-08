@@ -17,8 +17,10 @@ module Sequel
         Hash[conn.opts.select { |k, _| k.to_s.match(opt_regexp) }.map { |k, v| [k.to_s.gsub(opt_regexp, '').to_sym, prep_value(k, v)] }]
       end
 
-      def apply
-        conn.set(to_hash)
+      def apply(c)
+        sql_statements.each do |stmt|
+          c.execute(stmt)
+        end
       end
 
       def prep_value(k, v)
