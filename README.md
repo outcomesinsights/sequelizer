@@ -1,4 +1,4 @@
-# Sequelizer
+# Sequelizer [![Build Status](https://travis-ci.org/outcomesinsights/sequelizer.svg?branch=master)](https://travis-ci.org/outcomesinsights/sequelizer)
 
 I was tired of writing the code to bootstrap a connection to my databases.
 
