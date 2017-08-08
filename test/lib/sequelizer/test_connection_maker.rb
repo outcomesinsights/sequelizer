@@ -47,6 +47,16 @@ class TestConnectionMaker < Minitest::Test
     end
   end
 
+  def test_applies_settings_for_all_connections_if_given
+    with_yaml_config(@options.merge(postgres_db_opt_flim: :flam, max_connections: 2, preconnect: :concurrent)) do
+      with_env_config do
+        conn = Sequelizer::ConnectionMaker.new.connection
+        conn.test_connection
+        assert_equal(["SET flim=flam -- nil"] * 2, conn.sqls)
+      end
+    end
+  end
+
   def test_reads_options_from_env_config_if_no_yaml_config
     with_yaml_config do
       with_env_config(@options) do
