@@ -21,12 +21,12 @@ module Sequelizer
     private
 
     def make_ac(opts)
-      Proc.new do |conn, server|
+      Proc.new do |conn, server, db|
         if ac = opts[:after_connect]
           ac.arity == 2 ? ac.call(conn, server) : ac.call(conn)
         end
-        conn.db.extension :db_opts
-        conn.db.db_opts.apply(conn)
+        db.extension :db_opts
+        db.db_opts.apply(conn)
       end
     end
 

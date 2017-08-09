@@ -1,10 +1,10 @@
 module Sequel
   module DbOpts
     class DbOptions
-      attr :conn
-      def initialize(conn)
-        conn.extension :settable
-        @conn = conn
+      attr :db
+      def initialize(db)
+        db.extension :settable
+        @db = db
       end
 
       def to_hash
@@ -12,23 +12,25 @@ module Sequel
       end
 
       def extract_db_opts
-        opt_regexp = /^#{conn.database_type}_db_opt_/i
+        opt_regexp = /^#{db.database_type}_db_opt_/i
 
-        Hash[conn.opts.select { |k, _| k.to_s.match(opt_regexp) }.map { |k, v| [k.to_s.gsub(opt_regexp, '').to_sym, prep_value(k, v)] }]
+        Hash[db.opts.select { |k, _| k.to_s.match(opt_regexp) }.map { |k, v| [k.to_s.gsub(opt_regexp, '').to_sym, prep_value(k, v)] }]
       end
 
       def apply(c)
+        execute_meth = c.respond_to?(:log_connection_execute) ? :log_connection_execute : :execute
+
         sql_statements.each do |stmt|
-          c.execute(stmt)
+          c.send(execute_meth, stmt)
         end
       end
 
       def prep_value(k, v)
-        v =~ /\W/ ? conn.literal("#{v}") : v
+        v =~ /\W/ ? db.literal("#{v}") : v
       end
 
       def sql_statements
-        conn.send(:set_sql, to_hash)
+        db.send(:set_sql, to_hash)
       end
     end
 

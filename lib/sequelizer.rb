@@ -1,5 +1,6 @@
 require 'sequelizer/version'
 require 'sequelizer/connection_maker'
+require 'sequelizer/monkey_patches/database_in_after_connect'
 
 # Include this module in any class where you'd like to quickly establish
 # a Sequel connection to a database.

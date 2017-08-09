@@ -63,7 +63,7 @@ class TestOptions < Minitest::Test
     procky = Proc.new { |conn| conn.db[:table].to_a }
 
     options = Sequelizer::Options.new(after_connect: procky)
-    options.to_hash[:after_connect].call(conny)
+    options.to_hash[:after_connect].call(conny, :default, db)
 
     assert_equal(["SELECT * FROM \"table\""], db.sqls)
   end
