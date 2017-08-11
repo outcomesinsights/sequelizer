@@ -18,10 +18,21 @@ module Sequel
       end
 
       def apply(c)
-        execute_meth = c.respond_to?(:log_connection_execute) ? :log_connection_execute : :execute
-
         sql_statements.each do |stmt|
-          c.send(execute_meth, stmt)
+          if db.respond_to?(:log_connection_execute)
+            db.send(:log_connection_execute, c, stmt)
+          elsif c.respond_to?(:log_connection_execute)
+            c.send(:log_connection_execute, stmt)
+          elsif c.respond_to?(:execute)
+            cursor = c.send(:execute, stmt)
+            if cursor && cursor.respond_to?(:close)
+              cursor.close
+            end
+          elsif db.respond_to?(:execute)
+            db.send(:execute, stmt)
+          else
+            raise "Failed to run SET queries"
+          end
         end
       end
 
