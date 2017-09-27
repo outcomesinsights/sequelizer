@@ -15,7 +15,7 @@ module Sequelizer
   #
   # options :: an optional set of database connection options.
   #            If no options are provided, options are read from
-  #            config/database.yml or from .env or from environment variables.
+  #            config/sequelizer.yml or from .env or from environment variables.
   def db(options = {})
     @_sequelizer_db ||= new_db(options)
   end
@@ -24,7 +24,7 @@ module Sequelizer
   #
   # options :: an optional set of database connection options.
   #            If no options are provided, options are read from
-  #            config/database.yml or from .env or from environment variables.
+  #            config/sequelizer.yml or from .env or from environment variables.
   def new_db(options = {})
     cached = find_cached(options)
     return cached if cached && !options[:force_new]
