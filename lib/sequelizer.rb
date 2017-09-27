@@ -5,6 +5,10 @@ require 'sequelizer/monkey_patches/database_in_after_connect'
 # Include this module in any class where you'd like to quickly establish
 # a Sequel connection to a database.
 module Sequelizer
+  def self.options
+    Options.new.to_hash
+  end
+
   # Instantiates and memoizes a database connection.  The +db+ method instantiates
   # the connection on the first call and then memoizes itself so only a single
   # connection is used on repeated calls
