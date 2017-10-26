@@ -93,4 +93,10 @@ class TestConnectionMaker < Minitest::Test
       assert_equal(["SET search_path='searchy,path'"], conn.db_opts.sql_statements)
     end
   end
+
+  def test_applies_extensions
+    with_yaml_config(@options.merge(extension_error_sql: 1)) do
+      assert Sequelizer::ConnectionMaker.new.connection.send(:instance_variable_get, "@loaded_extensions".to_sym).include?(:error_sql), "Extension wasn't set"
+    end
+  end
 end

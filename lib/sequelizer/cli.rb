@@ -50,7 +50,9 @@ module Sequelizer
 
     desc 'config', 'prints out the connection parameters'
     def config
-      pp Options.new.to_hash
+      opts = Options.new
+      pp opts.to_hash
+      pp opts.extensions
     end
 
     private

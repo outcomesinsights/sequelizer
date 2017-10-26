@@ -67,5 +67,12 @@ class TestOptions < Minitest::Test
 
     assert_equal(["SELECT * FROM \"table\""], db.sqls)
   end
+
+  def test_handles_extensions_passed_in
+    options = Sequelizer::Options.new(extension_example_1: 1, extension_example_2: 1, not_an_extension_example: 1)
+    assert_equal 1, options.to_hash[:not_an_extension_example]
+    assert options.extensions.include?(:example_1), "Failed to find example_1 in extensions"
+    assert options.extensions.include?(:example_2), "Failed to find example_2 in extensions"
+  end
 end
 

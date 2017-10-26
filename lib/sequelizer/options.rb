@@ -4,8 +4,10 @@ require 'sequelizer/options_hash'
 
 module Sequelizer
   class Options
+    attr :extensions
     def initialize(options = nil)
-      @options = fix_options(options)
+      opts = fix_options(options)
+      @options, @extensions = filter_extensions(opts)
     end
 
     def to_hash
@@ -86,6 +88,16 @@ module Sequelizer
         end
         conn.execute("SET search_path TO #{search_path}")
       end
+    end
+
+    def filter_extensions(options)
+      extension_regexp = /^extension_/
+      extension_keys = options.keys.select { |k| k.to_s =~ extension_regexp }
+      extensions = extension_keys.map do |key|
+        options.delete(key)
+        key.to_s.gsub(extension_regexp, '').to_sym
+      end
+      [options, extensions]
     end
   end
 end
