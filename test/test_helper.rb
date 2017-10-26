@@ -1,4 +1,5 @@
 require 'minitest/autorun'
+require "sequel"
 
 class Minitest::Test
   def stub_const(klass, const, replace, &block)
