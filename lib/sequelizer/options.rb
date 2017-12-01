@@ -1,6 +1,6 @@
-require 'sequelizer/yaml_config'
-require 'sequelizer/env_config'
-require 'sequelizer/options_hash'
+require_relative 'yaml_config'
+require_relative 'env_config'
+require_relative 'options_hash'
 
 module Sequelizer
   class Options
