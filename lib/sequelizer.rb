@@ -1,8 +1,8 @@
-require 'sequelizer/version'
-require 'sequelizer/connection_maker'
-require 'sequelizer/monkey_patches/database_in_after_connect'
-require 'sequel/extensions/db_opts'
-require 'sequel/extensions/settable'
+require_relative 'sequelizer/version'
+require_relative 'sequelizer/connection_maker'
+require_relative 'sequelizer/monkey_patches/database_in_after_connect'
+require_relative 'sequel/extensions/db_opts'
+require_relative 'sequel/extensions/settable'
 
 # Include this module in any class where you'd like to quickly establish
 # a Sequel connection to a database.
