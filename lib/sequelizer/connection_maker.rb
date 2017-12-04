@@ -40,7 +40,7 @@ module Sequelizer
           password = opts[:password]
         end
 
-        case opts[:adapter]
+        case opts[:adapter] && opts[:adapter].to_sym
         when :jdbc_hive2
           opts[:adapter]  = :jdbc
           auth = if realm
