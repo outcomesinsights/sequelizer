@@ -52,7 +52,7 @@ class TestConnectionMaker < Minitest::Test
       with_env_config do
         conn = Sequelizer::ConnectionMaker.new.connection
         conn.test_connection
-        assert_equal(["SET flim=flam -- nil"] * 2, conn.sqls)
+        assert_equal(["SET flim=flam"] * 2, conn.sqls)
       end
     end
   end
