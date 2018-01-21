@@ -1,0 +1,4 @@
+deploy:
+  dropbox_path: /repo_shas/sequelizer
+  artifacts_path: sequelizer.txt
+  debug: true
