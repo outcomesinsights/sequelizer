@@ -1,4 +1,4 @@
 deploy:
-  dropbox_path: /repo_shas/sequelizer
+  dropbox_path: /zOI (Software Dev) Jigsaw/repo_shas/sequelizer
   artifacts_path: sequelizer.txt
   debug: true
