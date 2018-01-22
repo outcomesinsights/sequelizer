@@ -2,20 +2,22 @@ language: ruby
 rvm:
 - 2.3
 sudo: false
-env:
-  secure: xFZ00J+axPQADZ2Dqc61Ljo56vT8/uwVzOFw9zxKQs3ThMfI8+OvlI7LV8sf0XPC5Cp+BObYCxzsqIOY8M8yo+NfknlNmlrQaPqi3lf+3tKvEFeFiQZ/jvbGReIdxRdPViVls1W3zEDdRwe9zUAiz7C+xBYCRfZRoGjfm7gx/4c=
-before_install:
-- gem install bundler tping dropbox-deployment
-- bundle
-script: bundle exec rake test
+            env:
+    secure: xFZ00J+axPQADZ2Dqc61Ljo56vT8/uwVzOFw9zxKQs3ThMfI8+OvlI7LV8sf0XPC5Cp+BObYCxzsqIOY8M8yo+NfknlNmlrQaPqi3lf+3tKvEFeFiQZ/jvbGReIdxRdPViVls1W3zEDdRwe9zUAiz7C+xBYCRfZRoGjfm7gx/4c=
+  before_install:
+  - gem install bundler tping dropbox-deployment
+  - bundle
+  script: bundle exec rake test
+!!!!!!GARBAGE!!!!!!
+ALso basd STUFF goes here, yo
 #after_success:
 #- tping $TRAVIS_PRO_TOKEN outcomesinsights jigsaw_builder pro
 #notifications:
 #  slack:
 #    secure: b+ao+3BuBtM5nj/m1gP5AbrrTIdQiV/HkT1deXvY4gg5xZQDheDeLmOI7wSFP1o67BrwrAY7rpcwIP7S/99fudrU3rKI3+GLn8KoefdAv78Z4tsMs9rodJJ3Z3ZmnEdMK2i2+hCLJ1pzZ9Ae3e+GDHsBPkTz4+TNE1lrOPxDIUo=
 jobs:
-  include:
-    - stage: Ping Jigsaw Builder
-      script:
-        - echo "${TRAVIS_COMMIT}" > sequelizer.txt
-        - dropbox-deployment
+include:
+- stage: Ping Jigsaw Builder
+script:
+- echo "${TRAVIS_COMMIT}" > sequelizer.txt
+- dropbox-deployment
