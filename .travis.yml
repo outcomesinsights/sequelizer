@@ -1,6 +1,6 @@
 language: ruby
 rvm:
-- 2.3
+- 2.4
 sudo: false
 env:
   secure: xFZ00J+axPQADZ2Dqc61Ljo56vT8/uwVzOFw9zxKQs3ThMfI8+OvlI7LV8sf0XPC5Cp+BObYCxzsqIOY8M8yo+NfknlNmlrQaPqi3lf+3tKvEFeFiQZ/jvbGReIdxRdPViVls1W3zEDdRwe9zUAiz7C+xBYCRfZRoGjfm7gx/4c=
