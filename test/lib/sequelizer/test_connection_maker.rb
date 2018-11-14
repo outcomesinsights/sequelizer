@@ -12,28 +12,37 @@ class TestConnectionMaker < Minitest::Test
     end
   end
 
+  def with_ignored_yaml_config(opts = {})
+  end
+
+
   def with_yaml_config(options = {})
-    yaml_config = Minitest::Mock.new
-    yaml_config.expect :options, options
-    yaml_config.expect :options, options
-    Sequelizer::YamlConfig.stub :new, yaml_config do
-      yield
+    yaml_config = Sequelizer::YamlConfig.new
+    yaml_config.stub(:options, options) do
+      Sequelizer::YamlConfig.stub :new, yaml_config do
+        yield
+      end
     end
-    yaml_config.verify
   end
 
   def with_env_config(options = {})
-    env_config = Minitest::Mock.new
-    env_config.expect :options, options
-    Sequelizer::EnvConfig.stub :new, env_config do
-      yield
+    env_config = Sequelizer::EnvConfig.new
+    env_config.stub(:options, options) do
+      Sequelizer::EnvConfig.stub :new, env_config do
+        yield env_config
+      end
     end
-    env_config.verify
   end
 
   def test_reads_options_from_yaml_config
     with_yaml_config(@options) do
       assert_equal :postgres, Sequelizer::ConnectionMaker.new.connection.database_type
+    end
+  end
+
+  def test_ignores_options_from_yaml_config_when_asked
+    with_yaml_config(@options) do
+      assert_nil Sequelizer::ConnectionMaker.new(ignore_yaml: true).options.to_hash[:adapter]
     end
   end
 
@@ -61,6 +70,14 @@ class TestConnectionMaker < Minitest::Test
     with_yaml_config do
       with_env_config(@options) do
         assert_equal :postgres, Sequelizer::ConnectionMaker.new.connection.database_type
+      end
+    end
+  end
+
+  def test_ignores_options_from_env_config_if_no_yaml_config
+    with_yaml_config do
+      with_env_config(@options) do
+        assert_nil Sequelizer::ConnectionMaker.new(ignore_env: true).options.to_hash[:adapter]
       end
     end
   end
