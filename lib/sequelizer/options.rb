@@ -39,7 +39,8 @@ module Sequelizer
     # the string is returned without modification
     def fix_options(passed_options)
       return passed_options unless passed_options.nil? || passed_options.is_a?(Hash)
-      sequelizer_options = db_config.merge(OptionsHash.new(passed_options || {}).to_hash)
+      opts = OptionsHash.new(passed_options || {}).to_hash
+      sequelizer_options = db_config(opts).merge(opts)
 
       if sequelizer_options[:adapter] =~ /^postgres/
         sequelizer_options[:adapter] = 'postgres'
@@ -65,11 +66,12 @@ module Sequelizer
     #  - ~/.config/sequelizer.yml if it exists
     #  - config/database.yml if it exists
     #  - environment variables (also reads from .env)
-    def db_config
+    def db_config(opts)
       @db_config ||= begin
-        opts = OptionsHash.new(YamlConfig.user_config.options)
-        opts.merge!(YamlConfig.local_config.options)
-        opts.merge!(EnvConfig.new.options)
+        opts = OptionsHash.new(opts)
+        opts.merge!(YamlConfig.user_config.options) unless opts[:ignore_yaml]
+        opts.merge!(YamlConfig.local_config.options) unless opts[:ignore_yaml]
+        opts.merge!(EnvConfig.new.options) unless opts[:ignore_env]
         opts
       end
     end
