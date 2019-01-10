@@ -2,6 +2,36 @@ require 'sequel'
 require 'cgi'
 require_relative 'options'
 
+class Inliner
+  attr_reader :opts
+
+  def initialize(opts)
+    @opts = opts
+  end
+
+  def require!
+    require 'bundler/inline'
+    db_gem = get_db_gem
+    gemfile do
+      source 'https://rubygems.org'
+      gemspec
+      gem db_gem
+    end
+  end
+
+  def get_db_gem
+    case opts[:uri] || opts[:url]
+    when /postgres/
+      'pg'
+    when 'impala'
+      'sequel-impala'
+    else
+      raise "unknown adapter thingy"
+    end
+  end
+
+end
+
 module Sequelizer
   # Class that handles loading/interpretting the database options and
   # creates the Sequel connection
@@ -26,6 +56,7 @@ module Sequelizer
       opts = options.to_hash
       extensions = options.extensions
 
+      Inliner.new(opts).require!
       conn = if url = (opts.delete(:uri) || opts.delete(:url))
         Sequel.connect(url, opts)
       else
