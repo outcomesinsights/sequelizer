@@ -23,11 +23,20 @@ module Sequelizer
 
     # Returns a Sequel connection to the database
     def connection
-      opts = options.to_hash
-      extensions = options.extensions
 
-      conn = if url = (opts.delete(:uri) || opts.delete(:url))
-        Sequel.connect(url, opts)
+      conn = establish_connection
+
+      conn.extension(*options.extensions)
+      conn
+    end
+
+    private
+
+    def establish_connection
+      opts = options.to_hash
+
+      if url = (opts.delete(:uri) || opts.delete(:url))
+        get_connection(opts, url)
       else
         # Kerberos related options
         realm = opts[:realm]
@@ -80,14 +89,33 @@ module Sequelizer
             }
           end
         end
-
-        Sequel.connect(opts)
+        get_connection(opts)
       end
-      conn.extension(*extensions)
-      conn
     end
 
-    private
+    def get_connection(opts, url = nil)
+      with_retries(opts) do
+        if url
+          Sequel.connect(url, opts)
+        else
+          Sequel.connect(opts)
+        end
+      end
+    end
+
+    def with_retries(opts)
+      retries = 0
+      yield
+    rescue Sequel::DatabaseConnectionError => e
+      if (retries += 1) <= opts[:retries].to_i
+        timeout = retries * opts.fetch(:retry_delay, 5)
+        puts "Timeout (#{e.message.chomp}), retrying in #{timeout} second(s)..."
+        sleep(timeout)
+        retry
+      else
+        raise
+      end
+    end
 
     def e(v)
       CGI.escape(v.to_s)
