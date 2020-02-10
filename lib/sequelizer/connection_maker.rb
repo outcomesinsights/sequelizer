@@ -108,7 +108,7 @@ module Sequelizer
       yield
     rescue Sequel::DatabaseConnectionError => e
       if (retries += 1) <= opts[:retries].to_i
-        timeout = retries * opts.fetch(:retry_delay, 5)
+        timeout = retries * opts.fetch(:retry_delay, 5).to_i
         puts "Timeout (#{e.message.chomp}), retrying in #{timeout} second(s)..."
         sleep(timeout)
         retry
