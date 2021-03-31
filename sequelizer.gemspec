@@ -25,6 +25,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rake', '~> 12.0'
   spec.add_dependency 'sequel', '~> 5.0'
   spec.add_dependency 'dotenv', '~> 2.7'
-  spec.add_dependency 'thor', '~> 0.19'
+  spec.add_dependency 'thor', '~> 1.1'
   spec.add_dependency 'hashie', '~> 3.2'
 end
