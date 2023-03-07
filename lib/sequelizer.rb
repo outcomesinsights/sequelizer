@@ -30,11 +30,11 @@ module Sequelizer
   def new_db(options = {})
     cached = find_cached(options)
     return cached if cached && !options[:force_new]
-    @cache[options] = ConnectionMaker.new(options).connection
+    @_sequelizer_cache[options] = ConnectionMaker.new(options).connection
   end
 
   def find_cached(options)
-    @cache ||= {}
-    @cache[options]
+    @_sequelizer_cache ||= {}
+    @_sequelizer_cache[options]
   end
 end
