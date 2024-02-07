@@ -35,6 +35,14 @@ class TestUsable < Minitest::Test
     ], @db.sqls)
   end
 
+  def test_should_create_views_based_on_tables_in_search_paths_passed_as_strings
+    @db.make_ready(search_path: ["schema1", "schema2", "schema3"])
+    assert_equal([
+      "CREATE TEMPORARY VIEW `a` AS SELECT * FROM `schema1`.`a`",
+      "CREATE TEMPORARY VIEW `b` AS SELECT * FROM `schema2`.`b`"
+    ], @db.sqls)
+  end
+
   def test_should_create_views_based_on_tables_in_search_paths_accepts_except
     @db.make_ready(search_path: [:schema1, :schema2, :schema3], except: :a)
     assert_equal([
@@ -78,4 +86,3 @@ class TestUsable < Minitest::Test
     assert_match(%r{CREATE TEMPORARY VIEW `c` USING csv OPTIONS \('path'='/tmp/[^/]+/c.csv'\)}, sqls[2])
   end
 end
-

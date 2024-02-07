@@ -52,6 +52,7 @@ module Sequel
       only_tables = Array(opts[:only])
       created_views = (Array(opts[:except]) || [])
       (opts[:search_path] || []).each do |schema|
+        schema = schema.is_a?(Pathname) ? schema : schema.to_sym
         source = get_source(db, schema)
         tables = source.tables(schema: schema) - created_views
         tables &= only_tables unless only_tables.empty?
