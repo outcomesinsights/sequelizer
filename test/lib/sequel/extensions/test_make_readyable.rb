@@ -85,4 +85,81 @@ class TestUsable < Minitest::Test
     assert_match(%r{CREATE TEMPORARY VIEW `b` USING delta OPTIONS \('path'='/tmp/[^/]+/b.delta'\)}, sqls[1])
     assert_match(%r{CREATE TEMPORARY VIEW `c` USING csv OPTIONS \('path'='/tmp/[^/]+/c.csv'\)}, sqls[2])
   end
+
+  def test_should_create_a_single_view_if_multiple_files_have_the_same_name
+    dir = Pathname.new(Dir.mktmpdir)
+    a_file = dir + "a.parquet"
+    b_file = dir + "a.delta"
+    c_file = dir + "a.csv"
+    FileUtils.touch(a_file.to_s)
+    FileUtils.touch(b_file.to_s)
+    FileUtils.touch(c_file.to_s)
+
+    @db.make_ready(search_path: [a_file, b_file, c_file])
+    sqls = @db.sqls.dup
+    assert_equal(1, sqls.size)
+    assert_match(%r{CREATE TEMPORARY VIEW `a` USING parquet OPTIONS \('path'='/tmp/[^/]+/a.parquet'\)}, sqls[0])
+    refute_match(%r{CREATE TEMPORARY VIEW `a` USING delta OPTIONS \('path'='/tmp/[^/]+/a.delta'\)}, sqls[1])
+    refute_match(%r{CREATE TEMPORARY VIEW `a` USING csv OPTIONS \('path'='/tmp/[^/]+/a.csv'\)}, sqls[2])
+  end
+
+  def test_should_create_a_single_view_if_multiple_files_have_the_same_name_and_are_in_different_directories
+    dir = Pathname.new(Dir.mktmpdir)
+    a_file = dir / "one" / "a.parquet"
+    b_file = dir / "two" / "a.delta"
+    c_file = dir / "three" / "a.csv"
+    FileUtils.mkdir_p(a_file.dirname)
+    FileUtils.mkdir_p(b_file.dirname)
+    FileUtils.mkdir_p(c_file.dirname)
+    FileUtils.touch(a_file.to_s)
+    FileUtils.touch(b_file.to_s)
+    FileUtils.touch(c_file.to_s)
+
+    @db.make_ready(search_path: [a_file, b_file, c_file])
+    sqls = @db.sqls.dup
+    assert_equal(1, sqls.size)
+    assert_match(%r{CREATE TEMPORARY VIEW `a` USING parquet OPTIONS \('path'='/tmp/[^/]+/one/a.parquet'\)}, sqls[0])
+    refute_match(%r{CREATE TEMPORARY VIEW `a` USING delta OPTIONS \('path'='/tmp/[^/]+/two/a.delta'\)}, sqls[1])
+    refute_match(%r{CREATE TEMPORARY VIEW `a` USING csv OPTIONS \('path'='/tmp/[^/]+/three/a.csv'\)}, sqls[2])
+  end
+
+  def test_should_create_view_from_compact_style_path
+    dir = Pathname.new(Dir.mktmpdir)
+    a_file = dir / "one" / "a.parquet"
+    b_file = dir / "two" / "b.delta"
+    c_file = dir / "three" / "c.csv"
+    FileUtils.mkdir_p(a_file.dirname)
+    FileUtils.mkdir_p(b_file.dirname)
+    FileUtils.mkdir_p(c_file.dirname)
+    FileUtils.touch(a_file.to_s)
+    FileUtils.touch(b_file.to_s)
+    FileUtils.touch(c_file.to_s)
+
+    @db.make_ready(search_path: [Dir["#{dir}/{one,two,three}"].map { |path| Pathname.new(path).glob("*") }])
+    sqls = @db.sqls.dup
+    assert_equal(3, sqls.size)
+    assert_match(%r{CREATE TEMPORARY VIEW `a` USING parquet OPTIONS \('path'='/tmp/[^/]+/one/a.parquet'\)}, sqls[0])
+    assert_match(%r{CREATE TEMPORARY VIEW `b` USING delta OPTIONS \('path'='/tmp/[^/]+/two/b.delta'\)}, sqls[1])
+    assert_match(%r{CREATE TEMPORARY VIEW `c` USING csv OPTIONS \('path'='/tmp/[^/]+/three/c.csv'\)}, sqls[2])
+  end
+
+  def test_should_create_view_from_compact_style_path_with_multiple_files
+    dir = Pathname.new(Dir.mktmpdir)
+    a_file = dir / "one" / "a.parquet"
+    b_file = dir / "two" / "a.delta"
+    c_file = dir / "three" / "a.csv"
+    FileUtils.mkdir_p(a_file.dirname)
+    FileUtils.mkdir_p(b_file.dirname)
+    FileUtils.mkdir_p(c_file.dirname)
+    FileUtils.touch(a_file.to_s)
+    FileUtils.touch(b_file.to_s)
+    FileUtils.touch(c_file.to_s)
+
+    @db.make_ready(search_path: [Dir["#{dir}/{one,two,three}"].map { |path| Pathname.new(path).glob("*") }])
+    sqls = @db.sqls.dup
+    assert_equal(1, sqls.size)
+    assert_match(%r{CREATE TEMPORARY VIEW `a` USING parquet OPTIONS \('path'='/tmp/[^/]+/one/a.parquet'\)}, sqls[0])
+    refute_match(%r{CREATE TEMPORARY VIEW `a` USING delta OPTIONS \('path'='/tmp/[^/]+/two/a.delta'\)}, sqls[1])
+    refute_match(%r{CREATE TEMPORARY VIEW `a` USING csv OPTIONS \('path'='/tmp/[^/]+/three/a.csv'\)}, sqls[2])
+  end
 end

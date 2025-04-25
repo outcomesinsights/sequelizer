@@ -11,7 +11,7 @@ module Sequel
     #   # => USE `schema`
     #
     # When using search_path, tables from previous schema override tables
-    # from the next schema.  This is analogous to the way Unix searches 
+    # from the next schema.  This is analogous to the way Unix searches
     # the PATH variable for programs.
     #
     # Assuming the following tables: schema1.a, schema2.a, schema2.b
@@ -21,7 +21,7 @@ module Sequel
     #   # => CREATE TEMPORARY VIEW `b` AS SELECT * FROM `schema2`.`b;`
     #
     # When using Pathnames, the extension on the file becomes the format
-    # to try to read from the file.  
+    # to try to read from the file.
     #
     #   DB.make_ready(search_path: [Pathname.new("c.parquet"), Pathname.new("d.orc")])
     #   # => CREATE TEMPORARY VIEW `c` USING parquet OPTIONS ('path'='c.parquet')
@@ -35,7 +35,7 @@ module Sequel
     end
   end
 
-  private 
+  private
   class ReadyMaker
     attr_reader :db, :opts
 
@@ -43,7 +43,7 @@ module Sequel
       @db = db
       @opts = opts
     end
-  
+
     def run
       if opts[:use_schema]
         db.extension :usable
@@ -51,7 +51,7 @@ module Sequel
       end
       only_tables = Array(opts[:only])
       created_views = (Array(opts[:except]) || [])
-      (opts[:search_path] || []).each do |schema|
+      (opts[:search_path] || []).flatten.each do |schema|
         schema = schema.is_a?(Pathname) ? schema : schema.to_sym
         source = get_source(db, schema)
         tables = source.tables(schema: schema) - created_views
