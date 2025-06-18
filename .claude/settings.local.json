@@ -9,7 +9,11 @@
       "Bash(gem list)",
       "Bash(bundle exec gem dependency:*)",
       "Bash(bundle exec rake:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(gh repo edit:*)",
+      "Bash(gh repo view:*)",
+      "Bash(git branch:*)",
+      "Bash(git remote set-head:*)"
     ],
     "deny": []
   }

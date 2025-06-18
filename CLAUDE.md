@@ -159,3 +159,5 @@ This project follows standard Ruby community conventions enforced by RuboCop, em
 ## Development Memories
 
 - Ensure that bundler is used for all ruby/rake related cli invocations
+- Do all work in a worktree
+- Refer to Ruby Sequel for code style, test frameworks, and general guidance
