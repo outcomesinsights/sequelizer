@@ -180,39 +180,30 @@ This project follows standard Ruby community conventions enforced by RuboCop, em
 
 ## Development Environment
 
-**IMPORTANT: All future agent-driven development must be done using devcontainers and git worktrees.**
+**CRITICAL: NO DEVELOPMENT IS TO BE DONE IN THE MAIN PROJECT DIRECTORY. ALL DEVELOPMENT MUST BE DONE IN INTERNAL WORKTREES.**
+
+### Claude Code Limitation with Sibling Directories
+
+Due to Claude Code's security restrictions that prevent navigation to sibling directories, we cannot use the standard `git worktree add ../directory` approach. Instead, all worktrees must be created within the project directory under `.worktrees/`.
 
 ### Setting up Development Environment
 
-1. **Create a git worktree** for the feature/task:
+1. **Create an internal git worktree** for the feature/task:
    ```bash
-   git worktree add ../sequelizer-feature-name feature-branch-name
-   cd ../sequelizer-feature-name
+   git worktree add .worktrees/feature-name feature-branch-name
+   cd .worktrees/feature-name
    ```
 
-2. **Open in devcontainer**:
-   - Open the worktree directory in Cursor/VS Code
-   - When prompted, select "Reopen in Container"
-   - The devcontainer will automatically install dependencies and set up the environment
-
-3. **Development workflow**:
-   - All development commands should be run inside the devcontainer
-   - The container includes Ruby 3.3, bundler, RuboCop, Ruby LSP, and all necessary tools
+2. **Development workflow**:
+   - All development commands should be run inside the worktree
    - Overcommit hooks are automatically installed and configured
-
-### Devcontainer Features
-
-The `.devcontainer/` configuration provides:
-- Ruby 3.3 with bundler and development dependencies
-- Ruby LSP for intelligent code completion
-- RuboCop integration with auto-formatting
-- PostgreSQL client for database connectivity testing
-- Pre-configured VS Code/Cursor extensions
-- Automatic dependency installation and setup
+   - **NEVER work directly in the main project directory**
 
 ## Development Memories
 
 - Ensure that bundler is used for all ruby/rake related cli invocations
-- **ALWAYS do all work in a devcontainer and git worktree**
+- **ALWAYS do all work in an internal git worktree under .worktrees/**
+- **NEVER work directly in the main project directory**
 - Refer to Ruby Sequel for code style, test frameworks, and general guidance
 - To test CLI, just call bundle exec bin/sequelizer without installing binstubs
+- Internal worktrees are used due to Claude Code's security restriction preventing navigation to sibling directories
