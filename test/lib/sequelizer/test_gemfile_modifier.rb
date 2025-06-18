@@ -2,6 +2,7 @@ require_relative '../../test_helper'
 require 'sequelizer/gemfile_modifier'
 
 class TestGemfileModifier < Minitest::Test
+
   def setup
     @gm = Sequelizer::GemfileModifier.new
   end
@@ -9,6 +10,7 @@ class TestGemfileModifier < Minitest::Test
   def test_dies_if_Gemfile_missing
     pn_mock = Minitest::Mock.new
     pn_mock.expect(:exist?, false)
+
     Pathname.stub(:new, pn_mock) do
       assert_raises(RuntimeError) { @gm.modify }
     end
@@ -71,17 +73,16 @@ class TestGemfileModifier < Minitest::Test
   end
 
   private
+
   def standard_pn_mock
     pn_mock = Minitest::Mock.new
     pn_mock.expect(:exist?, true)
   end
 
-  def stub_modifying_methods(obj)
+  def stub_modifying_methods(obj, &block)
     obj.stub(:system, nil) do
-      obj.stub(:puts, nil) do
-        yield
-      end
+      obj.stub(:puts, nil, &block)
     end
   end
-end
 
+end

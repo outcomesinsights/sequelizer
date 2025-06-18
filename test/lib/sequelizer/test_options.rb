@@ -1,8 +1,8 @@
 require_relative '../../test_helper'
 require 'sequelizer/options'
 
-
 class TestOptions < Minitest::Test
+
   def test_changes_postgresql_adapter_to_postgres
     options = Sequelizer::Options.new(Sequelizer::OptionsHash.new(adapter: 'postgresql'))
 
@@ -30,19 +30,22 @@ class TestOptions < Minitest::Test
   end
 
   def test_prefers_search_path_over_schema_search_path
-    options = Sequelizer::Options.new(Sequelizer::OptionsHash.new(adapter: 'postgres', search_path: 'path', schema_search_path: 'path2'))
+    options = Sequelizer::Options.new(Sequelizer::OptionsHash.new(adapter: 'postgres', search_path: 'path',
+                                                                  schema_search_path: 'path2'))
 
     assert_equal('path', options.search_path)
   end
 
   def test_returns_timeout_as_an_integer_even_if_given_string
-    options = Sequelizer::Options.new({timeout: "30"})
+    options = Sequelizer::Options.new({ timeout: '30' })
+
     assert_equal(30, options.to_hash[:timeout])
   end
 
   def test_returns_a_hash_even_if_given_nil
     Sequelizer::YamlConfig.stub :user_config_path, Pathname.new('/completely/made/up/path/that/does/not/exist') do
       options = Sequelizer::Options.new
+
       assert_equal(1, options.to_hash.length)
       assert_instance_of(Proc, options.to_hash[:after_connect])
     end
@@ -50,6 +53,7 @@ class TestOptions < Minitest::Test
 
   def test_handles_symbolized_search_path
     options = Sequelizer::Options.new(search_path: 'passed', adapter: 'postgres')
+
     assert_equal 'passed', options.search_path
   end
 
@@ -60,19 +64,20 @@ class TestOptions < Minitest::Test
     conny.expect :db, db
     conny.expect :db, db
 
-    procky = Proc.new { |conn| conn.db[:table].to_a }
+    procky = proc { |conn| conn.db[:table].to_a }
 
     options = Sequelizer::Options.new(after_connect: procky)
     options.to_hash[:after_connect].call(conny, :default, db)
 
-    assert_equal(["SELECT * FROM \"table\""], db.sqls)
+    assert_equal(['SELECT * FROM "table"'], db.sqls)
   end
 
   def test_handles_extensions_passed_in
     options = Sequelizer::Options.new(extension_example_1: 1, extension_example_2: 1, not_an_extension_example: 1)
-    assert_equal 1, options.to_hash[:not_an_extension_example]
-    assert options.extensions.include?(:example_1), "Failed to find example_1 in extensions"
-    assert options.extensions.include?(:example_2), "Failed to find example_2 in extensions"
-  end
-end
 
+    assert_equal 1, options.to_hash[:not_an_extension_example]
+    assert_includes options.extensions, :example_1, 'Failed to find example_1 in extensions'
+    assert_includes options.extensions, :example_2, 'Failed to find example_2 in extensions'
+  end
+
+end

@@ -4,7 +4,9 @@ require_relative 'options_hash'
 
 module Sequelizer
   class Options
-    attr :extensions
+
+    attr_reader :extensions
+
     def initialize(options = nil)
       opts = fix_options(options)
       @options, @extensions = filter_extensions(opts)
@@ -14,7 +16,7 @@ module Sequelizer
       @options
     end
 
-    %w(adapter database username password search_path).each do |name|
+    %w[adapter database username password search_path].each do |name|
       define_method(name) do
         @options[name]
       end
@@ -23,8 +25,8 @@ module Sequelizer
     private
 
     def make_ac(opts)
-      Proc.new do |conn, server, db|
-        if ac = opts[:after_connect]
+      proc do |conn, server, db|
+        if (ac = opts[:after_connect])
           ac.arity == 2 ? ac.call(conn, server) : ac.call(conn)
         end
         db.extension :db_opts
@@ -39,12 +41,13 @@ module Sequelizer
     # the string is returned without modification
     def fix_options(passed_options)
       return passed_options unless passed_options.nil? || passed_options.is_a?(Hash)
+
       opts = OptionsHash.new(passed_options || {}).to_hash
       sequelizer_options = db_config(opts).merge(opts)
 
       if sequelizer_options[:adapter] =~ /^postgres/
         sequelizer_options[:adapter] = 'postgres'
-        paths = %w(search_path schema_search_path schema).map { |key| sequelizer_options.delete(key) }.compact
+        paths = %w[search_path schema_search_path schema].map { |key| sequelizer_options.delete(key) }.compact
 
         unless paths.empty?
           sequelizer_options[:search_path] = paths.first
@@ -84,7 +87,7 @@ module Sequelizer
     # is created if it doesn't exist, then the search_path is set for
     # the connection.
     def after_connect(search_path)
-      Proc.new do |conn|
+      proc do |conn|
         search_path.split(',').map(&:strip).each do |schema|
           conn.execute("CREATE SCHEMA IF NOT EXISTS #{schema}")
         end
@@ -101,5 +104,6 @@ module Sequelizer
       end
       [options, extensions]
     end
+
   end
 end

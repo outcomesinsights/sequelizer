@@ -1,4 +1,5 @@
-# frozen-string-literal: true
+# frozen_string_literal: true
+
 #
 # The sqls extension will record each SQL statement sent to the
 # database
@@ -10,12 +11,14 @@
 # Related module: Sequel::Sqls
 
 module Sequel
+
   module Sqls
+
     attr_reader :sqls
 
     # Record SQL statements when logging query.
-    def log_connection_yield(sql, conn, args=nil)
-      @sqls_mutex.synchronize{sqls.push(sql)}
+    def log_connection_yield(sql, conn, args = nil)
+      @sqls_mutex.synchronize { sqls.push(sql) }
       super
     end
 
@@ -25,7 +28,9 @@ module Sequel
         @sqls ||= []
       end
     end
+
   end
 
   Database.register_extension(:sqls, Sqls)
+
 end
