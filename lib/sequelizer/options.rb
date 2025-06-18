@@ -3,20 +3,61 @@ require_relative 'env_config'
 require_relative 'options_hash'
 
 module Sequelizer
+  # = Options
+  #
+  # Manages database connection options from multiple configuration sources.
+  # This class is responsible for:
+  #
+  # * Loading configuration from various sources (YAML files, environment variables, .env files)
+  # * Applying precedence rules for configuration sources
+  # * Processing adapter-specific options (especially PostgreSQL schema handling)
+  # * Managing Sequel extensions
+  # * Setting up after_connect callbacks
+  #
+  # == Configuration Sources (in order of precedence)
+  #
+  # 1. Passed options (highest priority)
+  # 2. .env file
+  # 3. Environment variables
+  # 4. config/database.yml
+  # 5. ~/.config/sequelizer/database.yml (lowest priority)
+  #
+  # @example Basic usage
+  #   options = Options.new(adapter: 'postgres', host: 'localhost')
+  #   hash = options.to_hash
+  #
+  # @example Loading from environment
+  #   ENV['SEQUELIZER_ADAPTER'] = 'postgres'
+  #   options = Options.new
+  #   puts options.adapter  # => 'postgres'
   class Options
 
+    # @!attribute [r] extensions
+    #   @return [Array<Symbol>] list of Sequel extensions to load
     attr_reader :extensions
 
+    # Creates a new Options instance, processing configuration from multiple sources.
+    #
+    # @param options [Hash, String, nil] database connection options or connection URL
+    #   If a Hash is provided, it will be merged with configuration from other sources.
+    #   If a String is provided, it's treated as a database URL and returned as-is.
+    #   If nil, configuration is loaded entirely from external sources.
     def initialize(options = nil)
       opts = fix_options(options)
       @options, @extensions = filter_extensions(opts)
     end
 
+    # Returns the processed options as a hash suitable for Sequel.connect.
+    #
+    # @return [Hash] the database connection options
     def to_hash
       @options
     end
 
+    # Define accessor methods for common database options
     %w[adapter database username password search_path].each do |name|
+      # @!method #{name}
+      #   @return [String, nil] the #{name} option value
       define_method(name) do
         @options[name]
       end
@@ -24,6 +65,11 @@ module Sequelizer
 
     private
 
+    # Creates an after_connect callback proc that handles custom callbacks
+    # and applies database-specific options.
+    #
+    # @param opts [Hash] options hash that may contain an :after_connect callback
+    # @return [Proc] callback to be executed after database connection
     def make_ac(opts)
       proc do |conn, server, db|
         if (ac = opts[:after_connect])
@@ -34,11 +80,18 @@ module Sequelizer
       end
     end
 
-    # If passed a hash, scans hash for certain options and sets up hash
-    # to be fed to Sequel.connect
+    # Processes and fixes the passed options, handling various input types
+    # and applying adapter-specific transformations.
     #
-    # If fed anything, like a string that represents the URL for a DB,
-    # the string is returned without modification
+    # If passed a hash, scans hash for certain options and sets up hash
+    # to be fed to Sequel.connect. Handles PostgreSQL schema setup and
+    # timeout conversion.
+    #
+    # If passed anything else (like a string that represents a database URL),
+    # the value is returned without modification.
+    #
+    # @param passed_options [Hash, String, nil] the options to process
+    # @return [Hash, String] processed options or original string
     def fix_options(passed_options)
       return passed_options unless passed_options.nil? || passed_options.is_a?(Hash)
 
@@ -65,10 +118,14 @@ module Sequelizer
       sequelizer_options.merge(after_connect: make_ac(sequelizer_options))
     end
 
-    # Grabs the database options from
-    #  - ~/.config/sequelizer.yml if it exists
-    #  - config/database.yml if it exists
-    #  - environment variables (also reads from .env)
+    # Loads database configuration from external sources in order of precedence.
+    # Sources checked (in order):
+    # - ~/.config/sequelizer.yml (if it exists and not ignored)
+    # - config/database.yml (if it exists and not ignored)
+    # - environment variables (including .env file if not ignored)
+    #
+    # @param opts [Hash] base options that may contain ignore flags
+    # @return [OptionsHash] merged configuration from all sources
     def db_config(opts)
       @db_config ||= begin
         opts = OptionsHash.new(opts)
@@ -80,12 +137,17 @@ module Sequelizer
     end
 
     # Returns a proc that should be executed after Sequel connects to the
-    # datebase.
+    # database.
     #
-    # Right now, the only thing that happens is if we're connecting to
-    # PostgreSQL and the schema_search_path is defined, each schema
-    # is created if it doesn't exist, then the search_path is set for
-    # the connection.
+    # For PostgreSQL connections with a search_path defined, this proc will:
+    # 1. Create each schema in the search path if it doesn't exist
+    # 2. Set the search_path for the connection
+    #
+    # @param search_path [String] comma-separated list of PostgreSQL schemas
+    # @return [Proc] callback to execute after connection
+    # @example
+    #   callback = after_connect('public,app_schema')
+    #   # When called, creates schemas and sets search_path
     def after_connect(search_path)
       proc do |conn|
         search_path.split(',').map(&:strip).each do |schema|
@@ -95,6 +157,19 @@ module Sequelizer
       end
     end
 
+    # Extracts Sequel extension configuration from options.
+    #
+    # Looks for keys starting with 'extension_' and converts them to
+    # extension names. The extension keys are removed from the options
+    # hash and returned separately.
+    #
+    # @param options [Hash] options hash that may contain extension keys
+    # @return [Array<Hash, Array>] tuple of [filtered_options, extensions]
+    # @example
+    #   opts = { adapter: 'postgres', extension_pg_json: true, extension_pg_array: true }
+    #   filtered_opts, exts = filter_extensions(opts)
+    #   # filtered_opts => { adapter: 'postgres' }
+    #   # exts => [:pg_json, :pg_array]
     def filter_extensions(options)
       extension_regexp = /^extension_/
       extension_keys = options.keys.select { |k| k.to_s =~ extension_regexp }
