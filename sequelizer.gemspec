@@ -23,6 +23,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rake', '~> 12.0'
   spec.add_development_dependency 'rubocop', '~> 1.0'
   spec.add_development_dependency 'rubocop-minitest', '~> 0.25'
+  spec.add_development_dependency 'simplecov', '~> 0.22'
   spec.add_dependency 'dotenv', '~> 2.1'
   spec.add_dependency 'hashie', '~> 3.2'
   spec.add_dependency 'sequel', '~> 5.0'

@@ -19,6 +19,9 @@ The gem includes:
 # Run all tests
 bundle exec rake test
 
+# Run tests with coverage report (generates coverage/index.html)
+bundle exec rake coverage
+
 # Run specific test file
 bundle exec ruby -I lib test/lib/sequelizer/test_connection_maker.rb
 ```
