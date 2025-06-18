@@ -76,7 +76,7 @@ module Sequel
 
     def get_source(db, schema)
       if schema.to_s =~ %r{/}
-        FileSourcerer.new(db, Pathname.new(schema))
+        FileSourcerer.new(db, Pathname.new(schema.to_s))
       else
         db
       end
@@ -92,7 +92,7 @@ module Sequel
       end
 
       def tables(_opts = {})
-        [schema.basename('.*').to_s.to_sym]
+        [schema.basename(schema.extname).to_s.to_sym]
       end
 
       def create_view(table, opts = {})
