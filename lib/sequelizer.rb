@@ -7,6 +7,7 @@ require_relative 'sequel/extensions/settable'
 # Include this module in any class where you'd like to quickly establish
 # a Sequel connection to a database.
 module Sequelizer
+
   def self.options
     Options.new.to_hash
   end
@@ -30,6 +31,7 @@ module Sequelizer
   def new_db(options = {})
     cached = find_cached(options)
     return cached if cached && !options[:force_new]
+
     @_sequelizer_cache[options] = ConnectionMaker.new(options).connection
   end
 
@@ -37,4 +39,5 @@ module Sequelizer
     @_sequelizer_cache ||= {}
     @_sequelizer_cache[options]
   end
+
 end

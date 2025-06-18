@@ -1,5 +1,7 @@
 module Sequel
+
   module MakeReadyable
+
     ##
     # This method is primarily geared towards Spark SQL-based databases.
     #
@@ -33,10 +35,11 @@ module Sequel
     def make_ready(opts = {})
       ReadyMaker.new(self, opts).run
     end
+
   end
 
-  private
   class ReadyMaker
+
     attr_reader :db, :opts
 
     def initialize(db, opts)
@@ -50,9 +53,9 @@ module Sequel
         db.use(opts[:use_schema])
       end
       only_tables = Array(opts[:only])
-      created_views = (Array(opts[:except]) || [])
+      created_views = Array(opts[:except]) || []
       (opts[:search_path] || []).flatten.each do |schema|
-        schema = schema.is_a?(Pathname) ? schema : schema.to_sym
+        schema = schema.to_sym unless schema.is_a?(Pathname)
         source = get_source(db, schema)
         tables = source.tables(schema: schema) - created_views
         tables &= only_tables unless only_tables.empty?
@@ -73,36 +76,41 @@ module Sequel
 
     def get_source(db, schema)
       if schema.to_s =~ %r{/}
-        FileSourcerer.new(db, Pathname.new(schema))
+        FileSourcerer.new(db, Pathname.new(schema.to_s))
       else
         db
       end
     end
 
     class FileSourcerer
+
       attr_reader :db, :schema
+
       def initialize(db, schema)
         @db = db
         @schema = schema
       end
 
-      def tables(opts = {})
-        [schema.basename(".*").to_s.to_sym]
+      def tables(_opts = {})
+        [schema.basename(schema.extname).to_s.to_sym]
       end
 
       def create_view(table, opts = {})
         db.create_view(table, {
           temp: true,
           using: format,
-          options: { path: schema.expand_path }
+          options: { path: schema.expand_path },
         }.merge(opts))
       end
 
       def format
-        schema.extname[1..-1]
+        schema.extname[1..]
       end
+
     end
+
   end
 
   Database.register_extension(:make_readyable, MakeReadyable)
+
 end

@@ -1,5 +1,7 @@
 module Sequel
+
   module Settable
+
     def set(opts = {})
       set_sql(opts).each do |sql|
         run(sql)
@@ -11,7 +13,9 @@ module Sequel
     def set_sql(opts)
       opts.map { |k, v| "SET #{k}=#{v}" }
     end
+
   end
 
   Database.register_extension(:settable, Settable)
+
 end
