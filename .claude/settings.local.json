@@ -8,7 +8,8 @@
       "Bash(bundle list:*)",
       "Bash(gem list)",
       "Bash(bundle exec gem dependency:*)",
-      "Bash(bundle exec rake:*)"
+      "Bash(bundle exec rake:*)",
+      "Bash(grep:*)"
     ],
     "deny": []
   }

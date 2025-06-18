@@ -26,4 +26,10 @@ rescue LoadError
   # RuboCop not available
 end
 
+desc 'Run tests with coverage report'
+task :coverage do
+  ENV['COVERAGE'] = 'true'
+  Rake::Task[:test].invoke
+end
+
 task default: :test
