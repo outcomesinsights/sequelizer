@@ -23,14 +23,18 @@ class TestSqlRecorder < Minitest::Test
     @db[:users].all
 
     assert_operator(@db.sql_recorder.length, :>=, 1, 'Should record at least one SQL statement')
-    assert(@db.sql_recorder.any? { |sql| sql.include?('SELECT * FROM users') || sql.include?('SELECT * FROM `users`') }, 'Should record the SELECT statement')
+    assert(@db.sql_recorder.any? do |sql|
+      sql.include?('SELECT * FROM users') || sql.include?('SELECT * FROM `users`')
+    end, 'Should record the SELECT statement')
   end
 
   def test_records_insert_statements
     @db[:users].insert(name: 'John', email: 'john@example.com', age: 30)
 
     assert_operator(@db.sql_recorder.length, :>=, 1, 'Should record at least one SQL statement')
-    assert(@db.sql_recorder.any? { |sql| sql.include?('INSERT INTO users') || sql.include?('INSERT INTO `users`') }, 'Should record INSERT statement')
+    assert(@db.sql_recorder.any? do |sql|
+      sql.include?('INSERT INTO users') || sql.include?('INSERT INTO `users`')
+    end, 'Should record INSERT statement')
     assert(@db.sql_recorder.any? { |sql| sql.include?('John') }, 'Should include the data')
   end
 
@@ -38,7 +42,9 @@ class TestSqlRecorder < Minitest::Test
     @db[:users].where(id: 1).update(name: 'Jane')
 
     assert_operator(@db.sql_recorder.length, :>=, 1, 'Should record at least one SQL statement')
-    assert(@db.sql_recorder.any? { |sql| sql.include?('UPDATE users SET') || sql.include?('UPDATE `users` SET') }, 'Should record UPDATE statement')
+    assert(@db.sql_recorder.any? do |sql|
+      sql.include?('UPDATE users SET') || sql.include?('UPDATE `users` SET')
+    end, 'Should record UPDATE statement')
     assert(@db.sql_recorder.any? { |sql| sql.include?('Jane') }, 'Should include the updated data')
   end
 
@@ -46,7 +52,9 @@ class TestSqlRecorder < Minitest::Test
     @db[:users].where(id: 1).delete
 
     assert_operator(@db.sql_recorder.length, :>=, 1, 'Should record at least one SQL statement')
-    assert(@db.sql_recorder.any? { |sql| sql.include?('DELETE FROM users') || sql.include?('DELETE FROM `users`') }, 'Should record DELETE statement')
+    assert(@db.sql_recorder.any? do |sql|
+      sql.include?('DELETE FROM users') || sql.include?('DELETE FROM `users`')
+    end, 'Should record DELETE statement')
   end
 
   def test_records_multiple_sql_statements
@@ -57,7 +65,9 @@ class TestSqlRecorder < Minitest::Test
     @db[:comments].count
 
     assert_operator(@db.sql_recorder.length, :>=, initial_count + 3, 'Should record at least 3 more SQL statements')
-    assert(@db.sql_recorder.any? { |sql| sql.include?('SELECT * FROM users') || sql.include?('SELECT * FROM `users`') }, 'Should record users query')
+    assert(@db.sql_recorder.any? do |sql|
+      sql.include?('SELECT * FROM users') || sql.include?('SELECT * FROM `users`')
+    end, 'Should record users query')
     assert(@db.sql_recorder.any? do |sql|
       sql.include?('SELECT * FROM posts WHERE (id = 1)')
     end, 'Should record posts query')

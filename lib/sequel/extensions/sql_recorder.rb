@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # == Overview
-# 
+#
 # The sql_recorder extension records each SQL statement sent to the database
 # in a thread-safe array accessible via the +sql_recorder+ method.
 #
@@ -10,11 +10,11 @@
 #   DB.extension :sql_recorder
 #   DB[:users].all
 #   DB[:posts].where(id: 1).first
-#   
+#
 #   # Access recorded SQL statements
-#   DB.sql_recorder 
+#   DB.sql_recorder
 #   # => ["SELECT * FROM users", "SELECT * FROM posts WHERE (id = 1) LIMIT 1"]
-#   
+#
 #   # Clear the recorded statements
 #   DB.sql_recorder.clear
 #
@@ -39,7 +39,7 @@ module Sequel
   module SqlRecorder
 
     # Returns the array of recorded SQL statements.
-    # 
+    #
     # The array accumulates all SQL statements sent to the database since the
     # extension was loaded or since the last time +clear+ was called on the array.
     #
@@ -51,7 +51,7 @@ module Sequel
     attr_reader :sql_recorder
 
     # Intercepts SQL execution to record statements.
-    # 
+    #
     # This method overrides Sequel's +log_connection_yield+ to capture each SQL
     # statement in a thread-safe manner before delegating to the parent implementation.
     #
