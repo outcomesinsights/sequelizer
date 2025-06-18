@@ -44,6 +44,28 @@ bundle exec rubocop --auto-correct-all
 bundle exec rubocop lib/sequelizer.rb
 ```
 
+### Pre-commit Hooks
+```bash
+# Install pre-commit hooks (done automatically after bundle install)
+bundle exec overcommit --install
+
+# Sign configuration (if you modify .overcommit.yml)
+bundle exec overcommit --sign
+
+# Run pre-commit hooks manually
+bundle exec overcommit --run
+
+# Skip hooks for a specific commit (use sparingly)
+git commit --no-verify -m "commit message"
+```
+
+The pre-commit hooks automatically run:
+- RuboCop linting with auto-correction
+- Full test suite
+- YAML/JSON syntax validation
+- Trailing whitespace and merge conflict checks
+- Commit message formatting validation
+
 ### Build and Release
 ```bash
 # Build gem
