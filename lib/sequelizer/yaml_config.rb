@@ -20,13 +20,13 @@ module Sequelizer
       def user_config_path
         return nil unless Dir.home
 
-        "#{Pathname.new(Dir.home)}.configsequelizerdatabase.yml"
+        Pathname.new(Dir.home) + '.config' + 'sequelizer' + 'database.yml'
       end
 
     end
 
     def initialize(config_file_path = nil)
-      @config_file_path = Pathname.new(config_file_path || "#{Pathname.pwd}configsequelizer.yml").expand_path
+      @config_file_path = Pathname.new(config_file_path || (Pathname.pwd + 'config' + 'sequelizer.yml')).expand_path
     end
 
     # Returns a set of options pulled from config/database.yml
