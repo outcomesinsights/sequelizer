@@ -17,24 +17,24 @@ The gem includes:
 ### Testing
 ```bash
 # Run all tests
-rake test
+bundle exec rake test
 
 # Run specific test file
-ruby -I lib test/lib/sequelizer/test_connection_maker.rb
+bundle exec ruby -I lib test/lib/sequelizer/test_connection_maker.rb
 ```
 
 ### Linting and Formatting
 ```bash
 # Check code style and lint issues
-rake lint
+bundle exec rake lint
 bundle exec rubocop
 
 # Auto-fix safe linting issues  
-rake lint_fix
+bundle exec rake lint_fix
 bundle exec rubocop --auto-correct
 
 # Auto-fix all issues (including unsafe corrections)
-rake format
+bundle exec rake format
 bundle exec rubocop --auto-correct-all
 
 # Run linter on specific files
@@ -44,10 +44,10 @@ bundle exec rubocop lib/sequelizer.rb
 ### Build and Release
 ```bash
 # Build gem
-rake build
+bundle exec rake build
 
 # Release gem
-rake release
+bundle exec rake release
 ```
 
 ### CLI Commands
@@ -152,3 +152,7 @@ This project follows standard Ruby community conventions enforced by RuboCop, em
 - Test methods prefixed with `test_`: `def test_accepts_options_as_params`
 - Extensive use of stubbing and mocking for isolated testing
 - Custom helper methods for common setup patterns
+
+## Development Memories
+
+- Ensure that bundler is used for all ruby/rake related cli invocations
