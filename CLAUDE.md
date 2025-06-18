@@ -178,8 +178,41 @@ This project follows standard Ruby community conventions enforced by RuboCop, em
 - Extensive use of stubbing and mocking for isolated testing
 - Custom helper methods for common setup patterns
 
+## Development Environment
+
+**IMPORTANT: All future agent-driven development must be done using devcontainers and git worktrees.**
+
+### Setting up Development Environment
+
+1. **Create a git worktree** for the feature/task:
+   ```bash
+   git worktree add ../sequelizer-feature-name feature-branch-name
+   cd ../sequelizer-feature-name
+   ```
+
+2. **Open in devcontainer**:
+   - Open the worktree directory in Cursor/VS Code
+   - When prompted, select "Reopen in Container"
+   - The devcontainer will automatically install dependencies and set up the environment
+
+3. **Development workflow**:
+   - All development commands should be run inside the devcontainer
+   - The container includes Ruby 3.3, bundler, RuboCop, Ruby LSP, and all necessary tools
+   - Overcommit hooks are automatically installed and configured
+
+### Devcontainer Features
+
+The `.devcontainer/` configuration provides:
+- Ruby 3.3 with bundler and development dependencies
+- Ruby LSP for intelligent code completion
+- RuboCop integration with auto-formatting
+- PostgreSQL client for database connectivity testing
+- Pre-configured VS Code/Cursor extensions
+- Automatic dependency installation and setup
+
 ## Development Memories
 
 - Ensure that bundler is used for all ruby/rake related cli invocations
-- Do all work in a worktree
+- **ALWAYS do all work in a devcontainer and git worktree**
 - Refer to Ruby Sequel for code style, test frameworks, and general guidance
+- To test CLI, just call bundle exec bin/sequelizer without installing binstubs
