@@ -78,3 +78,59 @@ The gem supports various database adapters with special handling for:
 - Tests use Minitest framework
 - Located in `test/` directory with subdirectories mirroring `lib/` structure
 - Helper utilities in `test_helper.rb` including constant stubbing for testing
+
+## Coding Standards
+
+This project follows standard Ruby community conventions without formal linting rules, emphasizing readability, consistency, and Ruby idioms.
+
+### Style Conventions
+
+**Indentation & Formatting:**
+- 2-space indentation (no tabs)
+- Single-line method definitions when appropriate: `def e(v)`
+- Method parameters without parentheses when no arguments: `def connection`
+- Method parameters with parentheses when there are arguments: `def initialize(options = nil)`
+
+**Naming:**
+- Module/Class names: PascalCase (`Sequelizer`, `ConnectionMaker`)
+- Method names: snake_case (`new_db`, `find_cached`, `after_connect`)
+- Variable names: snake_case (`sequelizer_options`, `db_config`)
+- Instance variables: snake_case with `@` prefix (`@options`, `@_sequelizer_db`)
+- Constants: SCREAMING_SNAKE_CASE (`VERSION`)
+
+**Strings:**
+- Single quotes for simple strings: `'postgres'`, `'mock'`
+- Double quotes for interpolation: `"SET #{key}=#{value}"`
+
+### Code Organization
+
+**File Structure:**
+- One main class/module per file
+- Nested modules follow directory structure: `lib/sequelizer/connection_maker.rb`
+- Private methods grouped at bottom with `private` keyword
+
+**Dependencies:**
+- Use `require_relative` for internal dependencies: `require_relative 'sequelizer/version'`
+- Use `require` for external gems: `require 'sequel'`, `require 'thor'`
+- Group requires at top of files
+
+### Documentation
+
+**Comments:**
+- Use `#` for single-line comments
+- Extensive method documentation with parameter descriptions
+- Minimal inline comments, used for clarification of complex logic
+
+### Ruby Idioms
+
+**Patterns Used:**
+- Memoization: `@_sequelizer_db ||= new_db(options)`
+- Conditional assignment: `||=` for defaults
+- Metaprogramming with `define_method` for dynamic method creation
+- Symbol keys in hashes: `{ adapter: 'postgres' }`
+- Method chaining kept readable
+
+**Testing Patterns:**
+- Test methods prefixed with `test_`: `def test_accepts_options_as_params`
+- Extensive use of stubbing and mocking for isolated testing
+- Custom helper methods for common setup patterns
