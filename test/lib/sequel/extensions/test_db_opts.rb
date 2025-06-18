@@ -3,10 +3,11 @@ require 'sequel'
 require 'sequel/extensions/db_opts'
 
 class TestDbOpts < Minitest::Test
+
   def with_fake_database_type_and_options(db_type, opts = {})
     db = Sequel.mock
-    db.define_singleton_method(:database_type){db_type}
-    db.define_singleton_method(:opts){opts}
+    db.define_singleton_method(:database_type) { db_type }
+    db.define_singleton_method(:opts) { opts }
     db.extension :db_opts
     yield db
   end
@@ -21,20 +22,21 @@ class TestDbOpts < Minitest::Test
   end
 
   def test_should_detect_options_for_appropriate_db
-    assert_equal(sql_for(:postgres, postgres_db_opt_flim: :flam), ["SET flim=flam"])
+    assert_equal(['SET flim=flam'], sql_for(:postgres, postgres_db_opt_flim: :flam))
   end
 
   def test_should_ignore_options_for_inappropriate_db
-    assert_equal(sql_for(:postgres, postgres_db_opt_flim: :flam, other_db_opt_foo: :bar), ["SET flim=flam"])
+    assert_equal(['SET flim=flam'], sql_for(:postgres, postgres_db_opt_flim: :flam, other_db_opt_foo: :bar))
   end
 
   def test_should_ignore_non_db_opts
-    assert_equal(sql_for(:postgres, postgres_flim: :flam), [])
+    assert_empty(sql_for(:postgres, postgres_flim: :flam))
   end
 
   def test_should_properly_quote_awkward_values
-    assert_equal(sql_for(:postgres, postgres_db_opt_str: "hello there", postgres_db_opt_hyphen: "i-like-hyphens-though-they-are-dumb"),
-      ["SET str='hello there'", "SET hyphen='i-like-hyphens-though-they-are-dumb'"])
+    assert_equal(["SET str='hello there'", "SET hyphen='i-like-hyphens-though-they-are-dumb'"],
+                 sql_for(:postgres, postgres_db_opt_str: 'hello there',
+                                    postgres_db_opt_hyphen: 'i-like-hyphens-though-they-are-dumb'))
   end
-end
 
+end

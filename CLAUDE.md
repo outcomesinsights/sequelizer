@@ -23,6 +23,24 @@ rake test
 ruby -I lib test/lib/sequelizer/test_connection_maker.rb
 ```
 
+### Linting and Formatting
+```bash
+# Check code style and lint issues
+rake lint
+bundle exec rubocop
+
+# Auto-fix safe linting issues  
+rake lint_fix
+bundle exec rubocop --auto-correct
+
+# Auto-fix all issues (including unsafe corrections)
+rake format
+bundle exec rubocop --auto-correct-all
+
+# Run linter on specific files
+bundle exec rubocop lib/sequelizer.rb
+```
+
 ### Build and Release
 ```bash
 # Build gem
@@ -81,7 +99,7 @@ The gem supports various database adapters with special handling for:
 
 ## Coding Standards
 
-This project follows standard Ruby community conventions without formal linting rules, emphasizing readability, consistency, and Ruby idioms.
+This project follows standard Ruby community conventions enforced by RuboCop, emphasizing readability, consistency, and Ruby idioms.
 
 ### Style Conventions
 
