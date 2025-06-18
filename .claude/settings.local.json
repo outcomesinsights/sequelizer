@@ -4,7 +4,11 @@
       "Bash(bundle install:*)",
       "Bash(bundle exec rubocop:*)",
       "Bash(rake lint)",
-      "Bash(rake test)"
+      "Bash(rake test)",
+      "Bash(bundle list:*)",
+      "Bash(gem list)",
+      "Bash(bundle exec gem dependency:*)",
+      "Bash(bundle exec rake:*)"
     ],
     "deny": []
   }
