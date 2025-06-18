@@ -1,0 +1,73 @@
+# Overcommit configuration for Sequelizer
+# See https://github.com/sds/overcommit for documentation
+
+PreCommit:
+  # Run RuboCop to check for style violations and auto-fix when possible
+  RuboCop:
+    enabled: true
+    command: ['bundle', 'exec', 'rubocop']
+    flags: ['--autocorrect']
+    include:
+      - '**/*.rb'
+      - '**/*.rake'
+      - '**/Rakefile'
+      - '**/Gemfile'
+      - '**/*.gemspec'
+
+  # Run tests to ensure nothing is broken
+  RakeTarget:
+    enabled: true
+    targets: ['test']
+    description: 'Run test suite'
+
+  # Check for potential security issues (if bundler-audit is available)
+  BundleAudit:
+    enabled: false  # Disabled by default, enable if you add bundler-audit gem
+
+  # Check for trailing whitespace
+  TrailingWhitespace:
+    enabled: true
+    exclude:
+      - '**/db/structure.sql' # Database dumps may have trailing whitespace
+      - '**/*.md'             # Markdown may intentionally have trailing spaces
+
+  # Check for merge conflict markers
+  MergeConflicts:
+    enabled: true
+
+  # Check YAML syntax
+  YamlSyntax:
+    enabled: true
+
+  # Check JSON syntax
+  JsonSyntax:
+    enabled: true
+
+  # Check for hard tabs (prefer spaces)
+  HardTabs:
+    enabled: true
+    exclude:
+      - '**/Makefile*'
+      - '**/*.mk'
+
+CommitMsg:
+  # Ensure commit messages are properly formatted
+  TextWidth:
+    enabled: true
+    max_subject_width: 60
+    max_body_width: 72
+
+PostCheckout:
+  # Bundle install when Gemfile changes
+  BundleCheck:
+    enabled: true
+
+PostMerge:
+  # Bundle install after merging changes to Gemfile
+  BundleCheck:
+    enabled: true
+
+PostRewrite:
+  # Bundle install after rebasing with Gemfile changes
+  BundleCheck:
+    enabled: true
