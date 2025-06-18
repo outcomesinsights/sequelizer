@@ -4,5 +4,5 @@ source 'https://rubygems.org'
 gemspec
 
 group :test do
-  gem "sequel-hexspace", github: "outcomesinsights/sequel-hexspace", branch: "master"
+  gem 'sequel-hexspace', github: 'outcomesinsights/sequel-hexspace', branch: 'master'
 end

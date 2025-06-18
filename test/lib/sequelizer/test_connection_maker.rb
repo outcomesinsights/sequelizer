@@ -2,8 +2,9 @@ require_relative '../../test_helper'
 require 'sequelizer'
 
 class TestConnectionMaker < Minitest::Test
+
   def setup
-    @options = { 'adapter' => 'mock', "host" => "postgres" }
+    @options = { 'adapter' => 'mock', 'host' => 'postgres' }
   end
 
   def test_accepts_options_as_params
@@ -12,16 +13,12 @@ class TestConnectionMaker < Minitest::Test
     end
   end
 
-  def with_ignored_yaml_config(opts = {})
-  end
+  def with_ignored_yaml_config(opts = {}); end
 
-
-  def with_yaml_config(options = {})
+  def with_yaml_config(options = {}, &block)
     yaml_config = Sequelizer::YamlConfig.new
     yaml_config.stub(:options, options) do
-      Sequelizer::YamlConfig.stub :new, yaml_config do
-        yield
-      end
+      Sequelizer::YamlConfig.stub :new, yaml_config, &block
     end
   end
 
@@ -51,7 +48,8 @@ class TestConnectionMaker < Minitest::Test
       with_env_config do
         conn = Sequelizer::ConnectionMaker.new.connection
         conn.test_connection
-        assert_equal(["SET flim=flam"], conn.sqls)
+
+        assert_equal(['SET flim=flam'], conn.sqls)
       end
     end
   end
@@ -61,7 +59,8 @@ class TestConnectionMaker < Minitest::Test
       with_env_config do
         conn = Sequelizer::ConnectionMaker.new.connection
         conn.test_connection
-        assert_equal(["SET flim=flam"] * 2, conn.sqls)
+
+        assert_equal(['SET flim=flam'] * 2, conn.sqls)
       end
     end
   end
@@ -83,12 +82,13 @@ class TestConnectionMaker < Minitest::Test
   end
 
   def test_applies_configuration_to_connection
-    opts = @options.merge(postgres_db_opt_search_path: "searchy", impala_db_opt_search_path: "searchy2")
+    opts = @options.merge(postgres_db_opt_search_path: 'searchy', impala_db_opt_search_path: 'searchy2')
     with_yaml_config(opts) do
       conn = Sequelizer::ConnectionMaker.new.connection
       conn.test_connection
-      assert_equal({ search_path: "searchy" }, conn.db_opts.to_hash)
-      assert_equal(["SET search_path=searchy"], conn.db_opts.sql_statements)
+
+      assert_equal({ search_path: 'searchy' }, conn.db_opts.to_hash)
+      assert_equal(['SET search_path=searchy'], conn.db_opts.sql_statements)
     end
   end
 
@@ -96,16 +96,18 @@ class TestConnectionMaker < Minitest::Test
     Sequelizer::YamlConfig.stub :user_config_path, Pathname.new('/completely/made/up/path/that/does/not/exist') do
       conn = Sequelizer::ConnectionMaker.new(@options).connection
       conn.test_connection
-      assert_equal({}, conn.db_opts.to_hash)
-      assert_equal([], conn.db_opts.sql_statements)
+
+      assert_empty(conn.db_opts.to_hash)
+      assert_empty(conn.db_opts.sql_statements)
     end
   end
 
   def test_applies_quotes_when_necessary
     Sequelizer::YamlConfig.stub :user_config_path, Pathname.new('/completely/made/up/path/that/does/not/exist') do
-      @options.merge!(postgres_db_opt_search_path: "searchy,path")
+      @options.merge!(postgres_db_opt_search_path: 'searchy,path')
       conn = Sequelizer::ConnectionMaker.new(@options).connection
       conn.test_connection
+
       assert_equal({ search_path: "'searchy,path'" }, conn.db_opts.to_hash)
       assert_equal(["SET search_path='searchy,path'"], conn.db_opts.sql_statements)
     end
@@ -113,7 +115,9 @@ class TestConnectionMaker < Minitest::Test
 
   def test_applies_extensions
     with_yaml_config(@options.merge(extension_error_sql: 1)) do
-      assert Sequelizer::ConnectionMaker.new.connection.send(:instance_variable_get, "@loaded_extensions".to_sym).include?(:error_sql), "Extension wasn't set"
+      assert_includes Sequelizer::ConnectionMaker.new.connection.send(:instance_variable_get, :@loaded_extensions), :error_sql,
+                      "Extension wasn't set"
     end
   end
+
 end

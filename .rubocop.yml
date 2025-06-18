@@ -1,0 +1,145 @@
+plugins:
+  - rubocop-minitest
+
+AllCops:
+  TargetRubyVersion: 3.2
+  NewCops: enable
+  Exclude:
+    - 'vendor/**/*'
+    - 'bin/**/*'
+    - 'tmp/**/*'
+
+# Style Configuration to match existing project standards
+
+# Indentation: 2 spaces (matches existing code)
+Layout/IndentationWidth:
+  Width: 2
+
+# String quotes: prefer single quotes (matches existing code)
+Style/StringLiterals:
+  EnforcedStyle: single_quotes
+
+# Allow both single and double quotes in string interpolation contexts
+Style/StringLiteralsInInterpolation:
+  EnforcedStyle: double_quotes
+
+# Method definitions: allow no parentheses for no arguments (matches existing code)
+Style/DefWithParentheses:
+  Enabled: false
+
+# Method calls: allow no parentheses for no arguments (matches existing code)
+Style/MethodCallWithoutArgsParentheses:
+  Enabled: true
+
+# Hash syntax: prefer symbols (matches existing code)
+
+# Line length: be reasonable but not too strict for a Ruby gem
+Layout/LineLength:
+  Max: 120
+  AllowedPatterns: ['\A\s*#']
+
+# Documentation: don't require class/module documentation for this gem type
+Style/Documentation:
+  Enabled: false
+
+# Frozen string literal: don't enforce for compatibility
+Style/FrozenStringLiteralComment:
+  Enabled: false
+
+# Allow both proc and lambda
+Style/Lambda:
+  Enabled: false
+
+# Allow multiple assignment
+Style/ParallelAssignment:
+  Enabled: false
+
+# Allow guard clauses
+Style/GuardClause:
+  Enabled: true
+
+# Allow both if and unless modifiers
+Style/IfUnlessModifier:
+  Enabled: true
+
+# Method length: be reasonable for small gem
+Metrics/MethodLength:
+  Max: 25
+
+# Class length: be reasonable for small gem
+Metrics/ClassLength:
+  Max: 200
+
+# Module length: be reasonable for small gem
+Metrics/ModuleLength:
+  Max: 200
+
+# Block length: allow longer blocks for tests and configuration
+Metrics/BlockLength:
+  Max: 50
+  Exclude:
+    - 'test/**/*'
+    - '*.gemspec'
+    - 'Rakefile'
+
+# Allow both foo.empty? and foo.size == 0
+Style/ZeroLengthPredicate:
+  Enabled: false
+
+# Allow memoized variables with different names (e.g., @_sequelizer_db for @db)
+Naming/MemoizedInstanceVariableName:
+  Enabled: false
+
+# Allow short parameter names (common in Ruby for simple methods)
+Naming/MethodParameterName:
+  MinNameLength: 1
+
+# Allow multi-line block chains (common in Ruby data processing)
+Style/MultilineBlockChain:
+  Enabled: false
+
+# Relax complexity metrics for existing code
+Metrics/AbcSize:
+  Max: 30
+
+Metrics/CyclomaticComplexity:
+  Max: 15
+
+Metrics/PerceivedComplexity:
+  Max: 12
+
+Metrics/BlockNesting:
+  Max: 4
+
+# Allow set_ prefixed methods (common pattern)
+Naming/AccessorMethodName:
+  Enabled: false
+
+# Allow both string and symbol keys in same hash for configuration
+Style/HashSyntax:
+  EnforcedStyle: ruby19
+  EnforcedShorthandSyntax: either
+
+# Minitest specific rules
+Minitest/AssertEqual:
+  Enabled: true
+
+Minitest/RefuteEqual:
+  Enabled: true
+
+# Layout rules that match existing code
+Layout/EmptyLinesAroundClassBody:
+  EnforcedStyle: empty_lines_except_namespace
+
+Layout/EmptyLinesAroundModuleBody:
+  EnforcedStyle: empty_lines_except_namespace
+
+# Allow trailing commas in multiline structures
+Style/TrailingCommaInArguments:
+  EnforcedStyleForMultiline: comma
+
+Style/TrailingCommaInArrayLiteral:
+  EnforcedStyleForMultiline: comma
+
+Style/TrailingCommaInHashLiteral:
+  EnforcedStyleForMultiline: comma

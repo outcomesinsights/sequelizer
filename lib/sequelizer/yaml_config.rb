@@ -4,9 +4,11 @@ require 'erb'
 
 module Sequelizer
   class YamlConfig
+
     attr_reader :config_file_path
 
     class << self
+
       def local_config
         new
       end
@@ -16,19 +18,22 @@ module Sequelizer
       end
 
       def user_config_path
-        return nil unless ENV['HOME']
-        Pathname.new(ENV['HOME']) + ".config" + "sequelizer" + "database.yml"
+        return nil unless Dir.home
+
+        Pathname.new(Dir.home) + '.config' + 'sequelizer' + 'database.yml'
       end
+
     end
 
     def initialize(config_file_path = nil)
-      @config_file_path = Pathname.new(config_file_path || Pathname.pwd + "config" + "sequelizer.yml").expand_path
+      @config_file_path = Pathname.new(config_file_path || (Pathname.pwd + 'config' + 'sequelizer.yml')).expand_path
     end
 
     # Returns a set of options pulled from config/database.yml
     # or +nil+ if config/database.yml doesn't exist
     def options
       return {} unless config_file_path.exist?
+
       config[environment] || config
     end
 
@@ -51,5 +56,6 @@ module Sequelizer
     def config
       @config ||= Psych.load(ERB.new(File.read(config_file_path)).result)
     end
+
   end
 end
