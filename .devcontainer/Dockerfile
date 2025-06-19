@@ -75,8 +75,9 @@ RUN SNIPPET="export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhisto
     && chown -R $USERNAME /commandhistory
 
 # Create workspace and config directories
-RUN mkdir -p /workspace /home/$USERNAME/.claude /home/$USERNAME/.bundle \
-    && chown -R $USERNAME:$USERNAME /workspace /home/$USERNAME/.claude /home/$USERNAME/.bundle
+RUN mkdir -p /workspace /home/$USERNAME/.claude /home/$USERNAME/.bundle /home/$USERNAME/.ssh \
+    && chown -R $USERNAME:$USERNAME /workspace /home/$USERNAME/.claude /home/$USERNAME/.bundle /home/$USERNAME/.ssh \
+    && chmod 700 /home/$USERNAME/.ssh
 
 # Set working directory
 WORKDIR /workspace
