@@ -5,6 +5,9 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
+# Suppress Powerlevel10k instant prompt warning
+typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
+
 export LANG='en_US.UTF-8'
 export LANGUAGE='en_US:en'
 export LC_ALL='en_US.UTF-8'
@@ -14,7 +17,7 @@ export TERM=xterm
 export ZSH="/home/rubydev/.oh-my-zsh"
 
 ZSH_THEME="powerlevel10k/powerlevel10k"
-plugins=(git ssh-agent history-substring-search )
+plugins=(git history-substring-search)
 
 
 ZSH_THEME="powerlevel10k/powerlevel10k"
