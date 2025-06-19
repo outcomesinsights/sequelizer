@@ -1,4 +1,5 @@
-# frozen-string-literal: true
+# frozen_string_literal: true
+
 #
 # The cold_col extension adds support for determining dataset column information
 # without executing queries against a live database. This "cold column" functionality
@@ -7,24 +8,24 @@
 #
 # The extension maintains schema information through three sources:
 # - Pre-loaded schemas from YAML files via load_schema
-# - Automatically recorded tables/views created during the session  
+# - Automatically recorded tables/views created during the session
 # - Manually added table schemas via add_table_schema
 #
 # Basic usage:
 #
 #   db = Sequel.mock.extension(:cold_col)
-#   
+#
 #   # Load schema from YAML file
 #   db.load_schema('schemas.yml')
-#   
+#
 #   # Or add schema manually
 #   db.add_table_schema(:users, [[:id, {}], [:name, {}], [:email, {}]])
-#   
+#
 #   # Now datasets can determine columns without database queries
 #   ds = db[:users].select(:name, :email)
 #   ds.columns  # => [:name, :email]
 #
-# The extension supports complex queries including JOINs, CTEs, subqueries, 
+# The extension supports complex queries including JOINs, CTEs, subqueries,
 # and aliased tables. Schema YAML files should follow this format:
 #
 #   users:
@@ -41,7 +42,9 @@ require 'active_support/core_ext/object/try'
 require 'active_support/core_ext/object/blank'
 
 module Sequel
+
   module ColdColDatabase
+
     # Sets up the cold column tracking when the extension is loaded
     def self.extended(db)
       db.extend_datasets(ColdColDataset)
@@ -53,10 +56,10 @@ module Sequel
     # Load table schema information from a YAML file
     def load_schema(path)
       schema_data = Psych.load_file(path) || {}
-      schemas = schema_data.map do |table, info|
+      schemas = schema_data.to_h do |table, info|
         columns = (info[:columns] || {}).map { |column_name, col_info| [column_name.to_sym, col_info] }
         [table.to_s, columns]
-      end.to_h
+      end
       schemas = (instance_variable_get(:@schemas) || {}).merge(schemas)
       instance_variable_set(:@schemas, schemas)
     end
@@ -110,9 +113,11 @@ module Sequel
     def columns_from_generator(generator)
       generator.columns.map { |c| [c[:name], c] }
     end
+
   end
 
   module ColdColDataset
+
     # Return the columns for the dataset without executing a query
     def columns
       columns_search
@@ -135,10 +140,14 @@ module Sequel
     WILDCARD = Sequel.lit('*').freeze
 
     def probable_columns(opts_chain)
-      if !(cols = opts[:select]).blank?
+      if (cols = opts[:select]).blank?
+        froms = opts[:from] || []
+        joins = (opts[:join] || []).map(&:table_expr)
+        (froms + joins).flat_map { |from| fetch_columns(from, opts_chain) }
+      else
         from_stars = []
 
-        if has_select_all?(cols)
+        if select_all?(cols)
           from_stars = (opts[:from] || []).flat_map { |from| fetch_columns(from, opts_chain) }
           cols = cols.reject { |c| c == WILDCARD }
         end
@@ -150,16 +159,12 @@ module Sequel
         cols = cols.reject { |c| c.is_a?(Sequel::SQL::ColumnAll) }
 
         (from_stars + cols.map { |c| probable_column_name(c) }).flatten
-      else
-        froms = opts[:from] || []
-        joins = (opts[:join] || []).map(&:table_expr)
-        (froms + joins).flat_map { |from| fetch_columns(from, opts_chain) }
       end
     end
 
     private
 
-    def has_select_all?(cols)
+    def select_all?(cols)
       cols.any? { |c| c == WILDCARD }
     end
 
@@ -196,7 +201,7 @@ module Sequel
           return sch.map { |c, _| c }
         end
       end
-      
+
       # Try with string representation for manually added schemas
       if schemas && (sch = Sequel.synchronize { schemas[name.to_s] })
         return sch.map { |c, _| c }
@@ -232,7 +237,9 @@ module Sequel
         a.is_a?(SQL::Identifier) ? a.value.to_sym : a.to_sym
       end
     end
+
   end
 
   Database.register_extension(:cold_col, Sequel::ColdColDatabase)
+
 end
