@@ -6,7 +6,7 @@ require_relative '../../../../lib/sequel/extensions/cold_col'
 describe Sequel::ColdColDatabase do
   let(:db) do
     @db = Sequel.mock.extension(:cold_col)
-    @db.instance_variable_set(:@schemas, {
+    @db.cold_col_registry.set_schemas({
                                 Sequel.lit('tab1') => [[:col1]],
                                 Sequel.lit('tab2') => [[:col2]],
                                 Sequel.lit('tab3') => [[:col3], [:col4]],
@@ -212,6 +212,40 @@ describe Sequel::ColdColDatabase do
         expect_columns(db[:initial_table], :col_x)
         expect_columns(db[:second_table], :col_y)
       end
+    end
+  end
+
+  # Additional tests to ensure refactoring preserves behavior
+  describe 'Internal schema lookup behavior' do
+    it 'should prioritize created tables over schemas' do
+      db.add_table_schema(:priority_test, [[:schema_col, {}]])
+      db.create_table(:priority_test) do
+        String :created_col
+      end
+      expect_columns(db[:priority_test], :created_col)
+    end
+
+    it 'should handle deeply nested WITH clauses' do
+      ds = db[:cte1]
+           .with(:cte1, db[:tab1])
+           .with(:cte2, db[:cte1])
+           .with(:cte3, db[:cte2])
+           .from(:cte3)
+      expect_columns(ds, :col1)
+    end
+
+    it 'should handle mixed aliased and non-aliased sources' do
+      ds = db[:tab1].from_self(alias: :t1)
+                    .join(:tab2, { col2: :col1 })
+                    .join(db[:tab3].as(:t3), { col3: :col1 })
+                    .select_all(:t1)
+                    .select_append(Sequel[:t3][:col4])
+      expect_columns(ds, :col1, :col4)
+    end
+
+    it 'should handle column lookup with empty select lists' do
+      ds = db.from(db[:tab1].where(id: 1))
+      expect_columns(ds, :col1)
     end
   end
 end

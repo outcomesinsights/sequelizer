@@ -215,4 +215,5 @@ This project follows standard Ruby community conventions enforced by RuboCop, em
 - To test CLI, just call bundle exec bin/sequelizer without installing binstubs
 - **IMPORTANT**: Commands like `docker build`, `devcontainer build`, and `bundle install` can take more than 10 minutes to complete and should be run with extended timeout (e.g., 20 minutes / 1200000ms)
 - **Wait for explicit instructions before reading files or creating plans - do not be proactive**
-
+- When pushing to github or making pull requests, remember you have a PAT in GITHUB_TOKEN you can use for authentication
+- When making a pull request, push to the "github" remote

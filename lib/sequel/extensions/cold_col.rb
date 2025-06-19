@@ -43,14 +43,78 @@ require 'active_support/core_ext/object/blank'
 
 module Sequel
 
+  # Internal schema registry for managing column information
+  class ColdColSchemaRegistry
+    def initialize(db)
+      @db = db
+      @created_tables = {}
+      @created_views = {}
+      @schemas = {}
+    end
+
+    def add_schema(name, columns)
+      Sequel.synchronize { @schemas[name.to_s] = columns }
+    end
+
+    def add_created_table(name, columns)
+      Sequel.synchronize { @created_tables[name] = columns }
+    end
+
+    def add_created_view(name, columns)
+      Sequel.synchronize { @created_views[name] = columns }
+    end
+
+    def find_columns(name)
+      table_name = name.to_s
+      literal_name = @db.literal(name)
+
+      # Try all possible representations
+      [@created_views, @created_tables, @schemas].each do |registry|
+        next unless registry
+
+        # Try literal representation first (most common for created tables/views)
+        if (columns = Sequel.synchronize { registry[literal_name] })
+          return columns.map { |c, _| c }
+        end
+
+        # Try string representation (for manually added schemas)
+        if (columns = Sequel.synchronize { registry[table_name] })
+          return columns.map { |c, _| c }
+        end
+
+        # Try finding by Sequel::LiteralString key (for test setup)
+        registry.keys.each do |key|
+          if key.respond_to?(:to_s) && key.to_s == literal_name
+            if (columns = Sequel.synchronize { registry[key] })
+              return columns.map { |c, _| c }
+            end
+          end
+        end
+      end
+
+      nil
+    end
+
+    def merge_schemas(new_schemas)
+      Sequel.synchronize { @schemas.merge!(new_schemas) }
+    end
+
+    # For test setup - directly set schemas registry
+    def set_schemas(schemas_hash)
+      Sequel.synchronize { @schemas = schemas_hash }
+    end
+  end
+
   module ColdColDatabase
 
     # Sets up the cold column tracking when the extension is loaded
     def self.extended(db)
       db.extend_datasets(ColdColDataset)
-      db.instance_variable_set(:@created_tables, {})
-      db.instance_variable_set(:@created_views, {})
-      db.instance_variable_set(:@schemas, {})
+      db.instance_variable_set(:@cold_col_registry, ColdColSchemaRegistry.new(db))
+    end
+
+    def cold_col_registry
+      @cold_col_registry
     end
 
     # Load table schema information from a YAML file
@@ -60,15 +124,12 @@ module Sequel
         columns = (info[:columns] || {}).map { |column_name, col_info| [column_name.to_sym, col_info] }
         [table.to_s, columns]
       end
-      schemas = (instance_variable_get(:@schemas) || {}).merge(schemas)
-      instance_variable_set(:@schemas, schemas)
+      cold_col_registry.merge_schemas(schemas)
     end
 
     # Manually add schema information for a table
     def add_table_schema(name, info)
-      schemas = instance_variable_get(:@schemas) || {}
-      schemas[name.to_s] = info
-      instance_variable_set(:@schemas, schemas)
+      cold_col_registry.add_schema(name, info)
     end
 
     def create_table_as(name, sql, options = {})
@@ -96,14 +157,11 @@ module Sequel
     end
 
     def record_table(name, columns)
-      name = literal(name)
-      Sequel.synchronize { @created_tables[name] = columns }
+      cold_col_registry.add_created_table(literal(name), columns)
     end
 
     def record_view(name, columns)
-      name = literal(name)
-      # puts "recording view #{name}"
-      Sequel.synchronize { @created_views[name] = columns }
+      cold_col_registry.add_created_view(literal(name), columns)
     end
 
     def columns_from_sql(sql)
@@ -140,26 +198,41 @@ module Sequel
     WILDCARD = Sequel.lit('*').freeze
 
     def probable_columns(opts_chain)
-      if (cols = opts[:select]).blank?
-        froms = opts[:from] || []
-        joins = (opts[:join] || []).map(&:table_expr)
-        (froms + joins).flat_map { |from| fetch_columns(from, opts_chain) }
-      else
-        from_stars = []
+      cols = opts[:select]
+      
+      return columns_from_sources(opts_chain) if cols.blank?
+      
+      columns_from_select_list(cols, opts_chain)
+    end
 
-        if select_all?(cols)
-          from_stars = (opts[:from] || []).flat_map { |from| fetch_columns(from, opts_chain) }
-          cols = cols.reject { |c| c == WILDCARD }
-        end
+    def columns_from_sources(opts_chain)
+      froms = opts_chain[:from] || []
+      joins = (opts_chain[:join] || []).map(&:table_expr)
+      (froms + joins).flat_map { |from| fetch_columns(from, opts_chain) }
+    end
 
-        from_stars += cols
-                      .select { |c| c.is_a?(Sequel::SQL::ColumnAll) }
-                      .flat_map { |c| from_named_sources(c.table, opts_chain) }
+    def columns_from_select_list(cols, opts_chain)
+      star_columns = extract_star_columns(cols, opts_chain)
+      table_star_columns = extract_table_star_columns(cols, opts_chain)
+      explicit_columns = extract_explicit_columns(cols)
 
-        cols = cols.reject { |c| c.is_a?(Sequel::SQL::ColumnAll) }
+      (star_columns + table_star_columns + explicit_columns).flatten
+    end
 
-        (from_stars + cols.map { |c| probable_column_name(c) }).flatten
-      end
+    def extract_star_columns(cols, opts_chain)
+      return [] unless select_all?(cols)
+      
+      (opts_chain[:from] || []).flat_map { |from| fetch_columns(from, opts_chain) }
+    end
+
+    def extract_table_star_columns(cols, opts_chain)
+      cols.select { |c| c.is_a?(Sequel::SQL::ColumnAll) }
+          .flat_map { |c| from_named_sources(c.table, opts_chain) }
+    end
+
+    def extract_explicit_columns(cols)
+      cols.reject { |c| c == WILDCARD || c.is_a?(Sequel::SQL::ColumnAll) }
+          .map { |c| probable_column_name(c) }
     end
 
     private
@@ -169,45 +242,61 @@ module Sequel
     end
 
     def from_named_sources(name, opts_chain)
-      current_opts = opts_chain
-
-      from = (opts[:from] || [])
-             .select { |f| f.is_a?(Sequel::SQL::AliasedExpression) }
-             .detect { |f| literal(f.alias) == literal(name) }
-
-      return from.expression.columns_search(opts_chain) if from
-
-      with = nil
-
-      while current_opts.present? && with.blank?
-        with = (current_opts[:with] || []).detect { |wh| literal(wh[:name]) == literal(name) }
-        current_opts = current_opts[:parent_opts]
+      # Try aliased FROM expressions first
+      if (columns = find_from_alias(name, opts_chain))
+        return columns
       end
 
-      return with[:dataset].columns_search(opts_chain) if with
-
-      if (join = (opts[:join] || []).detect { |jc| literal(jc.table_expr.try(:alias)) == literal(name) })
-        join_expr = join.table_expr.expression
-        return join_expr.columns_search(opts_chain) if join_expr.is_a?(Sequel::Dataset)
-
-        name = join_expr
+      # Try CTE (WITH clause) expressions
+      if (columns = find_cte_columns(name, opts_chain))
+        return columns
       end
 
-      created_views = db.instance_variable_get(:@created_views) || {}
-      created_tables = db.instance_variable_get(:@created_tables) || {}
-      schemas = db.instance_variable_get(:@schemas) || {}
-      [created_views, created_tables, schemas].each do |known_columns|
-        if known_columns && (table = literal(name)) && (sch = Sequel.synchronize { known_columns[table] })
-          return sch.map { |c, _| c }
-        end
+      # Try aliased JOIN expressions
+      if (columns = find_join_alias(name, opts_chain))
+        return columns
       end
 
-      # Try with string representation for manually added schemas
-      if schemas && (sch = Sequel.synchronize { schemas[name.to_s] })
-        return sch.map { |c, _| c }
+      # Try registry lookup (created tables/views and loaded schemas)
+      if (columns = db.cold_col_registry.find_columns(name))
+        return columns
       end
 
       raise("Failed to find columns for #{literal(name)}")
+    end
+
+    private
+
+    def find_from_alias(name, opts_chain)
+      from = (opts_chain[:from] || [])
+             .select { |f| f.is_a?(Sequel::SQL::AliasedExpression) }
+             .detect { |f| literal(f.alias) == literal(name) }
+
+      from&.expression&.columns_search(opts_chain)
+    end
+
+    def find_cte_columns(name, opts_chain)
+      current_opts = opts_chain
+
+      while current_opts.present?
+        with = (current_opts[:with] || []).detect { |wh| literal(wh[:name]) == literal(name) }
+        return with[:dataset].columns_search(opts_chain) if with
+
+        current_opts = current_opts[:parent_opts]
+      end
+
+      nil
+    end
+
+    def find_join_alias(name, opts_chain)
+      join = (opts_chain[:join] || []).detect { |jc| literal(jc.table_expr.try(:alias)) == literal(name) }
+      return nil unless join
+
+      join_expr = join.table_expr.expression
+      return join_expr.columns_search(opts_chain) if join_expr.is_a?(Sequel::Dataset)
+
+      # If it's a table reference, look it up in the registry
+      db.cold_col_registry.find_columns(join_expr)
     end
 
     def fetch_columns(from, opts_chain)
