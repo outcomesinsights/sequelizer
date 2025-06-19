@@ -45,6 +45,7 @@ module Sequel
 
   # Internal schema registry for managing column information
   class ColdColSchemaRegistry
+
     def initialize(db)
       @db = db
       @created_tables = {}
@@ -83,11 +84,9 @@ module Sequel
         end
 
         # Try finding by Sequel::LiteralString key (for test setup)
-        registry.keys.each do |key|
-          if key.respond_to?(:to_s) && key.to_s == literal_name
-            if (columns = Sequel.synchronize { registry[key] })
-              return columns.map { |c, _| c }
-            end
+        registry.each_key do |key|
+          if key.respond_to?(:to_s) && key.to_s == literal_name && (columns = Sequel.synchronize { registry[key] })
+            return columns.map { |c, _| c }
           end
         end
       end
@@ -103,6 +102,7 @@ module Sequel
     def set_schemas(schemas_hash)
       Sequel.synchronize { @schemas = schemas_hash }
     end
+
   end
 
   module ColdColDatabase
@@ -199,9 +199,9 @@ module Sequel
 
     def probable_columns(opts_chain)
       cols = opts[:select]
-      
+
       return columns_from_sources(opts_chain) if cols.blank?
-      
+
       columns_from_select_list(cols, opts_chain)
     end
 
@@ -221,7 +221,7 @@ module Sequel
 
     def extract_star_columns(cols, opts_chain)
       return [] unless select_all?(cols)
-      
+
       (opts_chain[:from] || []).flat_map { |from| fetch_columns(from, opts_chain) }
     end
 
@@ -264,8 +264,6 @@ module Sequel
 
       raise("Failed to find columns for #{literal(name)}")
     end
-
-    private
 
     def find_from_alias(name, opts_chain)
       from = (opts_chain[:from] || [])
