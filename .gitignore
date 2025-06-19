@@ -3,7 +3,6 @@
 .bundle
 .config
 .yardoc
-Gemfile.lock
 InstalledFiles
 _yardoc
 coverage
@@ -37,3 +36,4 @@ tags
 # DevContainer build artifacts
 .devcontainer/.tmp
 .worktrees/
+.claude/settings.local.json
