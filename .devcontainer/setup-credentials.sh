@@ -93,10 +93,3 @@ echo "2. Test Claude Code with: claude --help"
 echo "3. Start coding with AI assistance: claude"
 echo ""
 
-# Create necessary directories
-mkdir -p /home/rubydev/.claude
-mkdir -p /home/rubydev/.config/claude
-
-# Set proper ownership
-chown -R rubydev:rubydev /home/rubydev/.claude
-chown -R rubydev:rubydev /home/rubydev/.config/claude
