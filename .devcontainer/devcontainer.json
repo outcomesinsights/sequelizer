@@ -18,7 +18,7 @@
     "type=bind,source=${localEnv:HOME}/.claude.json,target=/tmp/host-claude.json,readonly",
     "type=bind,source=${localEnv:HOME}/.gitconfig,target=/home/rubydev/.gitconfig,readonly",
     "type=bind,source=${localEnv:HOME}/.ssh,target=/home/rubydev/.ssh,readonly",
-    "type=bind,source=${localEnv:HOME}/.config/gh,target=/home/rubydev/.config/gh,readonly",
+    "type=bind,source=${localEnv:HOME}/.config/gh,target=/tmp/host-gh,readonly",
     "source=ruby-command-history,target=/commandhistory,type=volume"
   ],
   "postCreateCommand": "/usr/local/bin/setup-credentials.sh && /usr/local/bin/copy-claude-credentials.sh",

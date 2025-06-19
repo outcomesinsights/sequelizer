@@ -85,6 +85,8 @@ WORKDIR /workspace
 # Switch to non-root user before gem installation
 USER $USERNAME
 
+RUN gem install overcommit:0.67.1
+
 # Set up ZSH with powerline10k theme (from Claude Code setup)
 RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/v1.1.5/zsh-in-docker.sh)" -- \
   -t https://github.com/romkatv/powerlevel10k \
