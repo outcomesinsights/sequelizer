@@ -180,30 +180,40 @@ This project follows standard Ruby community conventions enforced by RuboCop, em
 
 ## Development Environment
 
-**CRITICAL: NO DEVELOPMENT IS TO BE DONE IN THE MAIN PROJECT DIRECTORY. ALL DEVELOPMENT MUST BE DONE IN INTERNAL WORKTREES.**
+**CRITICAL: When making file modifications, ALL DEVELOPMENT MUST BE DONE IN INTERNAL WORKTREES.**
 
 ### Claude Code Limitation with Sibling Directories
 
 Due to Claude Code's security restrictions that prevent navigation to sibling directories, we cannot use the standard `git worktree add ../directory` approach. Instead, all worktrees must be created within the project directory under `.worktrees/`.
 
-### Setting up Development Environment
+### Development Workflow
 
-1. **Create an internal git worktree** for the feature/task:
-   ```bash
-   git worktree add .worktrees/feature-name feature-branch-name
-   cd .worktrees/feature-name
-   ```
+1. **For read-only operations** (exploring code, running tests, checking status):
+   - These can be performed directly in the main project directory
+   - Use tools like `bundle exec rake test`, `bundle exec rubocop`, etc.
 
-2. **Development workflow**:
-   - All development commands should be run inside the worktree
+2. **When file modifications are needed**:
+   - Create an internal git worktree for the feature/task:
+     ```bash
+     git worktree add .worktrees/feature-name feature-branch-name
+     cd .worktrees/feature-name
+     ```
+   - All file editing and development commands should be run inside the worktree
    - Overcommit hooks are automatically installed and configured
-   - **NEVER work directly in the main project directory**
+
+3. **Important guidelines**:
+   - Only switch to worktree when modifications are actually needed
+   - **NEVER modify files directly in the main project directory**
+   - Always work in appropriate worktree when making changes
 
 ## Development Memories
 
 - Ensure that bundler is used for all ruby/rake related cli invocations
-- **ALWAYS do all work in an internal git worktree under .worktrees/**
-- **NEVER work directly in the main project directory**
+- **Switch to internal git worktree under .worktrees/ only when modifications are needed**
+- **NEVER modify files directly in the main project directory**
+- Read-only operations (exploration, testing) can be done in main directory
 - Refer to Ruby Sequel for code style, test frameworks, and general guidance
 - To test CLI, just call bundle exec bin/sequelizer without installing binstubs
 - Internal worktrees are used due to Claude Code's security restriction preventing navigation to sibling directories
+- **IMPORTANT**: Commands like `docker build`, `devcontainer build`, and `bundle install` can take more than 10 minutes to complete and should be run with extended timeout (e.g., 20 minutes / 1200000ms)
+- **Wait for explicit instructions before reading files or creating plans - do not be proactive**
