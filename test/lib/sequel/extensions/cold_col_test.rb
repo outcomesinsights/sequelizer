@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative '../../../helper'
+require_relative '../../../test_helper'
 require_relative '../../../../lib/sequel/extensions/cold_col'
 
 describe Sequel::ColdColDatabase do
@@ -17,6 +17,12 @@ describe Sequel::ColdColDatabase do
         true
       end
     end
+    
+    # Add with method to mock database to support CTEs
+    def @db.with(*args)
+      dataset.with(*args)
+    end
+    
     @db
   end
 
@@ -134,5 +140,78 @@ describe Sequel::ColdColDatabase do
   it 'should ignore columns when asked, thus avoiding an issue with string-only SQL' do
     assert_raises { db.create_view(:ctas_view, 'SELECT 1 AS A') }
     db.create_view(:ctas_view, 'SELECT 1 AS A', dont_record: true)
+  end
+
+  it 'should handle load_schema with empty file' do
+    require 'tempfile'
+    require 'yaml'
+    
+    Tempfile.create(['schema', '.yml']) do |f|
+      f.write({}.to_yaml)
+      f.flush
+      
+      db.load_schema(f.path)
+      # Should not raise error and schemas should remain unchanged
+      expect_columns(db[:tab1], :col1)
+    end
+  end
+
+  it 'should handle add_table_schema with symbol and string table names' do
+    db.add_table_schema(:new_table, [[:col_a, {}], [:col_b, {}]])
+    db.add_table_schema('string_table', [[:col_c, {}]])
+    
+    expect_columns(db[:new_table], :col_a, :col_b)
+    expect_columns(db[:string_table], :col_c)
+  end
+
+  it 'should handle complex nested CTEs' do
+    ds = db.with(:cte1, db[:tab1])
+           .with(:cte2, db[:cte1].select(:col1))
+           .from(:cte2)
+    expect_columns(ds, :col1)
+  end
+
+  it 'should handle qualified table names in schema' do
+    expect_columns(db[Sequel[:q][:tab4]], :col5)
+  end
+
+  it 'should handle aliased expressions in select' do
+    ds = db[:tab1].select(Sequel[:col1].as(:renamed_col))
+    expect_columns(ds, :renamed_col)
+  end
+
+  it 'should handle function calls with aliases' do
+    ds = db[:tab1].select(Sequel.function(:count, :col1).as(:count_col1))
+    expect_columns(ds, :count_col1)
+  end
+
+  it 'should handle multiple table joins with mixed syntax' do
+    ds = db[:tab1]
+         .join(:tab2, { col2: :col1 })
+         .join(db[:tab3].as(:t3), { col3: :col1 })
+    expect_columns(ds, :col1, :col2, :col3, :col4)
+  end
+
+  it 'should handle recursive schema merging with load_schema' do
+    require 'tempfile'
+    require 'yaml'
+    
+    # First schema file
+    Tempfile.create(['schema1', '.yml']) do |f1|
+      f1.write({ 'initial_table' => { columns: { 'col_x' => {} } } }.to_yaml)
+      f1.flush
+      db.load_schema(f1.path)
+      
+      # Second schema file  
+      Tempfile.create(['schema2', '.yml']) do |f2|
+        f2.write({ 'second_table' => { columns: { 'col_y' => {} } } }.to_yaml)
+        f2.flush
+        db.load_schema(f2.path)
+        
+        # Both schemas should be available
+        expect_columns(db[:initial_table], :col_x)
+        expect_columns(db[:second_table], :col_y)
+      end
+    end
   end
 end

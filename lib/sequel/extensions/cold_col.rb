@@ -38,6 +38,7 @@
 #   DB.extension :cold_col
 
 require 'active_support/core_ext/object/try'
+require 'active_support/core_ext/object/blank'
 
 module Sequel
   module ColdColDatabase
@@ -46,13 +47,15 @@ module Sequel
       db.extend_datasets(ColdColDataset)
       db.instance_variable_set(:@created_tables, {})
       db.instance_variable_set(:@created_views, {})
+      db.instance_variable_set(:@schemas, {})
     end
 
     # Load table schema information from a YAML file
     def load_schema(path)
-      schemas = Psych.load_file(path).map do |table, info|
-        columns = info[:columns].map { |column_name, col_info| [column_name, col_info] }
-        [literal(table), columns]
+      schema_data = Psych.load_file(path) || {}
+      schemas = schema_data.map do |table, info|
+        columns = (info[:columns] || {}).map { |column_name, col_info| [column_name.to_sym, col_info] }
+        [table.to_s, columns]
       end.to_h
       schemas = (instance_variable_get(:@schemas) || {}).merge(schemas)
       instance_variable_set(:@schemas, schemas)
@@ -60,7 +63,9 @@ module Sequel
 
     # Manually add schema information for a table
     def add_table_schema(name, info)
-      instance_variable_get(:@schemas)[literal(name)] = info
+      schemas = instance_variable_get(:@schemas) || {}
+      schemas[name.to_s] = info
+      instance_variable_set(:@schemas, schemas)
     end
 
     def create_table_as(name, sql, options = {})
@@ -185,16 +190,18 @@ module Sequel
 
       created_views = db.instance_variable_get(:@created_views) || {}
       created_tables = db.instance_variable_get(:@created_tables) || {}
-      schemas = db.instance_variable_get(:@schemas)
+      schemas = db.instance_variable_get(:@schemas) || {}
       [created_views, created_tables, schemas].each do |known_columns|
         if known_columns && (table = literal(name)) && (sch = Sequel.synchronize { known_columns[table] })
           return sch.map { |c, _| c }
         end
       end
+      
+      # Try with string representation for manually added schemas
+      if schemas && (sch = Sequel.synchronize { schemas[name.to_s] })
+        return sch.map { |c, _| c }
+      end
 
-      pp name
-      pp opts_chain
-      pp sql
       raise("Failed to find columns for #{literal(name)}")
     end
 
