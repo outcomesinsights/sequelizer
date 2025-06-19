@@ -85,16 +85,6 @@
     }
   },
   "remoteUser": "rubydev",
-  "features": {
-    "ghcr.io/devcontainers/features/git:1": {
-      "ppa": true,
-      "version": "latest"
-    },
-    "ghcr.io/devcontainers/features/github-cli:1": {
-      "installDirectlyFromGitHubRelease": true,
-      "version": "latest"
-    }
-  },
   "containerEnv": {
     "BUNDLE_PATH": "/home/rubydev/.bundle",
     "BUNDLE_BIN": "/home/rubydev/.bundle/bin",

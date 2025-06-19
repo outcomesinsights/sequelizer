@@ -16,14 +16,15 @@ ARG USERNAME=rubydev
 ARG USER_UID=1001
 ARG USER_GID=$USER_UID
 
-# Install system dependencies
+# Install system dependencies first, then set up GitHub CLI repository
+# (need wget/curl for GitHub CLI setup)
 RUN apt-get update && apt-get install -y \
     # Essential build tools for Ruby gems
     build-essential \
     libpq-dev \
     libvips \
     pkg-config \
-    # Network and system tools
+    # Network and system tools (needed for GitHub CLI setup)
     curl \
     wget \
     git \
@@ -43,6 +44,14 @@ RUN apt-get update && apt-get install -y \
     nodejs \
     npm \
     && rm -rf /var/lib/apt/lists/*
+
+# Set up GitHub CLI repository (now that wget is installed)
+RUN mkdir -p -m 755 /etc/apt/keyrings && \
+    wget -qO- https://cli.github.com/packages/githubcli-archive-keyring.gpg > /etc/apt/keyrings/githubcli-archive-keyring.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" > /etc/apt/sources.list.d/github-cli.list
+
+# Install GitHub CLI from the repository we just added
+RUN apt-get update && apt-get install -y gh && rm -rf /var/lib/apt/lists/*
 
 # Create the non-root user
 RUN groupadd --gid $USER_GID $USERNAME \
