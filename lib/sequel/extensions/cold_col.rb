@@ -1,14 +1,54 @@
-require 'active_support/core_ext/object/try'
 # frozen-string-literal: true
+#
+# The cold_col extension adds support for determining dataset column information
+# without executing queries against a live database. This "cold column" functionality
+# is useful for testing, development, and static analysis scenarios where
+# database connections may not be available or desirable.
+#
+# The extension maintains schema information through three sources:
+# - Pre-loaded schemas from YAML files via load_schema
+# - Automatically recorded tables/views created during the session  
+# - Manually added table schemas via add_table_schema
+#
+# Basic usage:
+#
+#   db = Sequel.mock.extension(:cold_col)
+#   
+#   # Load schema from YAML file
+#   db.load_schema('schemas.yml')
+#   
+#   # Or add schema manually
+#   db.add_table_schema(:users, [[:id, {}], [:name, {}], [:email, {}]])
+#   
+#   # Now datasets can determine columns without database queries
+#   ds = db[:users].select(:name, :email)
+#   ds.columns  # => [:name, :email]
+#
+# The extension supports complex queries including JOINs, CTEs, subqueries, 
+# and aliased tables. Schema YAML files should follow this format:
+#
+#   users:
+#     columns:
+#       id: { type: integer, primary_key: true }
+#       name: { type: string }
+#       email: { type: string }
+#
+# You can load the extension into the database using:
+#
+#   DB.extension :cold_col
+
+require 'active_support/core_ext/object/try'
 
 module Sequel
   module ColdColDatabase
+    # Sets up the cold column tracking when the extension is loaded
     def self.extended(db)
       db.extend_datasets(ColdColDataset)
       db.instance_variable_set(:@created_tables, {})
       db.instance_variable_set(:@created_views, {})
     end
 
+    # Load table schema information from a YAML file
     def load_schema(path)
       schemas = Psych.load_file(path).map do |table, info|
         columns = info[:columns].map { |column_name, col_info| [column_name, col_info] }
@@ -18,6 +58,7 @@ module Sequel
       instance_variable_set(:@schemas, schemas)
     end
 
+    # Manually add schema information for a table
     def add_table_schema(name, info)
       instance_variable_get(:@schemas)[literal(name)] = info
     end
@@ -67,6 +108,7 @@ module Sequel
   end
 
   module ColdColDataset
+    # Return the columns for the dataset without executing a query
     def columns
       columns_search
     end
