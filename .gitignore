@@ -36,3 +36,4 @@ tags
 
 # DevContainer build artifacts
 .devcontainer/.tmp
+.worktrees/

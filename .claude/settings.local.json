@@ -13,8 +13,44 @@
       "Bash(gh repo edit:*)",
       "Bash(gh repo view:*)",
       "Bash(git branch:*)",
-      "Bash(git remote set-head:*)"
+      "Bash(git remote set-head:*)",
+      "Bash(mkdir:*)",
+      "Bash(chmod:*)",
+      "Bash(git worktree:*)",
+      "Bash(docker build:*)",
+      "Bash(find:*)",
+      "Bash(bundle exec sequelizer:*)",
+      "Bash(docker run:*)",
+      "Bash(ls:*)",
+      "Bash(git checkout:*)",
+      "Bash(echo $DEVCONTAINER)",
+      "Bash(ruby --version)",
+      "Bash(git config:*)",
+      "Bash(echo:*)",
+      "Bash(docker compose:*)",
+      "Bash(mv:*)",
+      "Bash(rmdir:*)",
+      "Bash(./.claude/claude:*)",
+      "Bash(find:*)",
+      "WebFetch(domain:docs.anthropic.com)",
+      "Bash(env)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(./test_claude_auth.sh:*)",
+      "Bash(npm install:*)",
+      "Bash(devcontainer build:*)",
+      "Bash(devcontainer exec:*)",
+      "Bash(devcontainer up:*)",
+      "Bash(rm:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(gem list:*)",
+      "Bash(bundle check:*)",
+      "Bash(timeout 600 bundle install)",
+      "Bash(bundle exec overcommit:*)"
     ],
     "deny": []
-  }
+  },
+  "allowedDirectories": [
+    "../"
+  ]
 }
