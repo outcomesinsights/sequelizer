@@ -1,0 +1,105 @@
+{
+  "name": "Ruby + Claude Code Development Environment",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "..",
+    "args": {
+      "TZ": "${localEnv:TZ:America/Los_Angeles}",
+      "HOST_HOME": "${localEnv:HOME}"
+    }
+  },
+  "runArgs": [
+    "--cap-add=NET_ADMIN",
+    "--cap-add=NET_RAW"
+  ],
+  "mounts": [
+    "type=bind,source=${localEnv:HOME}/.claude,target=/tmp/host-claude,readonly",
+    "type=bind,source=${localEnv:HOME}/.config/claude,target=/tmp/host-claude-config,readonly",
+    "type=bind,source=${localEnv:HOME}/.claude.json,target=/tmp/host-claude.json,readonly",
+    "source=ruby-command-history,target=/commandhistory,type=volume"
+  ],
+  "postCreateCommand": "/usr/local/bin/setup-credentials.sh && /usr/local/bin/copy-claude-credentials.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "rebornix.Ruby",
+        "castwide.solargraph",
+        "koichisasada.vscode-rdbg",
+        "eamodio.gitlens",
+        "esbenp.prettier-vscode",
+        "ms-vscode.vscode-json",
+        "yzhang.markdown-all-in-one",
+        "Shopify.ruby-lsp",
+        "vscodevim.vim"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "editor.tabSize": 2,
+        "editor.insertSpaces": true,
+        "editor.renderWhitespace": "all",
+        "editor.wordWrap": "on",
+        "editor.smartSelect.selectSubwords": false,
+        "files.trimTrailingWhitespace": true,
+        "files.insertFinalNewline": true,
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "terminal.integrated.scrollback": 100000,
+        "terminal.integrated.profiles.linux": {
+          "bash": {
+            "path": "bash",
+            "icon": "terminal-bash"
+          },
+          "zsh": {
+            "path": "zsh"
+          }
+        },
+        "vim.easymotion": true,
+        "vim.showMarksInGutter": true,
+        "ruby.intellisense": "rubyLocate",
+        "ruby.format": "rubocop",
+        "solargraph.diagnostics": true,
+        "solargraph.completion": true,
+        "solargraph.hover": true,
+        "solargraph.symbols": true,
+        "[ruby]": {
+          "rubyLsp.formatter": "rubocop",
+          "editor.defaultFormatter": "Shopify.ruby-lsp",
+          "editor.defaultColorDecorators": "never",
+          "editor.formatOnSave": true
+        },
+        "[markdown]": {
+          "editor.defaultFormatter": "yzhang.markdown-all-in-one",
+          "editor.suggest.showWords": false,
+          "editor.inlineSuggest.enabled": false
+        },
+        "[tsv]": {
+          "files.trimTrailingWhitespace": false,
+          "editor.formatOnSave": false
+        },
+        "[csv]": {
+          "files.trimTrailingWhitespace": false,
+          "editor.formatOnSave": false
+        },
+        "git.autofetch": true,
+        "git.openRepositoryInParentFolders": "never"
+      }
+    }
+  },
+  "remoteUser": "rubydev",
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {
+      "ppa": true,
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {
+      "installDirectlyFromGitHubRelease": true,
+      "version": "latest"
+    }
+  },
+  "containerEnv": {
+    "BUNDLE_PATH": "/home/rubydev/.bundle",
+    "BUNDLE_BIN": "/home/rubydev/.bundle/bin",
+    "SHELL": "/bin/zsh"
+  },
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+  "workspaceFolder": "/workspace"
+}
