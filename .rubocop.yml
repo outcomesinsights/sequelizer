@@ -39,6 +39,7 @@ Layout/LineLength:
   AllowedPatterns: ['\A\s*#']
   Exclude:
     - '*.gemspec'
+    - 'test/**/*'
 
 # Documentation: don't require class/module documentation for this gem type
 Style/Documentation:
