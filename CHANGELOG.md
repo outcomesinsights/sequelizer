@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.1.6
+
+### Removed
+- JDBC adapter support (jdbc_hive2, jdbc_impala, jdbc_postgres) - not needed for foreseeable future
+- Native Impala adapter support - not needed for foreseeable future
+- Kerberos authentication functionality for enterprise databases
+- CGI dependency used for URL escaping in JDBC connections
+- 16 test methods related to JDBC and Impala adapters
+
+### Added
+- pg gem as development dependency to support PostgreSQL testing
+
+### Changed
+- Simplified ConnectionMaker class by removing adapter-specific configuration methods
+- Improved test coverage from 84.95% to 93.54% by removing unused code paths
+- Updated documentation to reflect focus on standard Sequel adapters
+
 ## 0.1.5
 
 ### Changed
