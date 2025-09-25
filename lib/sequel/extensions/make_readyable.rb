@@ -1,3 +1,5 @@
+require 'pathname'
+
 module Sequel
 
   # = MakeReadyable
@@ -89,7 +91,11 @@ module Sequel
       (opts[:search_path] || []).flatten.each do |schema|
         schema = schema.to_sym unless schema.is_a?(Pathname)
         source = get_source(db, schema)
-        tables = source.tables(schema: schema) - created_views
+        tables = if schema.is_a?(Pathname)
+                   source.tables - created_views
+                 else
+                   source.tables(schema: schema) - created_views
+                 end
         tables &= only_tables unless only_tables.empty?
         tables.each do |table|
           create_view(source, table, schema)
@@ -107,6 +113,8 @@ module Sequel
       if schema.to_s =~ %r{/}
         source.create_view(table, temp: true)
       else
+        # For schema-based tables, just create temporary views
+        # This extension is primarily for Spark SQL-based databases
         source.create_view(table, db[Sequel.qualify(schema, table)], temp: true)
       end
     end
@@ -159,11 +167,47 @@ module Sequel
       # @param table [Symbol] the table/view name
       # @param opts [Hash] additional options to merge
       def create_view(table, opts = {})
-        db.create_view(table, {
-          temp: true,
-          using: format,
-          options: { path: schema.expand_path },
-        }.merge(opts))
+        case db.database_type
+        when :spark
+          # Spark SQL uses USING clause for external tables
+          db.create_view(table, {
+            temp: true,
+            using: format,
+            options: { path: schema.expand_path },
+          }.merge(opts))
+        when :duckdb
+          # DuckDB uses direct file reading with read_* functions
+          create_duckdb_view(table, opts)
+        else
+          raise Sequel::Error, "External file sources are not supported on #{db.database_type}"
+        end
+      end
+
+      private
+
+      # Creates a view for DuckDB to read external files
+      #
+      # @param table [Symbol] the table/view name
+      # @param _opts [Hash] additional options to merge (currently unused for DuckDB)
+      def create_duckdb_view(table, _opts)
+        file_path = if schema.directory?
+                      schema.expand_path.join('**').join("*.#{format}").to_s
+                    else
+                      schema.expand_path.to_s
+                    end
+        read_function = case format
+                        when 'parquet'
+                          :read_parquet
+                        when 'csv'
+                          :read_csv_auto
+                        when 'json'
+                          :read_json_auto
+                        else
+                          raise Sequel::Error, "Unsupported file format '#{format}' for DuckDB"
+                        end
+
+        # DuckDB doesn't support TEMPORARY views, use regular CREATE VIEW
+        db.create_view(table, db.from(Sequel.function(read_function, file_path)))
       end
 
       # Returns the file format based on the file extension.

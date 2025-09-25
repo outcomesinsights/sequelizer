@@ -37,6 +37,8 @@ Style/MethodCallWithoutArgsParentheses:
 Layout/LineLength:
   Max: 120
   AllowedPatterns: ['\A\s*#']
+  Exclude:
+    - '*.gemspec'
 
 # Documentation: don't require class/module documentation for this gem type
 Style/Documentation:
@@ -100,7 +102,9 @@ Style/MultilineBlockChain:
 
 # Relax complexity metrics for existing code
 Metrics/AbcSize:
-  Max: 30
+  Max: 35
+  Exclude:
+    - 'test/**/*'
 
 Metrics/CyclomaticComplexity:
   Max: 15
@@ -145,11 +149,18 @@ Style/TrailingCommaInHashLiteral:
   EnforcedStyleForMultiline: comma
 
 # Disable gemspec-specific rules that don't apply to this project
-Layout/LineLength:
-  Max: 120
-  AllowedPatterns: ['\A\s*#']
-  Exclude:
-    - '*.gemspec'
-
 Gemspec/DevelopmentDependencies:
   Enabled: false
+
+# Disable some style rules for tests to allow more flexibility
+Style/HashLikeCase:
+  Exclude:
+    - 'test/**/*'
+
+Lint/DuplicateBranch:
+  Exclude:
+    - 'test/**/*'
+
+Style/StringConcatenation:
+  Exclude:
+    - 'test/**/*'

@@ -1,5 +1,6 @@
 require_relative '../../../test_helper'
 require 'fileutils'
+require 'tmpdir'
 require 'pathname'
 require 'sequel'
 require 'sequel/extensions/make_readyable'
@@ -173,6 +174,86 @@ class TestUsable < Minitest::Test
     assert_match(%r{CREATE TEMPORARY VIEW `a` USING parquet OPTIONS \('path'='/tmp/[^/]+/one/a.parquet'\)}, sqls[0])
     refute_match(%r{CREATE TEMPORARY VIEW `a` USING delta OPTIONS \('path'='/tmp/[^/]+/two/a.delta'\)}, sqls[1])
     refute_match(%r{CREATE TEMPORARY VIEW `a` USING csv OPTIONS \('path'='/tmp/[^/]+/three/a.csv'\)}, sqls[2])
+  end
+
+  def test_duckdb_external_file_support
+    # Test DuckDB - uses read_* functions for external files
+    duckdb_db = Sequel.mock
+    duckdb_db.extension :make_readyable
+    def duckdb_db.database_type
+      :duckdb
+    end
+
+    dir = Pathname.new(Dir.mktmpdir)
+    parquet_file = dir / 'test.parquet'
+    csv_file = dir / 'test.csv'
+    json_file = dir / 'test.json'
+    FileUtils.touch(parquet_file.to_s)
+    FileUtils.touch(csv_file.to_s)
+    FileUtils.touch(json_file.to_s)
+
+    # Test parquet file
+    duckdb_db.make_ready(search_path: [parquet_file])
+
+    assert_match(/CREATE VIEW \w*test\w* AS SELECT \* FROM read_parquet\('.*test\.parquet'\)/, duckdb_db.sqls.last)
+
+    # Test CSV file
+    duckdb_db.sqls.clear
+    duckdb_db.make_ready(search_path: [csv_file])
+
+    assert_match(/CREATE VIEW \w*test\w* AS SELECT \* FROM read_csv_auto\('.*test\.csv'\)/, duckdb_db.sqls.last)
+
+    # Test JSON file
+    duckdb_db.sqls.clear
+    duckdb_db.make_ready(search_path: [json_file])
+
+    assert_match(/CREATE VIEW \w*test\w* AS SELECT \* FROM read_json_auto\('.*test\.json'\)/, duckdb_db.sqls.last)
+  end
+
+  def test_unsupported_file_format_for_duckdb
+    # Test unsupported file format for DuckDB
+    duckdb_db = Sequel.mock
+    duckdb_db.extension :make_readyable
+    def duckdb_db.database_type
+      :duckdb
+    end
+
+    dir = Pathname.new(Dir.mktmpdir)
+    orc_file = dir / 'test.orc'
+    FileUtils.touch(orc_file.to_s)
+
+    error = assert_raises(Sequel::Error) do
+      duckdb_db.make_ready(search_path: [orc_file])
+    end
+    assert_match(/Unsupported file format 'orc' for DuckDB/, error.message)
+  end
+
+  def test_duckdb_directory_support
+    # Test DuckDB with directory paths (globbing)
+    duckdb_db = Sequel.mock
+    duckdb_db.extension :make_readyable
+    def duckdb_db.database_type
+      :duckdb
+    end
+
+    # Mock directory? to return true
+    dir = Pathname.new(Dir.mktmpdir)
+    def dir.directory?
+      true
+    end
+
+    file_sourcerer = Sequel::ReadyMaker::FileSourcerer.new(duckdb_db, dir)
+
+    # Override format to return parquet
+    def file_sourcerer.format
+      'parquet'
+    end
+
+    # For directory support, DuckDB should use globbing pattern
+    file_sourcerer.create_view(:test_table)
+
+    assert_match(%r{CREATE VIEW \w*test_table\w* AS SELECT \* FROM read_parquet\('.*/\*\*/\*\.parquet'\)},
+                 duckdb_db.sqls.last)
   end
 
 end
