@@ -46,7 +46,15 @@
       "Bash(gem list:*)",
       "Bash(bundle check:*)",
       "Bash(timeout 600 bundle install)",
-      "Bash(bundle exec overcommit:*)"
+      "Bash(bundle exec overcommit:*)",
+      "Bash(zsh:*)",
+      "Read(//home/ryan/.local/share/mise/installs/ruby/3.4.4/lib/ruby/gems/3.4.0/gems/sequel-5.93.0/lib/sequel/extensions/**)",
+      "Bash(zsh -l -c 'git status')",
+      "Bash(zsh -l -c 'git reset HEAD')",
+      "Bash(zsh -l -c 'git add test/lib/sequel/extensions/test_more_sql.rb')",
+      "Bash(zsh -l -c 'git commit -m \"\"$(cat <<'\"''\"'EOF'\"''\"'\ntest: add comprehensive tests for more_sql extension\n\nAdd 13 test cases covering create_schema method functionality including\nbasic usage, option handling, edge cases, and extension registration.\n\n🤖 Generated with [Claude Code](https://claude.ai/code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\"\"')",
+      "Bash(zsh -l -c 'bundle exec rake test')",
+      "Bash(zsh -l -c 'bundle exec rake lint')"
     ],
     "deny": []
   },
