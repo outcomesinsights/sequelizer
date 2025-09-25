@@ -53,12 +53,12 @@ class TestYamlConfig < Minitest::Test
   end
 
   def test_path_defaults_to_local_config
-    assert_equal(@yaml_config.config_file_path, Pathname.pwd + 'config' + 'sequelizer.yml')
+    assert_equal(@yaml_config.config_file_path, Pathname.pwd.join('config', 'sequelizer.yml'))
   end
 
   def test_path_can_be_fed_pathanem_from_initialize
-    assert_equal(Sequelizer::YamlConfig.new(Pathname.new('~') + '.config').config_file_path,
-                 Pathname.new('~').expand_path + '.config')
+    assert_equal(Sequelizer::YamlConfig.new(Pathname.new('~').join('.config')).config_file_path,
+                 Pathname.new('~').expand_path.join('.config'))
   end
 
   def test_path_can_be_fed_string_from_initialize
@@ -66,12 +66,12 @@ class TestYamlConfig < Minitest::Test
   end
 
   def test_local_is_current_directory
-    assert_equal(Sequelizer::YamlConfig.local_config.config_file_path, Pathname.pwd + 'config' + 'sequelizer.yml')
+    assert_equal(Sequelizer::YamlConfig.local_config.config_file_path, Pathname.pwd.join('config', 'sequelizer.yml'))
   end
 
   def test_home_uses_home_directory
     assert_equal(Sequelizer::YamlConfig.user_config.config_file_path,
-                 Pathname.new(Dir.home) + '.config' + 'sequelizer' + 'database.yml')
+                 Pathname.new(Dir.home).join('.config', 'sequelizer', 'database.yml'))
   end
 
   def test_environment_checks_environment_variables

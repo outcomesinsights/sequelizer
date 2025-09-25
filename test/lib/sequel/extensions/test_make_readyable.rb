@@ -66,8 +66,8 @@ class TestUsable < Minitest::Test
 
   def test_should_create_views_based_on_path
     dir = Pathname.new(Dir.mktmpdir)
-    a_file = dir + 'a.parquet'
-    b_file = dir + 'b.parquet'
+    a_file = dir.join('a.parquet')
+    b_file = dir.join('b.parquet')
     FileUtils.touch(a_file.to_s)
     FileUtils.touch(b_file.to_s)
 
@@ -80,9 +80,9 @@ class TestUsable < Minitest::Test
 
   def test_should_create_views_format_based_on_path
     dir = Pathname.new(Dir.mktmpdir)
-    a_file = dir + 'a.parquet'
-    b_file = dir + 'b.delta'
-    c_file = dir + 'c.csv'
+    a_file = dir.join('a.parquet')
+    b_file = dir.join('b.delta')
+    c_file = dir.join('c.csv')
     FileUtils.touch(a_file.to_s)
     FileUtils.touch(b_file.to_s)
     FileUtils.touch(c_file.to_s)
@@ -97,9 +97,9 @@ class TestUsable < Minitest::Test
 
   def test_should_create_a_single_view_if_multiple_files_have_the_same_name
     dir = Pathname.new(Dir.mktmpdir)
-    a_file = dir + 'a.parquet'
-    b_file = dir + 'a.delta'
-    c_file = dir + 'a.csv'
+    a_file = dir.join('a.parquet')
+    b_file = dir.join('a.delta')
+    c_file = dir.join('a.csv')
     FileUtils.touch(a_file.to_s)
     FileUtils.touch(b_file.to_s)
     FileUtils.touch(c_file.to_s)
