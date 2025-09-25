@@ -2,7 +2,7 @@ require 'bundler/gem_tasks'
 require 'rake/testtask'
 
 Rake::TestTask.new do |t|
-  t.libs = ['lib', 'test']
+  t.libs = %w[lib test]
   t.warning = true
   t.test_files = FileList['test/**/test_*.rb']
 end

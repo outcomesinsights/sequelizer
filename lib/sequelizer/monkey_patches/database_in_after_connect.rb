@@ -16,7 +16,7 @@ module Sequel
             ac.call(conn)
           end
         end
-      rescue Exception => e
+      rescue StandardError => e
         raise Sequel.convert_exception_class(e, Sequel::DatabaseConnectionError)
       end
       raise(Sequel::DatabaseConnectionError, 'Connection parameters not valid') unless conn

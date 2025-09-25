@@ -7,7 +7,7 @@ class TestGemfileModifier < Minitest::Test
     @gm = Sequelizer::GemfileModifier.new
   end
 
-  def test_dies_if_Gemfile_missing
+  def test_dies_if_gemfile_missing
     pn_mock = Minitest::Mock.new
     pn_mock.expect(:exist?, false)
 

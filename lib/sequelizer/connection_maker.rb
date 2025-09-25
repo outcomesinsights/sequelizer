@@ -72,73 +72,119 @@ module Sequelizer
       opts = options.to_hash
       extensions = options.extensions
 
-      conn = if (url = opts.delete(:uri) || opts.delete(:url))
-               Sequel.connect(url, opts)
-             else
-               # Kerberos related options
-               realm = opts[:realm]
-               host_fqdn = opts[:host_fqdn] || opts[:host]
-               principal = opts[:principal]
-
-               adapter = opts[:adapter]
-               if adapter =~ /\Ajdbc_/
-                 user = opts[:user]
-                 password = opts[:password]
-               end
-
-               case opts[:adapter]&.to_sym
-               when :jdbc_hive2
-                 opts[:adapter] = :jdbc
-                 auth = if realm
-                          ";principal=#{e principal}/#{e host_fqdn}@#{e realm}"
-                        elsif user
-                          ";user=#{e user};password=#{e password}"
-                        else
-                          ';auth=noSasl'
-                        end
-                 opts[:uri] =
-                   "jdbc:hive2://#{e opts[:host]}:#{opts.fetch(:port,
-                                                               21_050).to_i}/#{e(opts[:database] || "default")}#{auth}"
-               when :jdbc_impala
-                 opts[:adapter] = :jdbc
-                 auth = if realm
-                          ";AuthMech=1;KrbServiceName=#{e principal};KrbAuthType=2;KrbHostFQDN=#{e host_fqdn};KrbRealm=#{e realm}"
-                        elsif user
-                          if password
-                            ";AuthMech=3;UID=#{e user};PWD=#{e password}"
-                          else
-                            ";AuthMech=2;UID=#{e user}"
-                          end
-                        end
-                 opts[:uri] =
-                   "jdbc:impala://#{e opts[:host]}:#{opts.fetch(:port,
-                                                                21_050).to_i}/#{e(opts[:database] || "default")}#{auth}"
-               when :jdbc_postgres
-                 opts[:adapter] = :jdbc
-                 auth = "?user=#{user}#{"&password=#{password}" if password}" if user
-                 opts[:uri] =
-                   "jdbc:postgresql://#{e opts[:host]}:#{opts.fetch(:port, 5432).to_i}/#{e(opts[:database])}#{auth}"
-               when :impala
-                 opts[:database] ||= 'default'
-                 opts[:port] ||= 21_000
-                 if principal
-                   # realm doesn't seem to be used?
-                   opts[:transport] = :sasl
-                   opts[:sasl_params] = {
-                     mechanism: 'GSSAPI',
-                     remote_host: host_fqdn,
-                     remote_principal: principal,
-                   }
-                 end
-               end
-
-               Sequel.connect(opts)
-             end
+      conn = create_sequel_connection(opts)
       conn.extension(*extensions)
       conn
     end
 
     private
+
+    def create_sequel_connection(opts)
+      if (url = opts.delete(:uri) || opts.delete(:url))
+        Sequel.connect(url, opts)
+      else
+        configure_adapter_specific_options(opts)
+        Sequel.connect(opts)
+      end
+    end
+
+    def configure_adapter_specific_options(opts)
+      case opts[:adapter]&.to_sym
+      when :jdbc_hive2
+        configure_jdbc_hive2(opts)
+      when :jdbc_impala
+        configure_jdbc_impala(opts)
+      when :jdbc_postgres
+        configure_jdbc_postgres(opts)
+      when :impala
+        configure_impala(opts)
+      end
+    end
+
+    def configure_jdbc_hive2(opts)
+      opts[:adapter] = :jdbc
+      auth = build_hive2_auth_string(opts)
+      port = opts.fetch(:port, 21_050).to_i
+      database = opts[:database] || 'default'
+      opts[:uri] = "jdbc:hive2://#{e opts[:host]}:#{port}/#{e database}#{auth}"
+    end
+
+    def configure_jdbc_impala(opts)
+      opts[:adapter] = :jdbc
+      auth = build_impala_auth_string(opts)
+      port = opts.fetch(:port, 21_050).to_i
+      database = opts[:database] || 'default'
+      opts[:uri] = "jdbc:impala://#{e opts[:host]}:#{port}/#{e database}#{auth}"
+    end
+
+    def configure_jdbc_postgres(opts)
+      opts[:adapter] = :jdbc
+      auth = build_postgres_auth_string(opts)
+      port = opts.fetch(:port, 5432).to_i
+      opts[:uri] = "jdbc:postgresql://#{e opts[:host]}:#{port}/#{e opts[:database]}#{auth}"
+    end
+
+    def configure_impala(opts)
+      opts[:database] ||= 'default'
+      opts[:port] ||= 21_000
+      setup_impala_sasl_if_needed(opts)
+    end
+
+    def build_hive2_auth_string(opts)
+      realm = opts[:realm]
+      host_fqdn = opts[:host_fqdn] || opts[:host]
+      principal = opts[:principal]
+      user = opts[:user]
+      password = opts[:password]
+
+      if realm
+        ";principal=#{e principal}/#{e host_fqdn}@#{e realm}"
+      elsif user
+        ";user=#{e user};password=#{e password}"
+      else
+        ';auth=noSasl'
+      end
+    end
+
+    def build_impala_auth_string(opts)
+      realm = opts[:realm]
+      host_fqdn = opts[:host_fqdn] || opts[:host]
+      principal = opts[:principal]
+      user = opts[:user]
+      password = opts[:password]
+
+      if realm
+        ";AuthMech=1;KrbServiceName=#{e principal};KrbAuthType=2;" \
+          "KrbHostFQDN=#{e host_fqdn};KrbRealm=#{e realm}"
+      elsif user
+        if password
+          ";AuthMech=3;UID=#{e user};PWD=#{e password}"
+        else
+          ";AuthMech=2;UID=#{e user}"
+        end
+      end
+    end
+
+    def build_postgres_auth_string(opts)
+      user = opts[:user]
+      password = opts[:password]
+      return unless user
+
+      "?user=#{user}#{"&password=#{password}" if password}"
+    end
+
+    def setup_impala_sasl_if_needed(opts)
+      principal = opts[:principal]
+      host_fqdn = opts[:host_fqdn] || opts[:host]
+      return unless principal
+
+      opts[:transport] = :sasl
+      opts[:sasl_params] = {
+        mechanism: 'GSSAPI',
+        remote_host: host_fqdn,
+        remote_principal: principal,
+      }
+    end
 
     # URL-escapes a value for safe inclusion in database connection strings.
     #

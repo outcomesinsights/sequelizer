@@ -73,11 +73,11 @@ class TestOptions < Minitest::Test
   end
 
   def test_handles_extensions_passed_in
-    options = Sequelizer::Options.new(extension_example_1: 1, extension_example_2: 1, not_an_extension_example: 1)
+    options = Sequelizer::Options.new(extension_example_one: 1, extension_example_two: 1, not_an_extension_example: 1)
 
     assert_equal 1, options.to_hash[:not_an_extension_example]
-    assert_includes options.extensions, :example_1, 'Failed to find example_1 in extensions'
-    assert_includes options.extensions, :example_2, 'Failed to find example_2 in extensions'
+    assert_includes options.extensions, :example_one, 'Failed to find example_one in extensions'
+    assert_includes options.extensions, :example_two, 'Failed to find example_two in extensions'
   end
 
 end
