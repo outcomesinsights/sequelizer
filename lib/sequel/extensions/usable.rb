@@ -34,7 +34,7 @@ module Sequel
     # @param schema_name [Symbol, String] the schema name to use
     # @return [String] the USE SQL statement
     def use_sql(schema_name)
-      "USE #{quote_identifier(schema_name)}"
+      "USE #{literal(schema_name)}"
     end
 
   end
