@@ -15,6 +15,7 @@ Gem::Specification.new do |spec|
   spec.files         = `git ls-files -z`.split("\x0")
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
+  spec.required_ruby_version = '>= 3.2.0'
 
   spec.add_development_dependency 'bundler', '~> 2.0'
   spec.add_development_dependency 'guard', '~> 2.0'
@@ -27,7 +28,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'activesupport', '~> 7.0'
   spec.add_dependency 'dotenv', '~> 2.1'
   spec.add_dependency 'hashie', '~> 3.2'
-  spec.add_dependency 'sequel', '~> 5.93.0'
+  spec.add_dependency 'sequel', '~> 5.93'
   spec.add_dependency 'thor', '~> 1.0'
   spec.metadata['rubygems_mfa_required'] = 'true'
 end

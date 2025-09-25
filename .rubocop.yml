@@ -143,3 +143,13 @@ Style/TrailingCommaInArrayLiteral:
 
 Style/TrailingCommaInHashLiteral:
   EnforcedStyleForMultiline: comma
+
+# Disable gemspec-specific rules that don't apply to this project
+Layout/LineLength:
+  Max: 120
+  AllowedPatterns: ['\A\s*#']
+  Exclude:
+    - '*.gemspec'
+
+Gemspec/DevelopmentDependencies:
+  Enabled: false

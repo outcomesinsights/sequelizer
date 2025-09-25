@@ -14,7 +14,7 @@ PATH
       activesupport (~> 7.0)
       dotenv (~> 2.1)
       hashie (~> 3.2)
-      sequel (~> 5.93.0)
+      sequel (~> 5.93)
       thor (~> 1.0)
 
 GEM
