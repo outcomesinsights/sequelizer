@@ -207,6 +207,10 @@ This project follows standard Ruby community conventions enforced by RuboCop, em
   - Great commit messages
   - Wonderful changelog messages
 
+## Platform Abstraction Project (In Planning)
+
+There is a separate, planned evolution of this gem documented in `oimnibus/projects/in-development/sequelizer/` with 31 ADRs. That project would add a `Platform` object to `Sequel::Database` instances with `supports_*?`/`prefers_*?` methods for abstracting RDBMS-specific behavior across Postgres, Spark, Athena, and Snowflake. **This is NOT yet implemented in this gem** — the current gem is DB-connection-only. The platform abstraction is entirely in planning documents.
+
 ## Development Memories
 
 - Ensure that bundler is used for all ruby/rake related cli invocations
