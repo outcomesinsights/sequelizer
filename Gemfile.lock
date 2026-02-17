@@ -1,10 +1,10 @@
 GIT
   remote: https://github.com/outcomesinsights/sequel-hexspace.git
-  revision: d041282798332227bbdf0a48a07c0494b2b54931
+  revision: 91ff040fac46380e2b35406ab4c8a7041beacd25
   branch: master
   specs:
     sequel-hexspace (1.0.0)
-      hexspace
+      hexspace (>= 0.2.1)
       sequel (~> 5.0)
 
 PATH
@@ -35,7 +35,7 @@ GEM
     ast (2.4.3)
     base64 (0.3.0)
     benchmark (0.4.1)
-    bigdecimal (3.2.2)
+    bigdecimal (4.0.1)
     childprocess (5.1.0)
       logger (~> 1.5)
     coderay (1.1.3)
@@ -60,7 +60,8 @@ GEM
       guard-compat (~> 1.2)
       minitest (>= 3.0)
     hashie (3.6.0)
-    hexspace (0.2.1)
+    hexspace (0.3.0)
+      bigdecimal
       thrift (>= 0.18)
     i18n (1.14.7)
       concurrent-ruby (~> 1.0)
@@ -120,7 +121,7 @@ GEM
       rubocop-ast (>= 1.38.0, < 2.0)
     ruby-progressbar (1.13.0)
     securerandom (0.4.1)
-    sequel (5.93.0)
+    sequel (5.101.0)
       bigdecimal
     shellany (0.0.1)
     simplecov (0.22.0)
@@ -130,7 +131,7 @@ GEM
     simplecov-html (0.13.1)
     simplecov_json_formatter (0.1.4)
     thor (1.3.0)
-    thrift (0.19.0)
+    thrift (0.22.0)
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
     unicode-display_width (3.2.0)
