@@ -13,7 +13,7 @@ PATH
     sequelizer (0.1.6)
       activesupport (~> 7.0)
       dotenv (>= 2.1, < 4.0)
-      hashie (~> 3.2)
+      hashie (>= 3.2, < 6.0)
       sequel (~> 5.93)
       thor (~> 1.0)
 
@@ -59,7 +59,8 @@ GEM
     guard-minitest (3.0.0)
       guard-compat (~> 1.2)
       minitest (>= 5.0.4, < 7.0)
-    hashie (3.6.0)
+    hashie (5.1.0)
+      logger
     hexspace (0.3.0)
       bigdecimal
       thrift (>= 0.18)
