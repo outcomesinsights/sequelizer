@@ -4,7 +4,7 @@ source 'https://rubygems.org'
 gemspec
 
 group :development do
-  gem 'overcommit', '~> 0.60'
+  gem 'overcommit', '~> 0.68'
 end
 
 group :test do
