@@ -26,7 +26,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rubocop', '~> 1.0'
   spec.add_development_dependency 'rubocop-minitest', '~> 0.25'
   spec.add_development_dependency 'simplecov', '~> 0.22'
-  spec.add_dependency 'activesupport', '~> 7.0'
+  spec.add_dependency 'activesupport', '>= 7', '< 9'
   spec.add_dependency 'dotenv', '>= 2.1', '< 4.0'
   spec.add_dependency 'hashie', '>= 3.2', '< 6.0'
   spec.add_dependency 'sequel', '~> 5.93'
