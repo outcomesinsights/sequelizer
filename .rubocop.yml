@@ -2,7 +2,7 @@ plugins:
   - rubocop-minitest
 
 AllCops:
-  TargetRubyVersion: 3.3
+  TargetRubyVersion: 3.4
   NewCops: enable
   Exclude:
     - 'vendor/**/*'
