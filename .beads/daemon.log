@@ -1,0 +1,207 @@
+time=2026-01-21T13:12:58.226-08:00 level=INFO msg="Daemon started (interval: %v, auto-commit: %v, auto-push: %v)" !BADKEY=5s !BADKEY=false !BADKEY=false
+time=2026-01-21T13:12:58.226-08:00 level=INFO msg="using database" path=/home/ryan/projects/outins/jigsaw/jumper/gems/sequelizer/.beads/beads.db
+time=2026-01-21T13:12:58.306-08:00 level=INFO msg="database opened" path=/home/ryan/projects/outins/jigsaw/jumper/gems/sequelizer/.beads/beads.db freshness_checking=true
+time=2026-01-21T13:12:58.306-08:00 level=INFO msg="upgrading .beads/.gitignore"
+time=2026-01-21T13:12:58.306-08:00 level=WARN msg="failed to upgrade .gitignore" error="open .beads/.gitignore: no such file or directory"
+time=2026-01-21T13:12:58.309-08:00 level=INFO msg="Repository fingerprint validated: %s" !BADKEY=1d059fab
+time=2026-01-21T13:12:58.309-08:00 level=INFO msg="starting RPC server" socket=/home/ryan/projects/outins/jigsaw/jumper/gems/sequelizer/.beads/bd.sock
+time=2026-01-21T13:12:58.309-08:00 level=INFO msg="RPC server ready (socket listening)"
+time=2026-01-21T13:12:58.311-08:00 level=INFO msg="registered in global registry"
+time=2026-01-21T13:12:58.311-08:00 level=INFO msg="Starting %s..." !BADKEY="sync cycle"
+time=2026-01-21T13:12:58.311-08:00 level=INFO msg="Exported to JSONL"
+time=2026-01-21T13:12:58.716-08:00 level=INFO msg="Pulled from remote"
+time=2026-01-21T13:12:58.722-08:00 level=INFO msg="Imported from JSONL"
+time=2026-01-21T13:12:58.729-08:00 level=INFO msg="Sync cycle complete"
+time=2026-01-21T13:12:58.729-08:00 level=INFO msg="monitoring parent process" pid=0
+time=2026-01-21T13:12:58.729-08:00 level=INFO msg="using event-driven mode"
+time=2026-01-21T13:12:58.730-08:00 level=INFO msg="Auto-pull disabled: use 'git pull' manually to sync remote changes"
+time=2026-01-21T13:13:39.808-08:00 level=INFO msg="Git ref change detected: %s" !BADKEY=/home/ryan/projects/outins/jigsaw/jumper/gems/sequelizer/.git/refs/heads/beads.lock
+time=2026-01-21T13:13:40.810-08:00 level=INFO msg="Import triggered by file change"
+time=2026-01-21T13:13:40.810-08:00 level=INFO msg="Starting %s..." !BADKEY=auto-import
+time=2026-01-21T13:13:40.811-08:00 level=INFO msg="JSONL content changed, proceeding with %s..." !BADKEY=auto-import
+time=2026-01-21T13:13:40.815-08:00 level=INFO msg="⚠️  WARNING: Uncommitted local changes detected in %s" !BADKEY=/home/ryan/projects/outins/jigsaw/jumper/gems/sequelizer/.beads/issues.jsonl
+time=2026-01-21T13:13:40.815-08:00 level=INFO msg="   Pulling from remote may overwrite local unpushed changes."
+time=2026-01-21T13:13:40.815-08:00 level=INFO msg="   Consider running 'bd sync' to commit and push your changes first."
+time=2026-01-21T13:13:41.156-08:00 level=INFO msg="Pull failed: %v (backoff: %v)" !BADKEY="git pull failed: exit status 1\nfatal: couldn't find remote ref beads\n" !BADKEY=30s
+time=2026-01-21T13:16:28.327-08:00 level=INFO msg="JSONL file created: %s" !BADKEY=/home/ryan/projects/outins/jigsaw/jumper/gems/sequelizer/.beads/issues.jsonl
+time=2026-01-21T13:16:28.327-08:00 level=INFO msg="File change detected: %s" !BADKEY=/home/ryan/projects/outins/jigsaw/jumper/gems/sequelizer/.beads/issues.jsonl
+time=2026-01-21T13:16:28.340-08:00 level=INFO msg="Git ref change detected: %s" !BADKEY=/home/ryan/projects/outins/jigsaw/jumper/gems/sequelizer/.git/refs/heads/beads.lock
+time=2026-01-21T13:16:29.342-08:00 level=INFO msg="Import triggered by file change"
+time=2026-01-21T13:16:29.342-08:00 level=INFO msg="Starting %s..." !BADKEY=auto-import
+time=2026-01-21T13:16:29.343-08:00 level=INFO msg="Skipping %s: JSONL content unchanged" !BADKEY=auto-import
+time=2026-01-21T13:42:19.849-08:00 level=INFO msg="Mutation detected: %s %s" create=sequelizer-caa
+time=2026-01-21T13:42:20.349-08:00 level=INFO msg="Export triggered by mutation events"
+time=2026-01-21T13:42:20.349-08:00 level=INFO msg="Starting %s..." !BADKEY=export
+time=2026-01-21T13:42:20.352-08:00 level=INFO msg="Exported to JSONL"
+time=2026-01-21T13:42:20.352-08:00 level=INFO msg="Export complete"
+time=2026-01-21T13:42:20.352-08:00 level=INFO msg="JSONL file created: %s" !BADKEY=/home/ryan/projects/outins/jigsaw/jumper/gems/sequelizer/.beads/issues.jsonl
+time=2026-01-21T13:42:20.352-08:00 level=INFO msg="File change detected: %s" !BADKEY=/home/ryan/projects/outins/jigsaw/jumper/gems/sequelizer/.beads/issues.jsonl
+time=2026-01-21T13:42:21.353-08:00 level=INFO msg="Import triggered by file change"
+time=2026-01-21T13:42:21.354-08:00 level=INFO msg="Starting %s..." !BADKEY=auto-import
+time=2026-01-21T13:42:21.354-08:00 level=INFO msg="JSONL content changed, proceeding with %s..." !BADKEY=auto-import
+time=2026-01-21T13:42:21.358-08:00 level=INFO msg="⚠️  WARNING: Uncommitted local changes detected in %s" !BADKEY=/home/ryan/projects/outins/jigsaw/jumper/gems/sequelizer/.beads/issues.jsonl
+time=2026-01-21T13:42:21.358-08:00 level=INFO msg="   Pulling from remote may overwrite local unpushed changes."
+time=2026-01-21T13:42:21.358-08:00 level=INFO msg="   Consider running 'bd sync' to commit and push your changes first."
+time=2026-01-21T13:42:21.696-08:00 level=INFO msg="Pull failed: %v (backoff: %v)" !BADKEY="git pull failed: exit status 1\nfatal: couldn't find remote ref beads\n" !BADKEY=1m0s
+time=2026-01-21T13:42:28.964-08:00 level=INFO msg="Mutation detected: %s %s" create=sequelizer-7yh
+time=2026-01-21T13:42:29.465-08:00 level=INFO msg="Export triggered by mutation events"
+time=2026-01-21T13:42:29.465-08:00 level=INFO msg="Starting %s..." !BADKEY=export
+time=2026-01-21T13:42:29.466-08:00 level=INFO msg="Pre-export validation failed: %v" !BADKEY="refusing to export: JSONL content has changed since last import (import first to avoid data loss)"
+time=2026-01-21T13:42:37.690-08:00 level=INFO msg="Mutation detected: %s %s" create=sequelizer-q0k
+time=2026-01-21T13:42:38.190-08:00 level=INFO msg="Export triggered by mutation events"
+time=2026-01-21T13:42:38.190-08:00 level=INFO msg="Starting %s..." !BADKEY=export
+time=2026-01-21T13:42:38.191-08:00 level=INFO msg="Pre-export validation failed: %v" !BADKEY="refusing to export: JSONL content has changed since last import (import first to avoid data loss)"
+time=2026-01-21T13:42:48.060-08:00 level=INFO msg="Mutation detected: %s %s" create=sequelizer-aib
+time=2026-01-21T13:42:48.561-08:00 level=INFO msg="Export triggered by mutation events"
+time=2026-01-21T13:42:48.561-08:00 level=INFO msg="Starting %s..." !BADKEY=export
+time=2026-01-21T13:42:48.562-08:00 level=INFO msg="Pre-export validation failed: %v" !BADKEY="refusing to export: JSONL content has changed since last import (import first to avoid data loss)"
+time=2026-01-21T13:42:57.008-08:00 level=INFO msg="Mutation detected: %s %s" create=sequelizer-ztz
+time=2026-01-21T13:42:57.509-08:00 level=INFO msg="Export triggered by mutation events"
+time=2026-01-21T13:42:57.509-08:00 level=INFO msg="Starting %s..." !BADKEY=export
+time=2026-01-21T13:42:57.510-08:00 level=INFO msg="Pre-export validation failed: %v" !BADKEY="refusing to export: JSONL content has changed since last import (import first to avoid data loss)"
+time=2026-01-21T13:43:06.903-08:00 level=INFO msg="Mutation detected: %s %s" create=sequelizer-b6t
+time=2026-01-21T13:43:07.403-08:00 level=INFO msg="Export triggered by mutation events"
+time=2026-01-21T13:43:07.403-08:00 level=INFO msg="Starting %s..." !BADKEY=export
+time=2026-01-21T13:43:07.404-08:00 level=INFO msg="Pre-export validation failed: %v" !BADKEY="refusing to export: JSONL content has changed since last import (import first to avoid data loss)"
+time=2026-01-21T13:45:26.181-08:00 level=INFO msg="Mutation detected: %s %s" update=sequelizer-7yh
+time=2026-01-21T13:45:26.244-08:00 level=INFO msg="Mutation detected: %s %s" update=sequelizer-q0k
+time=2026-01-21T13:45:26.313-08:00 level=INFO msg="Mutation detected: %s %s" update=sequelizer-aib
+time=2026-01-21T13:45:26.377-08:00 level=INFO msg="Mutation detected: %s %s" update=sequelizer-ztz
+time=2026-01-21T13:45:26.518-08:00 level=INFO msg="Mutation detected: %s %s" update=sequelizer-b6t
+time=2026-01-21T13:45:27.018-08:00 level=INFO msg="Export triggered by mutation events"
+time=2026-01-21T13:45:27.018-08:00 level=INFO msg="Starting %s..." !BADKEY=export
+time=2026-01-21T13:45:27.019-08:00 level=INFO msg="Pre-export validation failed: %v" !BADKEY="refusing to export: JSONL content has changed since last import (import first to avoid data loss)"
+time=2026-01-21T13:47:32.872-08:00 level=INFO msg="Mutation detected: %s %s" status=sequelizer-caa
+time=2026-01-21T13:47:33.373-08:00 level=INFO msg="Export triggered by mutation events"
+time=2026-01-21T13:47:33.373-08:00 level=INFO msg="Starting %s..." !BADKEY=export
+time=2026-01-21T13:47:33.374-08:00 level=INFO msg="Pre-export validation failed: %v" !BADKEY="refusing to export: JSONL content has changed since last import (import first to avoid data loss)"
+time=2026-01-21T13:51:02.226-08:00 level=INFO msg="Mutation detected: %s %s" status=sequelizer-caa
+time=2026-01-21T13:51:02.726-08:00 level=INFO msg="Export triggered by mutation events"
+time=2026-01-21T13:51:02.726-08:00 level=INFO msg="Starting %s..." !BADKEY=export
+time=2026-01-21T13:51:02.726-08:00 level=INFO msg="Pre-export validation failed: %v" !BADKEY="refusing to export: JSONL content has changed since last import (import first to avoid data loss)"
+time=2026-01-21T13:51:31.904-08:00 level=INFO msg="JSONL file created: %s" !BADKEY=/home/ryan/projects/outins/jigsaw/jumper/gems/sequelizer/.beads/issues.jsonl
+time=2026-01-21T13:51:31.904-08:00 level=INFO msg="File change detected: %s" !BADKEY=/home/ryan/projects/outins/jigsaw/jumper/gems/sequelizer/.beads/issues.jsonl
+time=2026-01-21T13:51:32.905-08:00 level=INFO msg="Import triggered by file change"
+time=2026-01-21T13:51:32.905-08:00 level=INFO msg="Starting %s..." !BADKEY=auto-import
+time=2026-01-21T13:51:32.906-08:00 level=INFO msg="JSONL content changed, proceeding with %s..." !BADKEY=auto-import
+time=2026-01-21T13:51:32.909-08:00 level=INFO msg="⚠️  WARNING: Uncommitted local changes detected in %s" !BADKEY=/home/ryan/projects/outins/jigsaw/jumper/gems/sequelizer/.beads/issues.jsonl
+time=2026-01-21T13:51:32.909-08:00 level=INFO msg="   Pulling from remote may overwrite local unpushed changes."
+time=2026-01-21T13:51:32.909-08:00 level=INFO msg="   Consider running 'bd sync' to commit and push your changes first."
+time=2026-01-21T13:51:33.278-08:00 level=INFO msg="Pull failed: %v (backoff: %v)" !BADKEY="git pull failed: exit status 1\nfatal: couldn't find remote ref beads\n" !BADKEY=2m0s
+time=2026-01-21T14:04:20.453-08:00 level=INFO msg="JSONL file created: %s" !BADKEY=/home/ryan/projects/outins/jigsaw/jumper/gems/sequelizer/.beads/issues.jsonl
+time=2026-01-21T14:04:20.453-08:00 level=INFO msg="File change detected: %s" !BADKEY=/home/ryan/projects/outins/jigsaw/jumper/gems/sequelizer/.beads/issues.jsonl
+time=2026-01-21T14:04:20.464-08:00 level=INFO msg="Git ref change detected: %s" !BADKEY=/home/ryan/projects/outins/jigsaw/jumper/gems/sequelizer/.git/refs/heads/beads.lock
+time=2026-01-21T14:04:21.465-08:00 level=INFO msg="Import triggered by file change"
+time=2026-01-21T14:04:21.466-08:00 level=INFO msg="Starting %s..." !BADKEY=auto-import
+time=2026-01-21T14:04:21.466-08:00 level=INFO msg="Skipping %s: JSONL content unchanged" !BADKEY=auto-import
+time=2026-01-21T14:04:58.728-08:00 level=INFO msg="Mutation detected: %s %s" status=sequelizer-7yh
+time=2026-01-21T14:04:59.229-08:00 level=INFO msg="Export triggered by mutation events"
+time=2026-01-21T14:04:59.229-08:00 level=INFO msg="Starting %s..." !BADKEY=export
+time=2026-01-21T14:04:59.232-08:00 level=INFO msg="JSONL file created: %s" !BADKEY=/home/ryan/projects/outins/jigsaw/jumper/gems/sequelizer/.beads/issues.jsonl
+time=2026-01-21T14:04:59.232-08:00 level=INFO msg="Exported to JSONL"
+time=2026-01-21T14:04:59.232-08:00 level=INFO msg="Export complete"
+time=2026-01-21T14:05:00.234-08:00 level=INFO msg="Import triggered by file change"
+time=2026-01-21T14:05:00.234-08:00 level=INFO msg="Starting %s..." !BADKEY=auto-import
+time=2026-01-21T14:05:00.235-08:00 level=INFO msg="JSONL content changed, proceeding with %s..." !BADKEY=auto-import
+time=2026-01-21T14:05:00.238-08:00 level=INFO msg="⚠️  WARNING: Uncommitted local changes detected in %s" !BADKEY=/home/ryan/projects/outins/jigsaw/jumper/gems/sequelizer/.beads/issues.jsonl
+time=2026-01-21T14:05:00.238-08:00 level=INFO msg="   Pulling from remote may overwrite local unpushed changes."
+time=2026-01-21T14:05:00.238-08:00 level=INFO msg="   Consider running 'bd sync' to commit and push your changes first."
+time=2026-01-21T14:05:00.579-08:00 level=INFO msg="Pull failed: %v (backoff: %v)" !BADKEY="git pull failed: exit status 1\nfatal: couldn't find remote ref beads\n" !BADKEY=5m0s
+time=2026-01-21T15:00:09.370-08:00 level=INFO msg="Mutation detected: %s %s" status=sequelizer-7yh
+time=2026-01-21T15:00:09.870-08:00 level=INFO msg="Export triggered by mutation events"
+time=2026-01-21T15:00:09.870-08:00 level=INFO msg="Starting %s..." !BADKEY=export
+time=2026-01-21T15:00:09.871-08:00 level=INFO msg="Pre-export validation failed: %v" !BADKEY="refusing to export: JSONL content has changed since last import (import first to avoid data loss)"
+time=2026-01-21T15:00:17.056-08:00 level=INFO msg="JSONL file created: %s" !BADKEY=/home/ryan/projects/outins/jigsaw/jumper/gems/sequelizer/.beads/issues.jsonl
+time=2026-01-21T15:00:17.056-08:00 level=INFO msg="File change detected: %s" !BADKEY=/home/ryan/projects/outins/jigsaw/jumper/gems/sequelizer/.beads/issues.jsonl
+time=2026-01-21T15:00:18.058-08:00 level=INFO msg="Import triggered by file change"
+time=2026-01-21T15:00:18.058-08:00 level=INFO msg="Starting %s..." !BADKEY=auto-import
+time=2026-01-21T15:00:18.059-08:00 level=INFO msg="JSONL content changed, proceeding with %s..." !BADKEY=auto-import
+time=2026-01-21T15:00:18.062-08:00 level=INFO msg="⚠️  WARNING: Uncommitted local changes detected in %s" !BADKEY=/home/ryan/projects/outins/jigsaw/jumper/gems/sequelizer/.beads/issues.jsonl
+time=2026-01-21T15:00:18.062-08:00 level=INFO msg="   Pulling from remote may overwrite local unpushed changes."
+time=2026-01-21T15:00:18.062-08:00 level=INFO msg="   Consider running 'bd sync' to commit and push your changes first."
+time=2026-01-21T15:00:18.403-08:00 level=INFO msg="Pull failed: %v (backoff: %v)" !BADKEY="git pull failed: exit status 1\nfatal: couldn't find remote ref beads\n" !BADKEY=10m0s
+time=2026-01-21T15:05:21.155-08:00 level=INFO msg="Mutation detected: %s %s" create=sequelizer-5kx
+time=2026-01-21T15:05:21.655-08:00 level=INFO msg="Export triggered by mutation events"
+time=2026-01-21T15:05:21.655-08:00 level=INFO msg="Starting %s..." !BADKEY=export
+time=2026-01-21T15:05:21.656-08:00 level=INFO msg="Pre-export validation failed: %v" !BADKEY="refusing to export: JSONL content has changed since last import (import first to avoid data loss)"
+time=2026-01-21T15:05:32.768-08:00 level=INFO msg="Mutation detected: %s %s" update=sequelizer-5kx
+time=2026-01-21T15:05:33.269-08:00 level=INFO msg="Export triggered by mutation events"
+time=2026-01-21T15:05:33.269-08:00 level=INFO msg="Starting %s..." !BADKEY=export
+time=2026-01-21T15:05:33.270-08:00 level=INFO msg="Pre-export validation failed: %v" !BADKEY="refusing to export: JSONL content has changed since last import (import first to avoid data loss)"
+time=2026-01-21T15:05:52.113-08:00 level=INFO msg="Mutation detected: %s %s" update=sequelizer-q0k
+time=2026-01-21T15:05:52.426-08:00 level=INFO msg="Mutation detected: %s %s" create=sequelizer-cxh
+time=2026-01-21T15:05:52.743-08:00 level=INFO msg="Mutation detected: %s %s" create=sequelizer-2wm
+time=2026-01-21T15:05:53.117-08:00 level=INFO msg="Mutation detected: %s %s" create=sequelizer-i0e
+time=2026-01-21T15:05:53.439-08:00 level=INFO msg="Mutation detected: %s %s" create=sequelizer-dgk
+time=2026-01-21T15:05:53.826-08:00 level=INFO msg="Mutation detected: %s %s" create=sequelizer-ipa
+time=2026-01-21T15:05:54.131-08:00 level=INFO msg="Mutation detected: %s %s" create=sequelizer-dfc
+time=2026-01-21T15:05:54.631-08:00 level=INFO msg="Export triggered by mutation events"
+time=2026-01-21T15:05:54.631-08:00 level=INFO msg="Starting %s..." !BADKEY=export
+time=2026-01-21T15:05:54.632-08:00 level=INFO msg="Pre-export validation failed: %v" !BADKEY="refusing to export: JSONL content has changed since last import (import first to avoid data loss)"
+time=2026-01-21T15:06:12.439-08:00 level=INFO msg="Mutation detected: %s %s" update=sequelizer-cxh
+time=2026-01-21T15:06:12.502-08:00 level=INFO msg="Mutation detected: %s %s" update=sequelizer-2wm
+time=2026-01-21T15:06:12.566-08:00 level=INFO msg="Mutation detected: %s %s" update=sequelizer-i0e
+time=2026-01-21T15:06:12.669-08:00 level=INFO msg="Mutation detected: %s %s" update=sequelizer-dgk
+time=2026-01-21T15:06:12.732-08:00 level=INFO msg="Mutation detected: %s %s" update=sequelizer-ipa
+time=2026-01-21T15:06:12.793-08:00 level=INFO msg="Mutation detected: %s %s" update=sequelizer-dfc
+time=2026-01-21T15:06:13.119-08:00 level=INFO msg="Mutation detected: %s %s" create=sequelizer-reb
+time=2026-01-21T15:06:13.460-08:00 level=INFO msg="Mutation detected: %s %s" create=sequelizer-grs
+time=2026-01-21T15:06:13.823-08:00 level=INFO msg="Mutation detected: %s %s" create=sequelizer-45h
+time=2026-01-21T15:06:14.153-08:00 level=INFO msg="Mutation detected: %s %s" create=sequelizer-7xh
+time=2026-01-21T15:06:14.654-08:00 level=INFO msg="Export triggered by mutation events"
+time=2026-01-21T15:06:14.654-08:00 level=INFO msg="Starting %s..." !BADKEY=export
+time=2026-01-21T15:06:14.654-08:00 level=INFO msg="Pre-export validation failed: %v" !BADKEY="refusing to export: JSONL content has changed since last import (import first to avoid data loss)"
+time=2026-01-21T15:06:21.887-08:00 level=INFO msg="Mutation detected: %s %s" update=sequelizer-reb
+time=2026-01-21T15:06:21.983-08:00 level=INFO msg="Mutation detected: %s %s" update=sequelizer-grs
+time=2026-01-21T15:06:22.045-08:00 level=INFO msg="Mutation detected: %s %s" update=sequelizer-45h
+time=2026-01-21T15:06:22.108-08:00 level=INFO msg="Mutation detected: %s %s" update=sequelizer-7xh
+time=2026-01-21T15:06:22.608-08:00 level=INFO msg="Export triggered by mutation events"
+time=2026-01-21T15:06:22.608-08:00 level=INFO msg="Starting %s..." !BADKEY=export
+time=2026-01-21T15:06:22.609-08:00 level=INFO msg="Pre-export validation failed: %v" !BADKEY="refusing to export: JSONL content has changed since last import (import first to avoid data loss)"
+time=2026-01-21T15:06:29.442-08:00 level=INFO msg="Mutation detected: %s %s" update=sequelizer-cxh
+time=2026-01-21T15:06:29.509-08:00 level=INFO msg="Mutation detected: %s %s" update=sequelizer-2wm
+time=2026-01-21T15:06:29.573-08:00 level=INFO msg="Mutation detected: %s %s" update=sequelizer-q0k
+time=2026-01-21T15:06:29.705-08:00 level=INFO msg="Mutation detected: %s %s" update=sequelizer-grs
+time=2026-01-21T15:06:29.767-08:00 level=INFO msg="Mutation detected: %s %s" update=sequelizer-ipa
+time=2026-01-21T15:06:29.831-08:00 level=INFO msg="Mutation detected: %s %s" update=sequelizer-dfc
+time=2026-01-21T15:06:30.332-08:00 level=INFO msg="Export triggered by mutation events"
+time=2026-01-21T15:06:30.332-08:00 level=INFO msg="Starting %s..." !BADKEY=export
+time=2026-01-21T15:06:30.333-08:00 level=INFO msg="Pre-export validation failed: %v" !BADKEY="refusing to export: JSONL content has changed since last import (import first to avoid data loss)"
+time=2026-01-21T15:07:06.900-08:00 level=INFO msg="Mutation detected: %s %s" update=sequelizer-45h
+time=2026-01-21T15:07:07.400-08:00 level=INFO msg="Export triggered by mutation events"
+time=2026-01-21T15:07:07.400-08:00 level=INFO msg="Starting %s..." !BADKEY=export
+time=2026-01-21T15:07:07.401-08:00 level=INFO msg="Pre-export validation failed: %v" !BADKEY="refusing to export: JSONL content has changed since last import (import first to avoid data loss)"
+time=2026-01-21T15:07:23.130-08:00 level=INFO msg="Mutation detected: %s %s" status=sequelizer-dfc
+time=2026-01-21T15:07:23.630-08:00 level=INFO msg="Export triggered by mutation events"
+time=2026-01-21T15:07:23.630-08:00 level=INFO msg="Starting %s..." !BADKEY=export
+time=2026-01-21T15:07:23.631-08:00 level=INFO msg="Pre-export validation failed: %v" !BADKEY="refusing to export: JSONL content has changed since last import (import first to avoid data loss)"
+time=2026-01-21T15:07:42.683-08:00 level=INFO msg="Mutation detected: %s %s" update=sequelizer-i0e
+time=2026-01-21T15:07:43.184-08:00 level=INFO msg="Export triggered by mutation events"
+time=2026-01-21T15:07:43.184-08:00 level=INFO msg="Starting %s..." !BADKEY=export
+time=2026-01-21T15:07:43.184-08:00 level=INFO msg="Pre-export validation failed: %v" !BADKEY="refusing to export: JSONL content has changed since last import (import first to avoid data loss)"
+time=2026-01-21T15:07:47.925-08:00 level=INFO msg="Mutation detected: %s %s" status=sequelizer-reb
+time=2026-01-21T15:07:48.427-08:00 level=INFO msg="Export triggered by mutation events"
+time=2026-01-21T15:07:48.427-08:00 level=INFO msg="Starting %s..." !BADKEY=export
+time=2026-01-21T15:07:48.427-08:00 level=INFO msg="Pre-export validation failed: %v" !BADKEY="refusing to export: JSONL content has changed since last import (import first to avoid data loss)"
+time=2026-01-21T15:49:28.347-08:00 level=INFO msg="Mutation detected: %s %s" status=sequelizer-ipa
+time=2026-01-21T15:49:28.847-08:00 level=INFO msg="Export triggered by mutation events"
+time=2026-01-21T15:49:28.847-08:00 level=INFO msg="Starting %s..." !BADKEY=export
+time=2026-01-21T15:49:28.848-08:00 level=INFO msg="Pre-export validation failed: %v" !BADKEY="refusing to export: JSONL content has changed since last import (import first to avoid data loss)"
+time=2026-01-21T15:49:29.322-08:00 level=INFO msg="Mutation detected: %s %s" update=sequelizer-cxh
+time=2026-01-21T15:49:29.823-08:00 level=INFO msg="Export triggered by mutation events"
+time=2026-01-21T15:49:29.823-08:00 level=INFO msg="Starting %s..." !BADKEY=export
+time=2026-01-21T15:49:29.824-08:00 level=INFO msg="Pre-export validation failed: %v" !BADKEY="refusing to export: JSONL content has changed since last import (import first to avoid data loss)"
+time=2026-01-21T15:49:41.418-08:00 level=INFO msg="Mutation detected: %s %s" update=sequelizer-aib
+time=2026-01-21T15:49:41.919-08:00 level=INFO msg="Export triggered by mutation events"
+time=2026-01-21T15:49:41.919-08:00 level=INFO msg="Starting %s..." !BADKEY=export
+time=2026-01-21T15:49:41.920-08:00 level=INFO msg="Pre-export validation failed: %v" !BADKEY="refusing to export: JSONL content has changed since last import (import first to avoid data loss)"
+time=2026-01-21T15:49:42.390-08:00 level=INFO msg="Mutation detected: %s %s" create=sequelizer-sfe
+time=2026-01-21T15:49:42.890-08:00 level=INFO msg="Export triggered by mutation events"
+time=2026-01-21T15:49:42.890-08:00 level=INFO msg="Starting %s..." !BADKEY=export
+time=2026-01-21T15:49:42.891-08:00 level=INFO msg="Pre-export validation failed: %v" !BADKEY="refusing to export: JSONL content has changed since last import (import first to avoid data loss)"
+time=2026-01-21T15:49:48.707-08:00 level=INFO msg="Mutation detected: %s %s" update=sequelizer-sfe
+time=2026-01-21T15:49:48.836-08:00 level=INFO msg="Mutation detected: %s %s" update=sequelizer-sfe
+time=2026-01-21T15:49:49.337-08:00 level=INFO msg="Export triggered by mutation events"
+time=2026-01-21T15:49:49.337-08:00 level=INFO msg="Starting %s..." !BADKEY=export
+time=2026-01-21T15:49:49.338-08:00 level=INFO msg="Pre-export validation failed: %v" !BADKEY="refusing to export: JSONL content has changed since last import (import first to avoid data loss)"
+time=2026-01-22T08:45:51.443-08:00 level=INFO msg="Received signal %v, shutting down..." !BADKEY=terminated
