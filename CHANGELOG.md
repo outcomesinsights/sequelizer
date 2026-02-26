@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.2.0
+
+### Added
+- funky Sequel extension for database-specific function abstraction
+- kvcsv as a runtime dependency
+- Platform configuration fixtures in config/platforms/
+
+### Changed
+- Broadened activesupport dependency from ~> 7.0 to >= 7, < 9
+- Broadened hashie dependency from ~> 3.2 to >= 3.2, < 6.0
+- Broadened dotenv dependency from ~> 2.1 to >= 2.1, < 4.0
+- Bumped sequel from 5.93.0 to 5.101.0
+- Added multi-Ruby CI matrix (3.2, 3.3, 3.4, 4.0) with separate lint job
+
+### Fixed
+- Adapter extraction from URL scheme for search_path processing
+
 ## 0.1.6
 
 ### Removed
