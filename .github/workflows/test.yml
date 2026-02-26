@@ -31,7 +31,7 @@ jobs:
       - name: Run Tests
         run: bundle exec rake test
 
-  ci:
+  Run-Tests:
     if: always()
     needs: [lint, test]
     runs-on: ubuntu-latest

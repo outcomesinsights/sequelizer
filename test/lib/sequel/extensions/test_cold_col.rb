@@ -19,8 +19,8 @@ describe Sequel::ColdColDatabase do
     end
 
     # Add with method to mock database to support CTEs
-    def @db.with(*args)
-      dataset.with(*args)
+    def @db.with(*)
+      dataset.with(*)
     end
 
     @db

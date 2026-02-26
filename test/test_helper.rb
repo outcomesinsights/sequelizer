@@ -8,6 +8,9 @@ SimpleCov.start do
   add_filter '/test/'
   add_filter '/vendor/'
 
+  # Exclude platform extension when kvcsv gem isn't available
+  add_filter 'lib/sequel/extensions/platform.rb' unless Gem.loaded_specs.key?('kvcsv')
+
   add_group 'Core', 'lib/sequelizer'
   add_group 'Sequel Extensions', 'lib/sequel'
 

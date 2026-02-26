@@ -15,10 +15,10 @@ class TestConnectionMaker < Minitest::Test
 
   def with_ignored_yaml_config(opts = {}); end
 
-  def with_yaml_config(options = {}, &block)
+  def with_yaml_config(options = {}, &)
     yaml_config = Sequelizer::YamlConfig.new
     yaml_config.stub(:options, options) do
-      Sequelizer::YamlConfig.stub :new, yaml_config, &block
+      Sequelizer::YamlConfig.stub(:new, yaml_config, &)
     end
   end
 

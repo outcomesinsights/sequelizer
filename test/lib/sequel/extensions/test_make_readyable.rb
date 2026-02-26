@@ -1,7 +1,6 @@
 require_relative '../../../test_helper'
 require 'fileutils'
 require 'tmpdir'
-require 'pathname'
 require 'sequel'
 require 'sequel/extensions/make_readyable'
 
