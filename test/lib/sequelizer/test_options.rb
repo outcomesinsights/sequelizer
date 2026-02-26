@@ -100,12 +100,67 @@ class TestOptions < Minitest::Test
     assert_nil(options.adapter)
   end
 
+  def test_handles_array_search_path
+    options = Sequelizer::Options.new(
+      Sequelizer::OptionsHash.new(adapter: 'postgres', search_path: %w[public my_schema]),
+    )
+
+    assert_equal(%w[public my_schema], options.search_path)
+    assert_after_connect_sql(
+      options,
+      ['CREATE SCHEMA IF NOT EXISTS public',
+       'CREATE SCHEMA IF NOT EXISTS my_schema',
+       'SET search_path TO public, my_schema'],
+    )
+  end
+
+  def test_handles_mixed_array_search_path
+    options = Sequelizer::Options.new(
+      Sequelizer::OptionsHash.new(adapter: 'postgres', search_path: ['public', 'schema_a, schema_b']),
+    )
+
+    assert_equal(['public', 'schema_a, schema_b'], options.search_path)
+    assert_after_connect_sql(
+      options,
+      ['CREATE SCHEMA IF NOT EXISTS public',
+       'CREATE SCHEMA IF NOT EXISTS schema_a',
+       'CREATE SCHEMA IF NOT EXISTS schema_b',
+       'SET search_path TO public, schema_a, schema_b'],
+    )
+  end
+
+  def test_handles_string_search_path_in_after_connect
+    options = Sequelizer::Options.new(
+      Sequelizer::OptionsHash.new(adapter: 'postgres', search_path: 'public, my_schema'),
+    )
+
+    assert_after_connect_sql(
+      options,
+      ['CREATE SCHEMA IF NOT EXISTS public',
+       'CREATE SCHEMA IF NOT EXISTS my_schema',
+       'SET search_path TO public, my_schema'],
+    )
+  end
+
   def test_handles_extensions_passed_in
     options = Sequelizer::Options.new(extension_example_one: 1, extension_example_two: 1, not_an_extension_example: 1)
 
     assert_equal 1, options.to_hash[:not_an_extension_example]
     assert_includes options.extensions, :example_one, 'Failed to find example_one in extensions'
     assert_includes options.extensions, :example_two, 'Failed to find example_two in extensions'
+  end
+
+  private
+
+  # Invokes the inner after_connect proc (the one that creates schemas and
+  # sets search_path) via the make_ac wrapper, and asserts it produced the
+  # expected SQL statements.
+  def assert_after_connect_sql(options, expected_sqls)
+    db = Sequel.mock(host: :postgres)
+    raw_conn = db.synchronize { |c| c }
+    options.to_hash[:after_connect].call(raw_conn, :default, db)
+
+    assert_equal(expected_sqls, db.sqls)
   end
 
 end

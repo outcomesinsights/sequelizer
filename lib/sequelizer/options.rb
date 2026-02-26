@@ -147,17 +147,22 @@ module Sequelizer
     # 1. Create each schema in the search path if it doesn't exist
     # 2. Set the search_path for the connection
     #
-    # @param search_path [String] comma-separated list of PostgreSQL schemas
+    # @param search_path [String, Array<String>] PostgreSQL schema names as a
+    #   comma-separated string, an Array of schema names, or a mixed Array
+    #   containing comma-separated strings
     # @return [Proc] callback to execute after connection
-    # @example
+    # @example String input
     #   callback = after_connect('public,app_schema')
-    #   # When called, creates schemas and sets search_path
+    # @example Array input
+    #   callback = after_connect(['public', 'app_schema'])
     def after_connect(search_path)
+      schemas = Array(search_path).flat_map { |p| p.to_s.split(',') }.map(&:strip)
+      path_string = schemas.join(', ')
       proc do |conn|
-        search_path.split(',').map(&:strip).each do |schema|
+        schemas.each do |schema|
           conn.execute("CREATE SCHEMA IF NOT EXISTS #{schema}")
         end
-        conn.execute("SET search_path TO #{search_path}")
+        conn.execute("SET search_path TO #{path_string}")
       end
     end
 
