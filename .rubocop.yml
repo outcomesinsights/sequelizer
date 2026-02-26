@@ -2,7 +2,7 @@ plugins:
   - rubocop-minitest
 
 AllCops:
-  TargetRubyVersion: 4.0
+  TargetRubyVersion: 3.2
   NewCops: enable
   Exclude:
     - 'vendor/**/*'
@@ -151,10 +151,6 @@ Style/TrailingCommaInHashLiteral:
 
 # Disable gemspec-specific rules that don't apply to this project
 Gemspec/DevelopmentDependencies:
-  Enabled: false
-
-# We lint with TargetRubyVersion 4.0 but support >= 3.2 in the gemspec
-Gemspec/RequiredRubyVersion:
   Enabled: false
 
 # Disable some style rules for tests to allow more flexibility
