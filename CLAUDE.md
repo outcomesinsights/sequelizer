@@ -211,6 +211,13 @@ This project follows standard Ruby community conventions enforced by RuboCop, em
 
 There is a separate, planned evolution of this gem documented in `oimnibus/projects/in-development/sequelizer/` with 31 ADRs. That project would add a `Platform` object to `Sequel::Database` instances with `supports_*?`/`prefers_*?` methods for abstracting RDBMS-specific behavior across Postgres, Spark, Athena, and Snowflake. **This is NOT yet implemented in this gem** — the current gem is DB-connection-only. The platform abstraction is entirely in planning documents.
 
+## Agent Rules
+
+1. **NEVER skip, hide, or conditionally disable tests to avoid failures.** If a test fails because a dependency is missing, add the dependency. If a test fails because fixture data is missing, create the fixtures. Wrapping a `require` in `rescue LoadError` and returning early is just as bad as deleting the test. Fix the root cause.
+2. **NEVER exclude files from coverage to dodge SimpleCov thresholds.** If coverage is low because tests aren't running, make the tests run.
+3. **Always test locally across all supported Ruby versions before pushing.** Use `MISE_RUBY_VERSION=X.Y mise exec -- bundle exec rake test` for each version in the CI matrix (3.2, 3.3, 3.4, 4.0).
+4. **Run both `bundle exec rubocop` and `bundle exec rake test` before every push.** No exceptions.
+
 ## Development Memories
 
 - Ensure that bundler is used for all ruby/rake related cli invocations
