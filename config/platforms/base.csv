@@ -1,0 +1,5 @@
+key,value
+supports_cte,true
+supports_cte_recursive,true
+supports_temp_tables,true
+drop_table_needs_unquoted,false

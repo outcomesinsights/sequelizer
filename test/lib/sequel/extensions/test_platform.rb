@@ -1,13 +1,6 @@
 require_relative '../../../test_helper'
 require 'sequel'
-
-begin
-  require 'sequel/extensions/platform'
-rescue LoadError
-  # kvcsv gem not available — skip platform tests
-end
-
-return unless defined?(KVCSV)
+require 'sequel/extensions/platform'
 
 class TestPlatform < Minitest::Test
 
