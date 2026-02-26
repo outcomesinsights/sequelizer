@@ -1,5 +1,4 @@
 require 'psych'
-require 'pathname'
 require 'erb'
 
 module Sequelizer

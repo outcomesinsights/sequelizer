@@ -153,6 +153,10 @@ Style/TrailingCommaInHashLiteral:
 Gemspec/DevelopmentDependencies:
   Enabled: false
 
+# We lint with TargetRubyVersion 4.0 but support >= 3.2 in the gemspec
+Gemspec/RequiredRubyVersion:
+  Enabled: false
+
 # Disable some style rules for tests to allow more flexibility
 Style/HashLikeCase:
   Exclude:

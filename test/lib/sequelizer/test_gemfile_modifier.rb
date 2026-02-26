@@ -79,9 +79,9 @@ class TestGemfileModifier < Minitest::Test
     pn_mock.expect(:exist?, true)
   end
 
-  def stub_modifying_methods(obj, &block)
+  def stub_modifying_methods(obj, &)
     obj.stub(:system, nil) do
-      obj.stub(:puts, nil, &block)
+      obj.stub(:puts, nil, &)
     end
   end
 
