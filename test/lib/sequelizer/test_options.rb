@@ -72,6 +72,34 @@ class TestOptions < Minitest::Test
     assert_equal(['SELECT * FROM "table"'], db.sqls)
   end
 
+  def test_url_based_connection_processes_search_path
+    options = Sequelizer::Options.new(
+      Sequelizer::OptionsHash.new(url: 'postgres://localhost/mydb', search_path: 'my_schema'),
+    )
+
+    assert_equal('my_schema', options.search_path)
+    assert_instance_of(Proc, options.to_hash[:after_connect])
+  end
+
+  def test_url_based_connection_processes_schema_as_search_path
+    options = Sequelizer::Options.new(
+      Sequelizer::OptionsHash.new(url: 'postgresql://localhost/mydb', schema: 'my_schema'),
+    )
+
+    assert_equal('my_schema', options.search_path)
+  end
+
+  def test_url_based_connection_skips_search_path_processing_for_non_postgres
+    options = Sequelizer::Options.new(
+      Sequelizer::OptionsHash.new(url: 'mysql2://localhost/mydb', search_path: 'my_schema'),
+    )
+
+    # search_path key remains but is NOT processed (no schema creation callback)
+    assert_equal('my_schema', options.search_path)
+    # adapter should not be normalized to 'postgres'
+    assert_nil(options.adapter)
+  end
+
   def test_handles_extensions_passed_in
     options = Sequelizer::Options.new(extension_example_one: 1, extension_example_two: 1, not_an_extension_example: 1)
 

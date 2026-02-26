@@ -1,3 +1,4 @@
+require 'uri'
 require_relative 'yaml_config'
 require_relative 'env_config'
 require_relative 'options_hash'
@@ -98,7 +99,10 @@ module Sequelizer
       opts = OptionsHash.new(passed_options || {}).to_hash
       sequelizer_options = db_config(opts).merge(opts)
 
-      if sequelizer_options[:adapter] =~ /^postgres/
+      adapter = sequelizer_options[:adapter]
+      adapter ||= URI.parse(sequelizer_options[:url].to_s).scheme if sequelizer_options[:url]
+
+      if adapter =~ /^postgres/
         sequelizer_options[:adapter] = 'postgres'
         paths = %w[search_path schema_search_path schema].map { |key| sequelizer_options.delete(key) }.compact
 
