@@ -292,7 +292,7 @@ module Sequel
     # @param opts_chain [Hash] the dataset's query options
     # @return [Array<Symbol>] array of column names from table.* expressions
     def extract_table_star_columns(cols, opts_chain)
-      cols.select { |c| c.is_a?(Sequel::SQL::ColumnAll) }
+      cols.grep(Sequel::SQL::ColumnAll)
           .flat_map { |c| from_named_sources(c.table, opts_chain) }
     end
 
@@ -359,7 +359,7 @@ module Sequel
     # @return [Array<Symbol>, nil] column names if found, nil otherwise
     def find_from_alias(name, opts_chain)
       from = (opts_chain[:from] || [])
-             .select { |f| f.is_a?(Sequel::SQL::AliasedExpression) }
+             .grep(Sequel::SQL::AliasedExpression)
              .detect { |f| literal(f.alias) == literal(name) }
 
       from&.expression&.columns_search(opts_chain)
