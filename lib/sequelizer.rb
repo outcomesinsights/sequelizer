@@ -1,5 +1,6 @@
 require_relative 'sequelizer/version'
 require_relative 'sequelizer/connection_maker'
+require_relative 'sequelizer/optional_adapter_support'
 require_relative 'sequelizer/monkey_patches/database_in_after_connect'
 require_relative 'sequel/extensions/db_opts'
 require_relative 'sequel/extensions/settable'

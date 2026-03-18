@@ -120,4 +120,66 @@ class TestConnectionMaker < Minitest::Test
     end
   end
 
+  def test_requires_duckdb_optional_adapter_gems_before_connecting_with_adapter
+    options = { adapter: 'duckdb', database: '/tmp/test.duckdb' }
+    required = []
+    connected = nil
+    fake_db = Object.new
+    fake_db.define_singleton_method(:extension) { |*| self }
+
+    Sequelizer::OptionalAdapterSupport.stub(:load_library, ->(library) { required << library }) do
+      Sequel.stub(:connect, lambda { |opts|
+        connected = opts
+        fake_db
+      }) do
+        Sequelizer::ConnectionMaker.new(options).connection
+      end
+    end
+
+    assert_equal(%w[duckdb sequel-duckdb], required)
+    assert_equal('duckdb', connected['adapter'])
+    assert_equal('/tmp/test.duckdb', connected['database'])
+    assert_instance_of(Proc, connected['after_connect'])
+  end
+
+  def test_requires_hexspace_optional_adapter_gems_before_connecting_with_url
+    options = { url: 'hexspace://localhost:10000/default' }
+    required = []
+    connected = nil
+    fake_db = Object.new
+    fake_db.define_singleton_method(:extension) { |*| self }
+
+    Sequelizer::OptionalAdapterSupport.stub(:load_library, ->(library) { required << library }) do
+      Sequel.stub(:connect, lambda { |url, opts|
+        connected = [url, opts]
+        fake_db
+      }) do
+        Sequelizer::ConnectionMaker.new(options).connection
+      end
+    end
+
+    assert_equal(['sequel-hexspace'], required)
+    assert_equal('hexspace://localhost:10000/default', connected.first)
+    assert_instance_of(Proc, connected.last['after_connect'])
+  end
+
+  def test_raises_clear_error_when_optional_adapter_gem_is_missing
+    options = { adapter: 'hexspace', database: 'default' }
+
+    Sequelizer::OptionalAdapterSupport.stub(:load_library, lambda { |library|
+      raise(
+        LoadError.new('cannot load such file').tap do |error|
+          error.define_singleton_method(:path) { library }
+        end,
+      )
+    }) do
+      error = assert_raises(Sequelizer::MissingOptionalAdapterError) do
+        Sequelizer::ConnectionMaker.new(options).connection
+      end
+
+      assert_match(/hexspace connections require optional gems 'sequel-hexspace'/i, error.message)
+      assert_match(/BUNDLE_WITH=hexspace/, error.message)
+    end
+  end
+
 end

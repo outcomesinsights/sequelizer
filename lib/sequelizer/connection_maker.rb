@@ -63,6 +63,8 @@ module Sequelizer
     private
 
     def create_sequel_connection(opts)
+      Sequelizer::OptionalAdapterSupport.require_adapter!(opts)
+
       if (url = opts.delete(:uri) || opts.delete(:url))
         Sequel.connect(url, opts)
       else
