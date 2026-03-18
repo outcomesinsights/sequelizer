@@ -1,7 +1,7 @@
 {
   "database": "dolt",
-  "jsonl_export": "issues.jsonl",
   "backend": "dolt",
   "dolt_mode": "server",
-  "dolt_database": "beads_sequelizer"
+  "dolt_database": "beads_sequelizer",
+  "project_id": "9b3408a7-7ce3-4772-96c3-4b0ee908722d"
 }

@@ -38,3 +38,7 @@ tags
 .worktrees/
 .claude/settings.local.json
 .specstory/
+
+# Dolt database files (added by bd init)
+.dolt/
+*.db
