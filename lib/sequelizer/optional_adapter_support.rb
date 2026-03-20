@@ -7,31 +7,41 @@ module Sequelizer
 
   module OptionalAdapterSupport
 
+    # Optional adapters are database drivers that live in separate gems
+    # and are only needed when connecting to that specific database type.
+    # Sequel handles adapter discovery and loading automatically via
+    # `require "sequel/adapters/shared/#{scheme}"` (for mocks) and
+    # `require "sequel/adapters/#{scheme}"` (for real connections).
+    #
+    # This module just detects when a connection targets an optional
+    # adapter whose gems aren't installed and raises a helpful error.
     OPTIONAL_ADAPTERS = {
       duckdb: {
         gems: %w[duckdb sequel-duckdb].freeze,
-        libraries: %w[duckdb sequel-duckdb].freeze,
         bundle_group: 'duckdb',
       },
       hexspace: {
         gems: ['sequel-hexspace'].freeze,
-        libraries: ['sequel-hexspace'].freeze,
         bundle_group: 'hexspace',
       },
     }.freeze
 
     class << self
 
+      # Called before Sequel.connect to provide a friendlier error
+      # message when optional adapter gems are missing.
       def require_adapter!(options)
         adapter = adapter_from_options(options)
         return unless adapter
 
+        # Let Sequel handle the actual loading — we just check that
+        # the adapter gem is available in the bundle.
         config = OPTIONAL_ADAPTERS.fetch(adapter)
-        config[:libraries].each { |library| load_library(library) }
-      rescue LoadError => e
-        raise missing_optional_adapter_error(adapter, e) if adapter && optional_dependency_load_error?(adapter, e)
-
-        raise
+        config[:gems].each do |gem_name|
+          Gem::Specification.find_by_name(gem_name)
+        end
+      rescue Gem::MissingSpecError
+        raise missing_optional_adapter_error(adapter)
       end
 
       private
@@ -51,20 +61,7 @@ module Sequelizer
         URI.parse(url.to_s).scheme
       end
 
-      def load_library(library)
-        require library
-      end
-
-      def optional_dependency_load_error?(adapter, error)
-        config = OPTIONAL_ADAPTERS.fetch(adapter)
-        path = error.path.to_s
-
-        config[:libraries].any? do |library|
-          path == library || path.end_with?("/#{library}")
-        end
-      end
-
-      def missing_optional_adapter_error(adapter, error)
+      def missing_optional_adapter_error(adapter)
         config = OPTIONAL_ADAPTERS.fetch(adapter)
         gems = config[:gems].map { |name| "'#{name}'" }.join(', ')
 
@@ -72,9 +69,7 @@ module Sequelizer
           "#{adapter} connections require optional gems #{gems}. " \
           "Add them to your bundle and install with BUNDLE_WITH=#{config[:bundle_group]} " \
           "(or declare the gems directly) before selecting the #{adapter} adapter.",
-        ).tap do |wrapped_error|
-          wrapped_error.set_backtrace(error.backtrace)
-        end
+        )
       end
 
     end
