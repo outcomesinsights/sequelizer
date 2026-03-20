@@ -77,6 +77,15 @@ class TestPlatform < Minitest::Test
     assert_instance_of Sequel::Platform::Base, db.platform
   end
 
+  def test_selects_base_platform_for_mock_duckdb_connection
+    db = Sequel.connect('mock://duckdb')
+    db.extension :platform
+
+    # DuckDB doesn't have a platform class yet, so it falls back to Base
+    assert_instance_of Sequel::Platform::Base, db.platform
+    assert_equal :duckdb, db.database_type
+  end
+
   # --- Config Loading ---
 
   def test_supports_returns_boolean_from_config

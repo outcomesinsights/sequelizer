@@ -8,5 +8,6 @@ group :development do
 end
 
 group :test do
+  gem 'sequel-duckdb', github: 'outcomesinsights/sequel-duckdb', branch: 'main'
   gem 'sequel-hexspace', github: 'outcomesinsights/sequel-hexspace', branch: 'master'
 end

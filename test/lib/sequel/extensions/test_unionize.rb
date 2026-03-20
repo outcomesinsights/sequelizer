@@ -3,6 +3,18 @@ require 'sequel'
 
 class TestUnionize < Minitest::Test
 
+  def test_mock_duckdb_connection_creates_temp_tables
+    db = Sequel.connect('mock://duckdb').extension(:unionize)
+    ds = db.unionize([db[:a], db[:b], db[:c], db[:d]], chunk_size: 2, from_self: false)
+
+    sqls = db.sqls
+    assert_equal 2, sqls.length
+    sqls.each do |sql|
+      assert_match(/CREATE TEMPORARY TABLE .* AS SELECT \* FROM .* UNION SELECT \* FROM/, sql)
+    end
+    assert_match(/SELECT \* FROM .* UNION SELECT \* FROM/, ds.sql)
+  end
+
   def test_should_unionize_a_single_dataset
     db = Sequel.mock(host: :spark).extension(:unionize)
     ds = db.unionize([db[:a]])

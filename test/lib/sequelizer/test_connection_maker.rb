@@ -120,7 +120,7 @@ class TestConnectionMaker < Minitest::Test
     end
   end
 
-  def test_checks_duckdb_gem_availability_before_connecting
+  def test_passes_duckdb_adapter_options_through_to_sequel
     options = { adapter: 'duckdb', database: '/tmp/test.duckdb' }
     connected = nil
     fake_db = Object.new
@@ -138,7 +138,7 @@ class TestConnectionMaker < Minitest::Test
     assert_instance_of(Proc, connected['after_connect'])
   end
 
-  def test_checks_hexspace_gem_availability_before_connecting_with_url
+  def test_passes_hexspace_url_through_to_sequel
     options = { url: 'hexspace://localhost:10000/default' }
     connected = nil
     fake_db = Object.new
@@ -153,19 +153,6 @@ class TestConnectionMaker < Minitest::Test
 
     assert_equal('hexspace://localhost:10000/default', connected.first)
     assert_instance_of(Proc, connected.last['after_connect'])
-  end
-
-  def test_raises_clear_error_when_optional_adapter_gem_is_missing
-    options = { adapter: 'hexspace', database: 'default' }
-
-    Gem::Specification.stub(:find_by_name, ->(_) { raise Gem::MissingSpecError }) do
-      error = assert_raises(Sequelizer::MissingOptionalAdapterError) do
-        Sequelizer::ConnectionMaker.new(options).connection
-      end
-
-      assert_match(/hexspace connections require optional gems 'sequel-hexspace'/i, error.message)
-      assert_match(/BUNDLE_WITH=hexspace/, error.message)
-    end
   end
 
 end

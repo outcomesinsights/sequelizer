@@ -1,4 +1,12 @@
 GIT
+  remote: https://github.com/outcomesinsights/sequel-duckdb.git
+  revision: 6fc858e43762047741c27e7d8713d63e28b62001
+  branch: main
+  specs:
+    sequel-duckdb (0.1.0)
+      sequel (~> 5.0, >= 5.0)
+
+GIT
   remote: https://github.com/outcomesinsights/sequel-hexspace.git
   revision: 91ff040fac46380e2b35406ab4c8a7041beacd25
   branch: master
@@ -181,6 +189,7 @@ DEPENDENCIES
   rake (~> 13.3)
   rubocop (~> 1.0)
   rubocop-minitest (~> 0.25)
+  sequel-duckdb!
   sequel-hexspace!
   sequelizer!
   simplecov (~> 0.22)

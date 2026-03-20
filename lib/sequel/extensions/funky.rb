@@ -89,7 +89,7 @@ module Sequel
       def make_json_column(ds, key_column, value_column)
         json_object_col = Sequel.function(
           :json_object,
-          key_column,
+          Sequel.cast_string(key_column),
           value_column,
         ).then do |json_object_col|
           Sequel.function(

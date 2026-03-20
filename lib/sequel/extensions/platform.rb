@@ -265,20 +265,19 @@ module Sequel
       platform_class.new(db, *config_paths)
     end
 
-    # Detect the effective adapter for platform selection.
-    # For mock databases, use database_type or host option; otherwise use adapter_scheme.
+    # Returns the effective database type for platform selection.
+    #
+    # For real connections, database_type is authoritative.  For mock
+    # connections whose shared adapter isn't installed (e.g. snowflake,
+    # athena), database_type returns :mock; fall back to opts[:host].
     #
     # @param db [Sequel::Database] Database connection
-    # @return [Symbol] Effective adapter type
+    # @return [Symbol] Effective database type
     def self.effective_adapter(db)
-      return db.adapter_scheme unless db.adapter_scheme == :mock
-
-      # Mock databases: try database_type first (set for known types like postgres, spark)
       db_type = db.database_type
-      return db_type if db_type && db_type != :mock
+      return db_type unless db_type == :mock
 
-      # Fall back to host option (for unknown types like snowflake, athena)
-      db.opts[:host]
+      db.opts[:host]&.to_sym
     end
 
     # Extension hook - called when extension is loaded
