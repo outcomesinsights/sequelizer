@@ -8,6 +8,7 @@ class TestUnionize < Minitest::Test
     ds = db.unionize([db[:a], db[:b], db[:c], db[:d]], chunk_size: 2, from_self: false)
 
     sqls = db.sqls
+
     assert_equal 2, sqls.length
     sqls.each do |sql|
       assert_match(/CREATE TEMPORARY TABLE .* AS SELECT \* FROM .* UNION SELECT \* FROM/, sql)
