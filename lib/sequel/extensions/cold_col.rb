@@ -172,7 +172,8 @@ module Sequel
 
     def create_table_as(name, sql, options = {})
       super.tap do |_|
-        record_table(name, columns_from_sql(sql))
+        columns = columns_from_sql(sql) rescue nil
+        record_table(name, columns) if columns
       end
     end
 
@@ -190,7 +191,8 @@ module Sequel
 
     def create_view_sql(name, source, options)
       super.tap do |_|
-        record_view(name, columns_from_sql(source)) unless options[:dont_record]
+        columns = columns_from_sql(source) rescue nil
+        record_view(name, columns) if columns && !options[:dont_record]
       end
     end
 

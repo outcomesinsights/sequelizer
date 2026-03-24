@@ -87,12 +87,12 @@ module Sequel
       only_tables = Array(opts[:only])
       created_views = Array(opts[:except]) || []
       (opts[:search_path] || []).flatten.each do |schema|
-        schema = schema.to_sym unless schema.is_a?(Pathname)
+        schema = schema.to_sym unless schema.is_a?(Pathname) || schema.is_a?(Sequel::SQL::QualifiedIdentifier)
         source = get_source(db, schema)
         tables = if schema.is_a?(Pathname)
                    source.tables - created_views
                  else
-                   source.tables(schema: schema) - created_views
+                   (source.tables(schema: schema) + source.views(schema: schema)) - created_views
                  end
         tables &= only_tables unless only_tables.empty?
         tables.each do |table|
@@ -110,9 +110,9 @@ module Sequel
     def create_view(source, table, schema)
       if schema.to_s =~ %r{/}
         source.create_view(table, temp: true)
+      elsif db.database_type == :duckdb
+        source.create_or_replace_view(table, db[Sequel.qualify(schema, table)], temp: true)
       else
-        # For schema-based tables, just create temporary views
-        # This extension is primarily for Spark SQL-based databases
         source.create_view(table, db[Sequel.qualify(schema, table)], temp: true)
       end
     end
