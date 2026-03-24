@@ -88,36 +88,26 @@ module Sequel
       end
 
       # Find column information for a given table/view name.
-      # This method searches through all available registries in priority order:
+      # Searches all registries in priority order:
       # 1. Created views (highest priority - most recent)
       # 2. Created tables (medium priority - session specific)
       # 3. Loaded schemas (lowest priority - external definitions)
       #
-      # @param name [String, Symbol] the table/view name to look up
+      # @param name [String, Symbol, Sequel::SQL::Identifier, Sequel::SQL::QualifiedIdentifier]
       # @return [Array<Symbol>, nil] array of column names as symbols, or nil if not found
       def find_columns(name)
-        table_name = name.to_s
         literal_name = @db.literal(name)
+        table_name = name_to_string(name)
 
-        # Search through registries in priority order
         [@created_views, @created_tables, @schemas].each do |registry|
           next unless registry
 
-          # Try literal representation first (most common for created tables/views)
           if (columns = Sequel.synchronize { registry[literal_name] })
             return columns.map { |c, _| c }
           end
 
-          # Try string representation (for manually added schemas)
           if (columns = Sequel.synchronize { registry[table_name] })
             return columns.map { |c, _| c }
-          end
-
-          # Try finding by Sequel::LiteralString key (for test setup compatibility)
-          registry.each_key do |key|
-            if key.respond_to?(:to_s) && key.to_s == literal_name && (columns = Sequel.synchronize { registry[key] })
-              return columns.map { |c, _| c }
-            end
           end
         end
 
@@ -138,6 +128,22 @@ module Sequel
       # @param schemas_hash [Hash] the new schemas hash to use
       def set_schemas(schemas_hash)
         Sequel.synchronize { @schemas = schemas_hash }
+      end
+
+      private
+
+      # Extract a plain string name from any Sequel name type.
+      # Sequel::SQL::Identifier#to_s returns an inspect-like string, not the value,
+      # so we must unwrap expression types to get a usable lookup key.
+      def name_to_string(name)
+        case name
+        when Sequel::SQL::QualifiedIdentifier
+          "#{name_to_string(name.table)}.#{name_to_string(name.column)}"
+        when Sequel::SQL::Identifier
+          name.value.to_s
+        else
+          name.to_s
+        end
       end
 
     end
@@ -172,8 +178,7 @@ module Sequel
 
     def create_table_as(name, sql, options = {})
       super.tap do |_|
-        columns = columns_from_sql(sql) rescue nil
-        record_table(name, columns) if columns
+        record_table(name, columns_from_sql(sql))
       end
     end
 
@@ -191,8 +196,7 @@ module Sequel
 
     def create_view_sql(name, source, options)
       super.tap do |_|
-        columns = columns_from_sql(source) rescue nil
-        record_view(name, columns) if columns && !options[:dont_record]
+        record_view(name, columns_from_sql(source)) unless options[:dont_record]
       end
     end
 

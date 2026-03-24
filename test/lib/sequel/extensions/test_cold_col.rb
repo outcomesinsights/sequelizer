@@ -137,8 +137,11 @@ describe Sequel::ColdColDatabase do
     expect_columns(ds, :a)
   end
 
-  it 'should ignore columns when asked, thus avoiding an issue with string-only SQL' do
-    assert_raises(NoMethodError) { db.create_view(:ctas_view, 'SELECT 1 AS A') }
+  it 'should raise on string-only SQL without dont_record' do
+    assert_raises { db.create_view(:ctas_view, 'SELECT 1 AS A') }
+  end
+
+  it 'should skip column recording with dont_record option' do
     db.create_view(:ctas_view, 'SELECT 1 AS A', dont_record: true)
   end
 
