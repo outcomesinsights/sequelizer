@@ -137,12 +137,30 @@ describe Sequel::ColdColDatabase do
     expect_columns(ds, :a)
   end
 
-  it 'should raise on string-only SQL without dont_record' do
-    assert_raises(NoMethodError) { db.create_view(:ctas_view, 'SELECT 1 AS A') }
+  it 'should not raise when create_view receives string SQL' do
+    db.create_view(:string_view, 'SELECT 1 AS A')
+    # View is created but columns are not recorded (string has no .columns)
+    assert_raises(RuntimeError) { db[:string_view].columns }
   end
 
   it 'should skip column recording with dont_record option' do
     db.create_view(:ctas_view, 'SELECT 1 AS A', dont_record: true)
+  end
+
+  it 'should not raise when create_table_as receives string SQL' do
+    db.create_table(:string_ctas, as: 'SELECT 1 AS B')
+    # Table is created but columns are not recorded
+    assert_raises(RuntimeError) { db[:string_ctas].columns }
+  end
+
+  it 'should still register columns when create_table_as receives a dataset' do
+    db.create_table(:dataset_ctas, as: db[:tab1].select(:col1))
+    expect_columns(db[:dataset_ctas], :col1)
+  end
+
+  it 'should still register columns when create_view receives a dataset' do
+    db.create_view(:dataset_view, db[:tab1].select(:col1))
+    expect_columns(db[:dataset_view], :col1)
   end
 
   it 'should handle load_schema with empty file' do
