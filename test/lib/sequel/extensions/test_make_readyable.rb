@@ -33,8 +33,11 @@ class TestUsable < Minitest::Test
     @db.make_ready(search_path: %i[schema1 schema2 schema3])
 
     assert_equal([
+                   'SHOW VIEWS IN `schema1`',
                    'CREATE TEMPORARY VIEW `a` AS SELECT * FROM `schema1`.`a`',
+                   'SHOW VIEWS IN `schema2`',
                    'CREATE TEMPORARY VIEW `b` AS SELECT * FROM `schema2`.`b`',
+                   'SHOW VIEWS IN `schema3`',
                  ], @db.sqls)
   end
 
@@ -42,8 +45,11 @@ class TestUsable < Minitest::Test
     @db.make_ready(search_path: %w[schema1 schema2 schema3])
 
     assert_equal([
+                   'SHOW VIEWS IN `schema1`',
                    'CREATE TEMPORARY VIEW `a` AS SELECT * FROM `schema1`.`a`',
+                   'SHOW VIEWS IN `schema2`',
                    'CREATE TEMPORARY VIEW `b` AS SELECT * FROM `schema2`.`b`',
+                   'SHOW VIEWS IN `schema3`',
                  ], @db.sqls)
   end
 
@@ -51,7 +57,10 @@ class TestUsable < Minitest::Test
     @db.make_ready(search_path: %i[schema1 schema2 schema3], except: :a)
 
     assert_equal([
+                   'SHOW VIEWS IN `schema1`',
+                   'SHOW VIEWS IN `schema2`',
                    'CREATE TEMPORARY VIEW `b` AS SELECT * FROM `schema2`.`b`',
+                   'SHOW VIEWS IN `schema3`',
                  ], @db.sqls)
   end
 
@@ -59,7 +68,10 @@ class TestUsable < Minitest::Test
     @db.make_ready(search_path: %i[schema1 schema2 schema3], only: :b)
 
     assert_equal([
+                   'SHOW VIEWS IN `schema1`',
+                   'SHOW VIEWS IN `schema2`',
                    'CREATE TEMPORARY VIEW `b` AS SELECT * FROM `schema2`.`b`',
+                   'SHOW VIEWS IN `schema3`',
                  ], @db.sqls)
   end
 
@@ -73,8 +85,10 @@ class TestUsable < Minitest::Test
     @db.make_ready(search_path: [:schema1, a_file, b_file, :schema2])
     sqls = @db.sqls.dup
 
-    assert_equal('CREATE TEMPORARY VIEW `a` AS SELECT * FROM `schema1`.`a`', sqls[0])
-    assert_match(%r{CREATE TEMPORARY VIEW `b` USING parquet OPTIONS \('path'='/tmp/[^/]+/b.parquet'\)}, sqls[1])
+    assert_equal('SHOW VIEWS IN `schema1`', sqls[0])
+    assert_equal('CREATE TEMPORARY VIEW `a` AS SELECT * FROM `schema1`.`a`', sqls[1])
+    assert_match(%r{CREATE TEMPORARY VIEW `b` USING parquet OPTIONS \('path'='/tmp/[^/]+/b.parquet'\)}, sqls[2])
+    assert_equal('SHOW VIEWS IN `schema2`', sqls[3])
   end
 
   def test_should_create_views_format_based_on_path
