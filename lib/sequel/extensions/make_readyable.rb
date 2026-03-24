@@ -89,16 +89,26 @@ module Sequel
       (opts[:search_path] || []).flatten.each do |schema|
         schema = schema.to_sym unless schema.is_a?(Pathname) || schema.is_a?(Sequel::SQL::QualifiedIdentifier)
         source = get_source(db, schema)
-        tables = if schema.is_a?(Pathname)
-                   source.tables - created_views
-                 else
-                   (source.tables(schema: schema) + source.views(schema: schema)) - created_views
-                 end
+        tables = available_tables(source, schema, created_views)
         tables &= only_tables unless only_tables.empty?
         tables.each do |table|
           create_view(source, table, schema)
           created_views << table
         end
+      end
+    end
+
+    # Returns tables (and views) from the source that haven't already been created.
+    #
+    # @param source [Sequel::Database, FileSourcerer] the source handler
+    # @param schema [Symbol, Pathname] the schema or file path
+    # @param created_views [Array<Symbol>] tables/views already created
+    # @return [Array<Symbol>] available table names
+    def available_tables(source, schema, created_views)
+      if schema.is_a?(Pathname)
+        source.tables - created_views
+      else
+        (source.tables(schema: schema) + source.views(schema: schema)) - created_views
       end
     end
 
