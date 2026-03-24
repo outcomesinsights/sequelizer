@@ -138,7 +138,7 @@ describe Sequel::ColdColDatabase do
   end
 
   it 'should raise on string-only SQL without dont_record' do
-    assert_raises { db.create_view(:ctas_view, 'SELECT 1 AS A') }
+    assert_raises(NoMethodError) { db.create_view(:ctas_view, 'SELECT 1 AS A') }
   end
 
   it 'should skip column recording with dont_record option' do

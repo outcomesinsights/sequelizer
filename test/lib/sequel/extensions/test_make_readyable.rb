@@ -189,14 +189,15 @@ class TestUsable < Minitest::Test
     refute_match(%r{CREATE TEMPORARY VIEW `a` USING csv OPTIONS \('path'='/tmp/[^/]+/three/a.csv'\)}, sqls[2])
   end
 
-  def test_duckdb_external_file_support
-    # Test DuckDB - uses read_* functions for external files
-    duckdb_db = Sequel.mock
-    duckdb_db.extension :make_readyable
-    def duckdb_db.database_type
-      :duckdb
+  def make_duckdb_mock
+    Sequel.mock.tap do |db|
+      db.extension :make_readyable
+      db.define_singleton_method(:database_type) { :duckdb }
     end
+  end
 
+  def test_duckdb_external_file_support
+    duckdb_db = make_duckdb_mock
     dir = Pathname.new(Dir.mktmpdir)
     parquet_file = dir / 'test.parquet'
     csv_file = dir / 'test.csv'
@@ -224,12 +225,7 @@ class TestUsable < Minitest::Test
   end
 
   def test_unsupported_file_format_for_duckdb
-    # Test unsupported file format for DuckDB
-    duckdb_db = Sequel.mock
-    duckdb_db.extension :make_readyable
-    def duckdb_db.database_type
-      :duckdb
-    end
+    duckdb_db = make_duckdb_mock
 
     dir = Pathname.new(Dir.mktmpdir)
     orc_file = dir / 'test.orc'
@@ -242,18 +238,9 @@ class TestUsable < Minitest::Test
   end
 
   def test_duckdb_directory_support
-    # Test DuckDB with directory paths (globbing)
-    duckdb_db = Sequel.mock
-    duckdb_db.extension :make_readyable
-    def duckdb_db.database_type
-      :duckdb
-    end
-
-    # Mock directory? to return true
+    duckdb_db = make_duckdb_mock
     dir = Pathname.new(Dir.mktmpdir)
-    def dir.directory?
-      true
-    end
+    dir.define_singleton_method(:directory?) { true }
 
     file_sourcerer = Sequel::ReadyMaker::FileSourcerer.new(duckdb_db, dir)
 
