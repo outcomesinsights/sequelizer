@@ -178,7 +178,11 @@ module Sequel
 
     def create_table_as(name, sql, options = {})
       super.tap do |_|
-        columns = columns_from_sql(sql) rescue nil
+        columns = begin
+          columns_from_sql(sql)
+        rescue StandardError
+          nil
+        end
         record_table(name, columns) if columns
       end
     end
@@ -197,7 +201,11 @@ module Sequel
 
     def create_view_sql(name, source, options)
       super.tap do |_|
-        columns = columns_from_sql(source) rescue nil
+        columns = begin
+          columns_from_sql(source)
+        rescue StandardError
+          nil
+        end
         record_view(name, columns) if columns && !options[:dont_record]
       end
     end
