@@ -165,3 +165,7 @@ Lint/DuplicateBranch:
 Style/StringConcatenation:
   Exclude:
     - 'test/**/*'
+
+Style/OneClassPerFile:
+  Exclude:
+    - 'test/**/*'
