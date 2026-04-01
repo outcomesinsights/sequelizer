@@ -182,8 +182,8 @@ module Sequel
 
     end
 
-    # Map adapter schemes to platform classes
-    PLATFORM_CLASSES = {
+    # Default adapter-to-platform mappings. Use Platform.register to extend.
+    DEFAULT_PLATFORM_CLASSES = {
       postgres: Postgres,
       postgresql: Postgres,
       spark: Spark,
@@ -193,8 +193,8 @@ module Sequel
       snowflake: Snowflake,
     }.freeze
 
-    # Map adapter schemes to config file names
-    ADAPTER_CONFIG_NAMES = {
+    # Default adapter-to-config-file mappings. Use Platform.register to extend.
+    DEFAULT_ADAPTER_CONFIG_NAMES = {
       postgres: 'postgres',
       postgresql: 'postgres',
       spark: 'spark',
@@ -213,6 +213,42 @@ module Sequel
 
       # Allow overriding config dir for testing
       attr_writer :config_dir
+
+      # Runtime platform class registry, initialized from defaults.
+      def platform_classes
+        @platform_classes ||= DEFAULT_PLATFORM_CLASSES.dup
+      end
+
+      # Runtime adapter config name registry, initialized from defaults.
+      def adapter_config_names
+        @adapter_config_names ||= DEFAULT_ADAPTER_CONFIG_NAMES.dup
+      end
+
+      # Register a custom platform for one or more adapter schemes.
+      #
+      # @param schemes [Symbol, Array<Symbol>] adapter scheme(s) to register
+      # @param platform_class [Class] Platform subclass to use
+      # @param config_name [String, nil] name of the CSV config file under
+      #   config/platforms/rdbms/ (without .csv extension). If nil, no
+      #   adapter-specific config is loaded.
+      #
+      # @example Register a custom DuckDB platform
+      #   Sequel::Platform.register(:duckdb, MyDuckDBPlatform, 'duckdb')
+      #
+      # @example Register with multiple aliases
+      #   Sequel::Platform.register([:presto, :trino], AthenaPlatform, 'athena')
+      def register(schemes, platform_class, config_name = nil)
+        Array(schemes).each do |scheme|
+          platform_classes[scheme] = platform_class
+          adapter_config_names[scheme] = config_name if config_name
+        end
+      end
+
+      # Reset registries to defaults. Primarily for testing.
+      def reset_registries!
+        @platform_classes = nil
+        @adapter_config_names = nil
+      end
 
       private
 
@@ -242,7 +278,7 @@ module Sequel
         base_config = File.join(config_dir, 'base.csv')
         paths << base_config if File.exist?(base_config)
 
-        adapter_name = ADAPTER_CONFIG_NAMES[adapter_scheme]
+        adapter_name = adapter_config_names[adapter_scheme]
         if adapter_name
           rdbms_config = File.join(config_dir, 'rdbms', "#{adapter_name}.csv")
           paths << rdbms_config if File.exist?(rdbms_config)
@@ -253,14 +289,17 @@ module Sequel
       paths
     end
 
-    # Build platform instance for database
+    # Build platform instance for database.
+    #
+    # Looks up the adapter scheme in the platform registry and
+    # instantiates the matching platform class with stacked configs.
     #
     # @param db [Sequel::Database] Database connection
     # @param extra_configs [Array<String>] Additional config paths
     # @return [Platform::Base] Platform instance
     def self.build_platform(db, extra_configs = [])
       adapter = effective_adapter(db)
-      platform_class = PLATFORM_CLASSES.fetch(adapter, Base)
+      platform_class = platform_classes.fetch(adapter, Base)
       config_paths = config_paths_for(adapter, extra_configs)
       platform_class.new(db, *config_paths)
     end

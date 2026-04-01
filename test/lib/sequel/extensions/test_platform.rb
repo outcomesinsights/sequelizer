@@ -339,4 +339,75 @@ class TestPlatformExtended < Minitest::Test
     assert_equal :snowflake, adapter
   end
 
+  # --- Custom Adapter Registration ---
+
+  def test_register_custom_platform_class
+    custom_class = Class.new(Sequel::Platform::Base)
+    Sequel::Platform.register(:mydb, custom_class)
+
+    db = Sequel.mock(host: :mydb)
+    db.extension :platform
+
+    assert_kind_of custom_class, db.platform
+  ensure
+    Sequel::Platform.reset_registries!
+  end
+
+  def test_register_with_config_name
+    custom_class = Class.new(Sequel::Platform::Base)
+    Sequel::Platform.register(:mydb, custom_class, 'postgres')
+
+    assert_equal 'postgres', Sequel::Platform.adapter_config_names[:mydb]
+  ensure
+    Sequel::Platform.reset_registries!
+  end
+
+  def test_register_multiple_aliases
+    custom_class = Class.new(Sequel::Platform::Base)
+    Sequel::Platform.register(%i[alias_a alias_b], custom_class)
+
+    db_a = Sequel.mock(host: :alias_a)
+    db_a.extension :platform
+
+    db_b = Sequel.mock(host: :alias_b)
+    db_b.extension :platform
+
+    assert_kind_of custom_class, db_a.platform
+    assert_kind_of custom_class, db_b.platform
+  ensure
+    Sequel::Platform.reset_registries!
+  end
+
+  def test_register_overrides_default
+    custom_class = Class.new(Sequel::Platform::Postgres)
+    Sequel::Platform.register(:postgres, custom_class)
+
+    db = Sequel.mock(host: :postgres)
+    db.extension :platform
+
+    assert_kind_of custom_class, db.platform
+  ensure
+    Sequel::Platform.reset_registries!
+  end
+
+  def test_reset_registries_restores_defaults
+    custom_class = Class.new(Sequel::Platform::Base)
+    Sequel::Platform.register(:mydb, custom_class)
+
+    Sequel::Platform.reset_registries!
+
+    db = Sequel.mock(host: :mydb)
+    db.extension :platform
+
+    # Should fall back to Base since registry was reset
+    assert_instance_of Sequel::Platform::Base, db.platform
+  end
+
+  def test_unregistered_adapter_falls_back_to_base
+    db = Sequel.mock(host: :unknown_db)
+    db.extension :platform
+
+    assert_instance_of Sequel::Platform::Base, db.platform
+  end
+
 end
