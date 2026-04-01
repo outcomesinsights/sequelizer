@@ -229,3 +229,114 @@ class TestPlatform < Minitest::Test
   end
 
 end
+
+class TestPlatformExtended < Minitest::Test
+
+  def setup
+    @original_config_dir = Sequel::Platform.config_dir
+    Sequel::Platform.config_dir = File.expand_path('../../../../config/platforms', __dir__)
+  end
+
+  def teardown
+    Sequel::Platform.config_dir = @original_config_dir
+  end
+
+  # --- Additional Function Translations ---
+
+  def test_base_str_to_date_returns_to_date_function
+    db = Sequel.mock(host: :sqlite)
+    db.extension :platform
+
+    expr = db.platform.str_to_date('2024-01-15', '%Y-%m-%d')
+    sql = db.literal(expr)
+
+    assert_includes sql.downcase, 'to_date'
+  end
+
+  def test_spark_str_to_date_casts_to_string_first
+    db = Sequel.mock(host: :spark)
+    db.extension :platform
+
+    expr = db.platform.str_to_date(:date_col, '%Y-%m-%d')
+    sql = db.literal(expr)
+
+    assert_includes sql.downcase, 'to_date'
+    assert_includes sql.downcase, 'cast'
+  end
+
+  def test_postgres_days_between_uses_subtraction
+    db = Sequel.mock(host: :postgres)
+    db.extension :platform
+
+    expr = db.platform.days_between(:start_date, :end_date)
+    sql = db.literal(expr)
+
+    assert_includes sql, '-'
+  end
+
+  def test_snowflake_days_between_uses_datediff
+    db = Sequel.mock(host: :snowflake)
+    db.extension :platform
+
+    expr = db.platform.days_between(:start_date, :end_date)
+    sql = db.literal(expr)
+
+    assert_includes sql.downcase, 'datediff'
+    assert_includes sql, 'day'
+  end
+
+  def test_athena_days_between_uses_date_diff
+    db = Sequel.mock(host: :athena)
+    db.extension :platform
+
+    expr = db.platform.days_between(:start_date, :end_date)
+    sql = db.literal(expr)
+
+    assert_includes sql.downcase, 'date_diff'
+    assert_includes sql, 'day'
+  end
+
+  # --- Adapter Aliases ---
+
+  def test_selects_athena_platform_for_trino_adapter
+    db = Sequel.mock(host: :trino)
+    db.extension :platform
+
+    assert_kind_of Sequel::Platform::Athena, db.platform
+  end
+
+  def test_selects_postgres_platform_for_postgresql_adapter
+    db = Sequel.mock(host: :postgresql)
+    db.extension :platform
+
+    assert_kind_of Sequel::Platform::Postgres, db.platform
+  end
+
+  # --- Extra Config Paths ---
+
+  def test_accepts_extra_platform_configs
+    extra = File.expand_path('../../../../config/platforms/rdbms/athena.csv', __dir__)
+    db = Sequel.mock(host: :postgres, platform_configs: [extra])
+    db.extension :platform
+
+    # Athena config overrides drop_table_needs_unquoted to true
+    assert db.platform[:drop_table_needs_unquoted]
+  end
+
+  # --- Effective Adapter ---
+
+  def test_effective_adapter_uses_database_type_for_real_connections
+    db = Sequel.connect('mock://duckdb')
+    adapter = Sequel::Platform.effective_adapter(db)
+
+    assert_equal :duckdb, adapter
+  end
+
+  def test_effective_adapter_falls_back_to_host_for_mock
+    db = Sequel.mock(host: :snowflake)
+    adapter = Sequel::Platform.effective_adapter(db)
+
+    assert_equal :snowflake, adapter
+  end
+
+end

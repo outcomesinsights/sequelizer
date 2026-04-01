@@ -193,6 +193,82 @@ class TestCteExtractionExtractor < Minitest::Test
     assert_equal expr, result
   end
 
+  # --- Nested and Multi-level Extraction ---
+
+  def test_extracts_nested_ctes_within_cte_definitions
+    db = Sequel.mock(host: :postgres)
+
+    # inner CTE is nested inside outer CTE's definition
+    inner_ds = db[:raw_visits].where(active: true)
+    outer_ds = db[:inner_cohort].select(:patient_id)
+                                .with(:inner_cohort, inner_ds)
+
+    ds = db[:main].with(:outer_cohort, outer_ds)
+
+    extractor = Sequel::CteExtraction::Extractor.new
+    extractor.recursive_extract_ctes(ds)
+
+    names = extractor.ctes.map(&:first)
+
+    assert_includes names, :inner_cohort
+    assert_includes names, :outer_cohort
+  end
+
+  def test_extracts_multiple_interdependent_ctes
+    db = Sequel.mock(host: :postgres)
+
+    # c depends on b, b depends on a
+    cte_a = db[:visits].where(type: 'inpatient')
+    cte_b = db[:a].where(active: true)
+    cte_c = db[:b].select(:patient_id)
+
+    ds = db[:main]
+         .with(:c, cte_c)
+         .with(:b, cte_b)
+         .with(:a, cte_a)
+
+    extractor = Sequel::CteExtraction::Extractor.new
+    extractor.recursive_extract_ctes(ds)
+    sorted = extractor.sorted_ctes
+    names = sorted.map(&:first)
+
+    assert_equal 3, names.size
+    assert_operator names.index(:a), :<, names.index(:b)
+    assert_operator names.index(:b), :<, names.index(:c)
+  end
+
+  def test_strips_metadata_keys_from_extracted_cte_opts
+    db = Sequel.mock(host: :postgres)
+
+    ds = db[:main].with(:cohort, db[:visits], recursive: true)
+
+    extractor = Sequel::CteExtraction::Extractor.new
+    extractor.recursive_extract_ctes(ds)
+
+    _name, _ds, opts = extractor.ctes.first
+
+    # :name, :dataset, :no_temp_table should be stripped; :recursive kept
+    refute opts.key?(:name)
+    refute opts.key?(:dataset)
+    refute opts.key?(:no_temp_table)
+    assert opts[:recursive]
+  end
+
+  def test_cleaned_dataset_produces_valid_sql
+    db = Sequel.mock(host: :postgres)
+
+    ds = db[:main].with(:cohort, db[:visits].where(type: 'inpatient'))
+
+    extractor = Sequel::CteExtraction::Extractor.new
+    cleaned = extractor.recursive_extract_ctes(ds)
+
+    # Should produce SQL without WITH clause
+    sql = cleaned.sql
+
+    refute_includes sql, 'WITH'
+    assert_includes sql, '"main"'
+  end
+
 end
 
 class TestCteExtractionIntegration < Minitest::Test
@@ -356,6 +432,98 @@ class TestCteExtractionIntegration < Minitest::Test
 
     assert_respond_to result, :sql_statements
     assert_respond_to result, :drop_temp_tables
+  end
+
+  # --- Temp Table Lifecycle via Mock DB ---
+
+  def test_executor_creates_temp_tables_on_iteration
+    db = Sequel.mock(host: :postgres, fetch: [{ id: 1 }])
+    ctes = [[:cohort, db[:visits].where(type: 'inpatient'), {}]]
+
+    executor = Sequel::CteExtraction::TempTableExecutor.new(db[:main], ctes, db)
+    result = executor.to_dataset
+
+    result.each { |_row| nil } # trigger iteration
+
+    sqls = db.sqls
+
+    # Should have CREATE TEMPORARY TABLE and DROP TABLE
+    assert sqls.any? { |s| s.include?('CREATE') && s.include?('TEMPORARY') },
+           "Expected CREATE TEMPORARY TABLE in: #{sqls}"
+    assert sqls.any? { |s| s.include?('DROP') },
+           "Expected DROP TABLE in: #{sqls}"
+  end
+
+  def test_executor_drops_tables_in_reverse_order
+    db = Sequel.mock(host: :postgres, fetch: [{ id: 1 }])
+    ctes = [
+      [:first_cte, db[:visits], {}],
+      [:second_cte, db[:patients], {}],
+    ]
+
+    executor = Sequel::CteExtraction::TempTableExecutor.new(db[:main], ctes, db)
+    result = executor.to_dataset
+
+    result.each { |_row| nil }
+
+    sqls = db.sqls
+    drop_sql = sqls.select { |s| s.include?('DROP') }.join(' ')
+
+    # Both tables should be dropped
+    assert_includes drop_sql, 'second_cte'
+    assert_includes drop_sql, 'first_cte'
+    # second_cte should be dropped before first_cte (reverse dependency order)
+    assert_operator drop_sql.index('second_cte'), :<, drop_sql.index('first_cte')
+  end
+
+  def test_executor_sql_statements_returns_all_cte_queries
+    db = Sequel.mock(host: :postgres)
+    cte_a = db[:visits].where(type: 'inpatient')
+    cte_b = db[:patients].where(active: true)
+    ctes = [[:cte_a, cte_a, {}], [:cte_b, cte_b, {}]]
+
+    executor = Sequel::CteExtraction::TempTableExecutor.new(db[:main], ctes, db)
+    result = executor.to_dataset
+    stmts = result.sql_statements
+
+    assert_equal 3, stmts.size
+    assert stmts.key?(:cte_a)
+    assert stmts.key?(:cte_b)
+    assert stmts.key?(:query)
+    assert_includes stmts[:cte_a], 'inpatient'
+    assert_includes stmts[:cte_b], 'active'
+  end
+
+  # --- SQL Generation Verification ---
+
+  def test_cte_reattach_generates_correct_sql
+    db = Sequel.mock(host: :postgres)
+    db.extension :platform, :cte_extraction
+
+    ds = db[:main].with(:cohort, db[:visits].where(type: 'inpatient'))
+    result = ds.with_cte_extraction
+    sql = result.sql
+
+    assert_includes sql, 'WITH'
+    assert_includes sql, '"cohort"'
+    assert_includes sql, 'inpatient'
+  end
+
+  def test_multiple_ctes_reattach_in_dependency_order
+    db = Sequel.mock(host: :postgres)
+    db.extension :platform, :cte_extraction
+
+    cte_a = db[:visits].where(type: 'inpatient')
+    cte_b = db[:a].select(:patient_id)
+
+    ds = db[:main]
+         .with(:b, cte_b)
+         .with(:a, cte_a)
+    result = ds.with_cte_extraction
+    sql = result.sql
+
+    # :a should appear before :b in the WITH clause
+    assert_operator sql.index('"a"'), :<, sql.index('"b"')
   end
 
 end
