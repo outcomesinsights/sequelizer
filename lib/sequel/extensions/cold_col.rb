@@ -364,6 +364,14 @@ module Sequel
         return columns
       end
 
+      # Fall back to database query for real tables cold_col doesn't know about
+      begin
+        columns = db[name].columns!
+        return columns if columns && !columns.empty?
+      rescue StandardError
+        nil
+      end
+
       raise("Failed to find columns for #{literal(name)}")
     end
 
