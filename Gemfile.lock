@@ -93,7 +93,7 @@ GEM
     logger (1.7.0)
     lumberjack (1.4.2)
     method_source (1.1.0)
-    minitest (6.0.4)
+    minitest (6.0.5)
       drb (~> 2.0)
       prism (~> 1.5)
     minitest-mock (5.27.0)
