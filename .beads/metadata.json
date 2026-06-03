@@ -1,7 +1,6 @@
 {
   "database": "dolt",
   "backend": "dolt",
-  "dolt_mode": "server",
-  "dolt_database": "beads_sequelizer",
+  "dolt_mode": "embedded",
   "project_id": "9b3408a7-7ce3-4772-96c3-4b0ee908722d"
 }
