@@ -1,6 +1,6 @@
 GIT
   remote: https://github.com/outcomesinsights/sequel-duckdb.git
-  revision: 8c7ccf00552a8c327110851f49292f58f1d926dd
+  revision: 440e3def87cd7511aba1a52cdbf25ebc7f51ae31
   branch: main
   specs:
     sequel-duckdb (0.1.0)
@@ -148,7 +148,7 @@ GEM
       rubocop-ast (>= 1.38.0, < 2.0)
     ruby-progressbar (1.13.0)
     securerandom (0.4.1)
-    sequel (5.104.0)
+    sequel (5.105.0)
       bigdecimal
     shellany (0.0.1)
     simplecov (0.22.0)
