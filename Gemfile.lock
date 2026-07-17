@@ -8,10 +8,10 @@ GIT
 
 GIT
   remote: https://github.com/outcomesinsights/sequel-hexspace.git
-  revision: 91ff040fac46380e2b35406ab4c8a7041beacd25
-  branch: master
+  revision: 3300eaec7afb5f475935a66ac745ab7652baf527
+  branch: main
   specs:
-    sequel-hexspace (1.0.0)
+    sequel-hexspace (1.0.1)
       hexspace (>= 0.2.1)
       sequel (~> 5.0)
 
@@ -158,7 +158,8 @@ GEM
     simplecov-html (0.13.2)
     simplecov_json_formatter (0.1.4)
     thor (1.5.0)
-    thrift (0.22.0)
+    thrift (0.24.0)
+      logger
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
     unicode-display_width (3.2.0)

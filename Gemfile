@@ -5,4 +5,4 @@ gemspec
 
 gem 'overcommit', '~> 0.71'
 gem 'sequel-duckdb', github: 'outcomesinsights/sequel-duckdb', branch: 'main'
-gem 'sequel-hexspace', github: 'outcomesinsights/sequel-hexspace', branch: 'master'
+gem 'sequel-hexspace', github: 'outcomesinsights/sequel-hexspace', branch: 'main'
