@@ -8,7 +8,7 @@ GIT
 
 GIT
   remote: https://github.com/outcomesinsights/sequel-hexspace.git
-  revision: fb8ffb85cbf6bd14cc29bd77fc74f3379921bd8c
+  revision: d64667ba2c3bb01dbb220e9ec1f2ba2a1007e2f6
   branch: main
   specs:
     sequel-hexspace (1.0.1)
@@ -148,7 +148,7 @@ GEM
       rubocop-ast (>= 1.38.0, < 2.0)
     ruby-progressbar (1.13.0)
     securerandom (0.4.1)
-    sequel (5.106.0)
+    sequel (5.107.0)
       bigdecimal
     shellany (0.0.1)
     simplecov (1.0.3)
