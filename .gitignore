@@ -51,3 +51,7 @@ claude_stuff/
 
 # Claude Code agent worktrees — local, per-agent; never committed
 .claude/worktrees/
+
+# Beads export — derived. The Dolt remote at refs/dolt/data is the store
+# and the backup; this file is kept on disk for local grep only.
+.beads/issues.jsonl
