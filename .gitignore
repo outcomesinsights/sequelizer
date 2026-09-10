@@ -48,3 +48,6 @@ tags
 
 # Claude agent scratch (test logs, etc.) — not for commit
 claude_stuff/
+
+# Claude Code agent worktrees — local, per-agent; never committed
+.claude/worktrees/
