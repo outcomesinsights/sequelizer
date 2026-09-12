@@ -12,35 +12,46 @@ I normally use this gem when I'm writing a quick script or a Thor-based command 
 
 Add this line to your application's Gemfile:
 
-    gem 'sequelizer'
+```
+gem 'sequelizer'
+```
 
 And then execute:
 
-    $ bundle
+```
+$ bundle
+```
 
 Or install it yourself as:
 
-    $ gem install sequelizer
+```
+$ gem install sequelizer
+```
 
 ## Usage
 
 To get the most out of Sequelizer, you'll need to create a config/database.yml file or a .env file and specify your database configuration options in that file.
 
-Sequelizer comes with a handy command that will print out your connection parameters.  Just run:
+Sequelizer comes with a handy command that will print out your connection parameters. Just run:
 
-    bundle exec sequelizer config
+```
+bundle exec sequelizer config
+```
 
-You'll also need to make sure the gem for your database is installed.  You can do this by adding the gem to your application's Gemfile.
+You'll also need to make sure the gem for your database is installed. You can do this by adding the gem to your application's Gemfile.
 
-Sequelizer comes with a handy command that will update your Gemfile for you.  Once you've specified your database configuration, run
+Sequelizer comes with a handy command that will update your Gemfile for you. Once you've specified your database configuration, run
 
-    bundle exec sequelizer update_gemfile
+```
+bundle exec sequelizer update_gemfile
+```
 
 The command will look up the right gem to use with the adapter you've specified, add a line to your Gemfile specifying that gem, and run `bundle install` to install the gem for you.
 
 Once you've specified your options and made sure your database's gem is installed, simply include the Sequelizer module in any class that needs a database connection and you'll get two handy-dandy methods: `db` and `new_db`
 
 Observe:
+
 ```ruby
 require 'sequelizer'
 
@@ -59,17 +70,19 @@ end
 
 `new_db` will create a new connection to the database on each call.
 
-Both take a hash of database options if you don't want to create a config/database.yml or .env file, or simply wish to override those options.  Options are merged together from all sources with the following precedence:
+Both take a hash of database options if you don't want to create a config/database.yml or .env file, or simply wish to override those options. Options are merged together from all sources with the following precedence:
 
-    passed_options > .env > manually defined environment variables > config/database.yml > ~/.config/sequelizer/database.yml
+```
+passed_options > .env > manually defined environment variables > config/database.yml > ~/.config/sequelizer/database.yml
+```
 
-So if config/database.yml specifies a connection, you can set an environment variable (either manually, or through .env) to override one of those options.  Similarly, if you pass an option to the method directly, that option will override the YAML and ENV-based options.  See #3 for further discussion.
+So if config/database.yml specifies a connection, you can set an environment variable (either manually, or through .env) to override one of those options. Similarly, if you pass an option to the method directly, that option will override the YAML and ENV-based options. See #3 for further discussion.
 
 Take a look at the examples directory for a few ways you can specify your database configuration options.
 
 ## Frustrations
 
-I can't seem to figure out a way to avoid having to specify the database gem in the a user's bundler file.  If anyone has ideas on how to automagically load the correct database gem based on the database options fed to Sequelizer, please let me know (#1)!
+I can't seem to figure out a way to avoid having to specify the database gem in the a user's bundler file. If anyone has ideas on how to automagically load the correct database gem based on the database options fed to Sequelizer, please let me know (#1)!
 
 ## Contributing
 
@@ -82,9 +95,10 @@ I can't seem to figure out a way to avoid having to specify the database gem in 
 ## Thanks
 
 - [Outcomes Insights, Inc.](http://outins.com)
-    - Many thanks for allowing me to release a portion of my work as Open Source Software!
+  - Many thanks for allowing me to release a portion of my work as Open Source Software!
 - Jeremy Evans
-    - For writing Sequel!
+  - For writing Sequel!
 
 ## License
+
 Released under the MIT license, Copyright (c) 2014 Outcomes Insights, Inc.

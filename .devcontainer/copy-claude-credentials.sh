@@ -8,21 +8,21 @@ mkdir -p ~/.claude
 
 # Copy credentials from temporary mounts to proper locations
 if [ -d "/tmp/host-claude" ]; then
-    cp -r /tmp/host-claude/* ~/.claude/ 2>/dev/null || true
+	cp -r /tmp/host-claude/* ~/.claude/ 2>/dev/null || true
 fi
 
 if [ -d "/tmp/host-claude-config" ]; then
-    cp -r /tmp/host-claude-config/* ~/.config/claude/ 2>/dev/null || true
+	cp -r /tmp/host-claude-config/* ~/.config/claude/ 2>/dev/null || true
 fi
 
 if [ -f "/tmp/host-claude.json" ]; then
-    cp /tmp/host-claude.json ~/.claude.json
+	cp /tmp/host-claude.json ~/.claude.json
 fi
 
 # Create writable GitHub config directory and copy from readonly mount
 mkdir -p ~/.config/gh
 if [ -d "/tmp/host-gh" ]; then
-    cp -r /tmp/host-gh/* ~/.config/gh/ 2>/dev/null || true
+	cp -r /tmp/host-gh/* ~/.config/gh/ 2>/dev/null || true
 fi
 
 # Set proper permissions

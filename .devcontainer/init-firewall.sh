@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail  # Exit on error, undefined vars, and pipeline failures
+set -euo pipefail # Exit on error, undefined vars, and pipeline failures
 IFS=$'\n\t'       # Stricter word splitting
 
 echo "Initializing firewall rules..."
@@ -33,50 +33,50 @@ ipset create allowed-domains hash:net
 echo "Fetching GitHub IP ranges..."
 gh_ranges=$(curl -s https://api.github.com/meta | jq -r '.git[],.web[],.api[],.pages[]' | sort -u)
 for range in $gh_ranges; do
-    echo "Adding GitHub range: $range"
-    ipset add allowed-domains "$range"
+	echo "Adding GitHub range: $range"
+	ipset add allowed-domains "$range"
 done
 
 # Define allowed domains for Claude Code functionality
 declare -a domains=(
-    "api.anthropic.com"
-    "claude.ai"
-    "github.com"
-    "raw.githubusercontent.com"
-    "registry.npmjs.org"
-    "rubygems.org"
-    "index.rubygems.org"
-    "api.rubygems.org"
-    "bundler.rubygems.org"
-    "fastly.com"
-    "cloudflare.com"
-    "amazonaws.com"
-    "docker.io"
-    "docker.com"
-    "gcr.io"
-    "quay.io"
+	"api.anthropic.com"
+	"claude.ai"
+	"github.com"
+	"raw.githubusercontent.com"
+	"registry.npmjs.org"
+	"rubygems.org"
+	"index.rubygems.org"
+	"api.rubygems.org"
+	"bundler.rubygems.org"
+	"fastly.com"
+	"cloudflare.com"
+	"amazonaws.com"
+	"docker.io"
+	"docker.com"
+	"gcr.io"
+	"quay.io"
 )
 
 # Resolve domains to IP addresses and add to ipset
 for domain in "${domains[@]}"; do
-    echo "Resolving $domain..."
-    ips=$(dig +short "$domain" A | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$')
+	echo "Resolving $domain..."
+	ips=$(dig +short "$domain" A | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$')
 
-    while read -r ip; do
-        if [[ ! "$ip" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
-            echo "ERROR: Invalid IP from DNS for $domain: $ip"
-            exit 1
-        fi
-        echo "Adding $ip for $domain"
-        ipset add allowed-domains "$ip"
-    done < <(echo "$ips")
+	while read -r ip; do
+		if [[ ! "$ip" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+			echo "ERROR: Invalid IP from DNS for $domain: $ip"
+			exit 1
+		fi
+		echo "Adding $ip for $domain"
+		ipset add allowed-domains "$ip"
+	done < <(echo "$ips")
 done
 
 # Get host IP from default route
 HOST_IP=$(ip route | grep default | cut -d" " -f3)
 if [ -z "$HOST_IP" ]; then
-    echo "ERROR: Failed to detect host IP"
-    exit 1
+	echo "ERROR: Failed to detect host IP"
+	exit 1
 fi
 
 HOST_NETWORK=$(echo "$HOST_IP" | sed "s/\.[0-9]*$/.0\/24/")
@@ -107,17 +107,17 @@ echo "Firewall rules configured successfully"
 # Verify firewall configuration
 echo "Verifying firewall configuration..."
 if ! curl --connect-timeout 5 https://api.github.com/zen >/dev/null 2>&1; then
-    echo "ERROR: Firewall verification failed - unable to reach https://api.github.com"
-    exit 1
+	echo "ERROR: Firewall verification failed - unable to reach https://api.github.com"
+	exit 1
 else
-    echo "Firewall verification passed - able to reach https://api.github.com as expected"
+	echo "Firewall verification passed - able to reach https://api.github.com as expected"
 fi
 
 # Test Claude API connectivity
 if ! curl --connect-timeout 5 https://api.anthropic.com >/dev/null 2>&1; then
-    echo "WARNING: Unable to reach https://api.anthropic.com - Claude Code may not work properly"
+	echo "WARNING: Unable to reach https://api.anthropic.com - Claude Code may not work properly"
 else
-    echo "Claude API connectivity verified"
+	echo "Claude API connectivity verified"
 fi
 
 echo "Firewall initialization completed successfully"
