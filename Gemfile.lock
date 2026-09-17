@@ -1,6 +1,6 @@
 GIT
   remote: https://github.com/outcomesinsights/sequel-duckdb.git
-  revision: ef02d1c2adf773657b2c8a6e42825c7fe95aa534
+  revision: dcb3ca9bb6fe5c9db198231e423347ff9a818d09
   branch: main
   specs:
     sequel-duckdb (0.1.0)
@@ -46,7 +46,7 @@ GEM
       uri (>= 0.13.1)
     ast (2.4.3)
     base64 (0.3.0)
-    bigdecimal (4.1.2)
+    bigdecimal (4.1.3)
     coderay (1.1.3)
     concurrent-ruby (1.3.8)
     connection_pool (3.0.2)
