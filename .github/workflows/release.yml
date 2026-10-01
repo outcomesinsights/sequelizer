@@ -1,0 +1,152 @@
+# Publishes sequelizer to rubygems.org when a v* tag is pushed.
+#
+# To cut a release: bump VERSION in lib/sequelizer/version.rb, update
+# CHANGELOG.md (git-cliff --unreleased --bump, see cliff.toml), land that
+# commit on main, wait for CI to go green on it, then push the matching tag:
+#   git tag v0.3.0 && git push origin v0.3.0
+#
+# The FILE NAME is load-bearing: the rubygems.org trusted publisher for
+# sequelizer is registered to outcomesinsights/sequelizer and `release.yml`.
+# Renaming this file makes rubygems refuse the token. The publish job declares
+# `environment: release`, which a publisher registered with no environment
+# also accepts. No API key is stored anywhere.
+#
+# v* tags cannot be deleted or moved (repository ruleset), so a tag that fails
+# verification is not retried by retagging: fix forward with a new version.
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # CI never runs on a tag, so this job decides whether the tagged commit was
+  # tested. It fails closed: a tag pushed before CI finishes, a cancelled run,
+  # or an API error blocks the release. Re-run this workflow once CI is green.
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Refuse unless the tag matches Sequelizer::VERSION
+        id: version
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version=$(ruby -e 'require "./lib/sequelizer/version"; print Sequelizer::VERSION')
+          echo "tag=$TAG version.rb=$version"
+          if [[ "$TAG" != "v$version" ]]; then
+            echo "::error::Tag $TAG does not match Sequelizer::VERSION $version; refusing to publish"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      # Only main ships. Without this, a tag on a pull-request commit would
+      # publish code that never landed.
+      - name: Require the tagged commit to be on main
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          status=$(gh api "repos/$REPO/compare/$SHA...main" --jq .status)
+          echo "main relative to $SHA: $status"
+          if [[ "$status" != "ahead" && "$status" != "identical" ]]; then
+            echo "::error::$SHA is not on main ($status); refusing to publish"
+            exit 1
+          fi
+      # A successful run of the CI workflow file, started by a push to main,
+      # for exactly this commit. Not any check named Run-Tests: pull-request
+      # runs report that name too, as can anything with statuses:write.
+      - name: Require a green CI run from a push to main on the tagged commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          ci=$(gh api "repos/$REPO/actions/workflows/test.yml/runs?head_sha=$SHA&event=push&branch=main" \
+            --jq '[.workflow_runs[] | select(.path == ".github/workflows/test.yml" and .head_sha == env.SHA)]
+                  | sort_by(.created_at) | last | (.conclusion // .status // "missing")')
+          echo "CI (push to main) on $SHA: $ci"
+          if [[ "$ci" != "success" ]]; then
+            echo "::error::CI on $SHA is '$ci'. Land the commit on main, let CI pass, then re-run this workflow."
+            exit 1
+          fi
+
+  publish:
+    needs: verify
+    runs-on: ubuntu-latest
+    environment: release
+    # Required by the OIDC token exchange; scoped to this job only.
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      VERSION: ${{ needs.verify.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '4.0'
+          bundler-cache: true
+      # Cheap here, so run it again against exactly what is about to ship.
+      - name: Run the full suite against the tagged commit
+        run: bundle exec rake test
+      - name: Build the gem
+        run: gem build sequelizer.gemspec --output "sequelizer-${VERSION}.gem"
+      # The platform extension loads config/platforms/*.csv from the installed
+      # gem and quietly runs without them, so prove the built gem carries them.
+      - name: Check the built gem resolves its platform config when installed
+        run: |
+          set -euo pipefail
+          home=$(mktemp -d); empty=$(mktemp -d)
+          # Runtime dependencies come from the bundle (vendor/bundle under bundler-cache).
+          deps=$(bundle exec ruby -e 'print((Gem.path + [Bundler.bundle_path.to_s]).uniq.join(":"))')
+          GEM_HOME="$home" gem install --local --ignore-dependencies --no-document "sequelizer-${VERSION}.gem"
+          cd "$empty"
+          export GEM_HOME="$home" GEM_PATH="$home:$deps"
+          ruby -e '
+            gem "sequelizer"; require "sequelizer"
+            dir = Gem.loaded_specs["sequelizer"].gem_dir
+            abort "loaded #{dir}, not the built gem" unless dir.start_with?(ENV["GEM_HOME"])
+            Sequel.connect("mock://postgres").extension(:platform)
+            paths = Sequel::Platform.config_paths_for(:postgres)
+            abort "platform config missing from the built gem: #{paths}" unless paths.size == 2 && paths.all? { |p| p.start_with?(dir) }
+            puts "platform config: #{paths}"'
+          "$home/bin/sequelizer" help >/dev/null
+      # Trusted publishing: exchanges this job's OIDC token for a short-lived
+      # rubygems API key.
+      - uses: rubygems/configure-rubygems-credentials@v2.1.0
+      # No retry. A failed push fails the run; investigate before re-running.
+      - name: Push to rubygems.org
+        run: gem push "sequelizer-${VERSION}.gem"
+      # The run's colour is not the evidence; the version on rubygems.org is.
+      # Compared against THIS release's version, so an older gem cannot pass it.
+      # Polled because rubygems' CDN can lag a minute behind the push.
+      - name: Confirm rubygems.org serves the new version
+        run: |
+          for i in $(seq 1 30); do
+            latest=$(curl -fsS https://rubygems.org/api/v1/versions/sequelizer/latest.json | jq -r .version || true)
+            echo "attempt $i: rubygems latest=$latest"
+            [[ "$latest" == "$VERSION" ]] && exit 0
+            sleep 10
+          done
+          echo "::error::rubygems.org still does not report $VERSION as latest"
+          exit 1
