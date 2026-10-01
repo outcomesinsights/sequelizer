@@ -12,8 +12,12 @@ Gem::Specification.new do |spec|
   spec.homepage      = 'https://github.com/outcomesinsights/sequelizer'
   spec.license       = 'MIT'
 
-  spec.files         = `git ls-files -z`.split("\x0")
-  spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
+  # Ship only what runs. The platform extension loads config/platforms/*.csv
+  # from the installed gem, so those travel with lib/.
+  spec.files         = %w[CHANGELOG.md LICENSE README.md bin/sequelizer] +
+                       Dir['lib/**/*.rb'] + Dir['config/platforms/**/*.csv']
+  spec.bindir        = 'bin'
+  spec.executables   = ['sequelizer']
   spec.require_paths = ['lib']
   spec.required_ruby_version = '>= 3.3.0'
 
