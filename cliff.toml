@@ -40,11 +40,11 @@ filter_commits = true
 # A `!` or BREAKING CHANGE commit is shown and bumps the version even when its
 # type is one skipped below (e.g. `build!:` raising the Ruby floor).
 protect_breaking_commits = true
-# Releases are v0.x.y (v1-v9 allowed for later). The repo also carries
-# 2014-2020 release-train tags that were never RubyGems versions: codenames,
-# 18.06.xx, and v16.11.x. The v16.11.x tags look like semver and v16.11.5 is
-# an ancestor of main, so a looser pattern could read one as the current
-# version. A single digit before the first dot keeps them out.
+# Releases are v0.x.y (v1-v9 allowed for later). The 2014-2020 Jigsaw
+# release-train tags (year.month.edit, e.g. v16.11.5, and codenames) were
+# never RubyGems versions; they live under train/ so they cannot pass for
+# one. This pattern is defence in depth should a semver-shaped train tag
+# ever reappear outside that namespace. Widen it before v10.
 tag_pattern = "^v(0|[1-9])\\.[0-9]+\\.[0-9]+$"
 topo_order = false
 sort_commits = "newest"
