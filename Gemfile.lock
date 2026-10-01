@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    sequelizer (0.2.0)
+    sequelizer (0.3.0)
       activesupport (>= 7, < 9)
       dotenv (>= 2.1, < 4.0)
       hashie (>= 3.2, < 6.0)

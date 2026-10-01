@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2026-10-01
+
+### Breaking changes
+
+- Drop support for Ruby 3.2 ([feef6de](https://github.com/outcomesinsights/sequelizer/commit/feef6de5c155dc0dd39642ad1686ff9bab0211de)): sequelizer now requires Ruby >= 3.3.0.
+
+### Added
+
+- Add smart_select_remove Sequel extension ([a1366ec](https://github.com/outcomesinsights/sequelizer/commit/a1366ec8f68e64728b3c794de15c2fd78cfa9e2e))
+- DuckDB support in make_readyable and cold_col extensions ([9433d98](https://github.com/outcomesinsights/sequelizer/commit/9433d982bc0855df11ac6f48a915e861fd78a572))
+
+### Changed
+
+- Extract available_tables to fix AbcSize in ReadyMaker#run ([60c6a68](https://github.com/outcomesinsights/sequelizer/commit/60c6a6803afbfde2b0747fd19e3bcd346bf2d1ef))
+- Simplify cold_col find_columns and remove rescue nil guards ([752eab1](https://github.com/outcomesinsights/sequelizer/commit/752eab14595af23974ea56a976dd99e29d9d5552))
+- Remove OptionalAdapterSupport, add sequel-duckdb to bundle ([74d6d16](https://github.com/outcomesinsights/sequelizer/commit/74d6d16f564742138a32e111d7b6107289abec75))
+- Let Sequel handle adapter loading, remove pre-require ([c2b592d](https://github.com/outcomesinsights/sequelizer/commit/c2b592d1965e24370dae2f5cfb515097358cd3da))
+- Ship only runtime files in the gem: lib/, the sequelizer executable, the platform CSVs, and the docs and licence ([1cc49b6](https://github.com/outcomesinsights/sequelizer/commit/1cc49b69dec0c6c879a469f0774c1196c467ed17))
+
+### Fixed
+
+- Fall back to database query in cold_col for unregistered tables ([d07f7c5](https://github.com/outcomesinsights/sequelizer/commit/d07f7c5e482074e631828afbf558a767d6695b66))
+- Replace rescue modifier with explicit begin/rescue in cold_col ([6fced2b](https://github.com/outcomesinsights/sequelizer/commit/6fced2b4957277b5c6d45fabf11e89d0b476a8e5))
+- Handle string SQL in cold_col create_table_as and create_view_sql ([8f30602](https://github.com/outcomesinsights/sequelizer/commit/8f306028857e3838370fc623cd619a9a79c8c06f))
+- Handle Array search_path in after_connect ([c376825](https://github.com/outcomesinsights/sequelizer/commit/c3768251695286668ca49dcbb84aa12c3bbb7f69))
+
 ## 0.2.0
 
 ### Added
