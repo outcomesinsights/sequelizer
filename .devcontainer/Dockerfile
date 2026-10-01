@@ -1,5 +1,5 @@
-# Start with Ruby 3.2 slim for a smaller image
-FROM ruby:3.2-slim
+# Start with Ruby 4.0 slim for a smaller image
+FROM ruby:4.0-slim
 
 # Set timezone argument (can be overridden in devcontainer.json)
 ARG TZ=America/Los_Angeles
