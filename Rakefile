@@ -1,5 +1,26 @@
-require 'bundler/gem_tasks'
+require 'bundler/gem_helper'
 require 'rake/testtask'
+
+# Not bundler/gem_tasks: its `release` task (and `release:rubygem_push`) would
+# tag whatever is checked out and push the gem from this machine, skipping the
+# checks in .github/workflows/release.yml. Only build and install are kept.
+gem_helper = Bundler::GemHelper.new(__dir__)
+
+desc "Build #{gem_helper.gemspec.name}-#{gem_helper.gemspec.version}.gem into the pkg directory"
+task(:build) { gem_helper.build_gem }
+
+desc "Build and install #{gem_helper.gemspec.name}-#{gem_helper.gemspec.version}.gem into system gems"
+task(install: :build) { gem_helper.install_gem }
+
+desc 'Disabled: releases publish from GitHub Actions when a v* tag is pushed'
+task :release do
+  abort <<~MSG
+    rake release is disabled. To release: bump VERSION in lib/sequelizer/version.rb,
+    update CHANGELOG.md (git-cliff --unreleased --bump), land that commit on main,
+    wait for CI to pass on it, then push the matching tag (git tag vX.Y.Z && git push
+    origin vX.Y.Z). .github/workflows/release.yml checks the tag and publishes.
+  MSG
+end
 
 Rake::TestTask.new do |t|
   t.libs = %w[lib test]

@@ -74,12 +74,23 @@ The pre-commit hooks automatically run:
 ### Build and Release
 
 ```bash
-# Build gem
+# Build gem (into pkg/)
 bundle exec rake build
-
-# Release gem
-bundle exec rake release
 ```
+
+Releases publish only from `.github/workflows/release.yml` when a `v*` tag is
+pushed. `rake release` is disabled, and nothing is ever `gem push`ed from a
+workstation. To release:
+
+1. Bump `VERSION` in `lib/sequelizer/version.rb` and run `bundle install`.
+2. Add the changelog section with `git-cliff --unreleased --bump` (see
+   `cliff.toml`), dropping entries for commits that change no shipped file.
+3. Land that commit on `main` and wait for CI to pass on it.
+4. Push the matching tag: `git tag vX.Y.Z && git push origin vX.Y.Z`.
+
+The workflow refuses unless the tag equals `v` + `VERSION`, the commit is on
+`main`, and CI from a push to `main` passed on that exact commit. `v*` tags
+cannot be deleted or moved, so a bad release is fixed with a new version.
 
 ### CLI Commands
 
