@@ -129,9 +129,10 @@ jobs:
       # The platform extension loads config/platforms/*.csv from the installed
       # gem and quietly runs without them, so prove the built gem carries them.
       # It is installed with only its declared runtime dependencies, into an
-      # empty GEM_HOME, and loaded from there, not from the checkout.
+      # empty GEM_HOME, and loaded from there, not from the checkout. That
+      # install, outside any lockfile, is deliberate, hence the zizmor ignore.
       - name: Check the built gem resolves its platform config when installed
-        run: |
+        run: | # zizmor: ignore[adhoc-packages]
           set -euo pipefail
           home=$(mktemp -d); empty=$(mktemp -d)
           # GEM_PATH too, so already-installed gems cannot satisfy a dependency:
