@@ -5,15 +5,15 @@ ENV["MT_NO_PLUGINS"] = "1"
 require "simplecov"
 
 SimpleCov.start do
-  add_filter "/test/"
-  add_filter "/vendor/"
+  skip "/test/"
+  skip "/vendor/"
 
-  add_group "Core", "lib/sequelizer"
-  add_group "Sequel Extensions", "lib/sequel"
+  group "Core", "lib/sequelizer"
+  group "Sequel Extensions", "lib/sequel"
 
   # Temporarily lower minimum coverage to see what we're working with
   minimum_coverage 70
-  minimum_coverage_by_file 40
+  coverage(:line) { minimum 40, per: :file }
 
   # Generate both HTML and JSON for easier analysis
   formatter SimpleCov::Formatter::MultiFormatter.new([
