@@ -94,7 +94,11 @@ jobs:
       - uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
         with:
           ruby-version: '4.0'
-          bundler-cache: true
+          # No cache: a cache written by a branch or PR run must not supply the
+          # gems for the suite that decides whether a release publishes.
+          bundler-cache: false
+      - name: Install the bundle fresh
+        run: bundle install
       # Cheap here, so run it again against exactly what is about to ship.
       - name: Run the full suite against the tagged commit
         run: bundle exec rake test
