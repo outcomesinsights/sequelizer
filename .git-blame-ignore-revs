@@ -3,3 +3,6 @@
 
 # style: adopt the ruled RuboCop config (rubocop-rails-omakase + Lint)
 212b2515c356e0f5b2739a6dff8d093cb9d5c53d
+
+# style: apply treefmt's first pass (prettier)
+9d5e598a04aee50f23f345b9c2519f7fb0c3f84b
