@@ -12,13 +12,17 @@ ARG HOST_HOME
 ENV DEVCONTAINER=true
 
 # Create a non-root user (following Claude Code pattern)
+# DL3064 flags the NAME USERNAME; the value is a login name, not a secret.
+# hadolint ignore=DL3064
 ARG USERNAME=rubydev
 ARG USER_UID=1001
 ARG USER_GID=$USER_UID
 
 # Install system dependencies first, then set up GitHub CLI repository
 # (need wget/curl for GitHub CLI setup)
-RUN apt-get update && apt-get install -y \
+# Unpinned on purpose: exact apt versions break the build whenever Debian drops one.
+# hadolint ignore=DL3008
+RUN apt-get update && apt-get install -y --no-install-recommends \
   # Essential build tools for Ruby gems
   build-essential \
   libpq-dev \
@@ -46,12 +50,13 @@ RUN apt-get update && apt-get install -y \
   && rm -rf /var/lib/apt/lists/*
 
 # Set up GitHub CLI repository (now that wget is installed)
-RUN mkdir -p -m 755 /etc/apt/keyrings && \
+RUN install -d -m 755 /etc/apt/keyrings && \
   wget -qO- https://cli.github.com/packages/githubcli-archive-keyring.gpg > /etc/apt/keyrings/githubcli-archive-keyring.gpg && \
   echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" > /etc/apt/sources.list.d/github-cli.list
 
-# Install GitHub CLI from the repository we just added
-RUN apt-get update && apt-get install -y gh && rm -rf /var/lib/apt/lists/*
+# Install GitHub CLI from the repository we just added (unpinned, as above)
+# hadolint ignore=DL3008
+RUN apt-get update && apt-get install -y --no-install-recommends gh && rm -rf /var/lib/apt/lists/*
 
 # Create the non-root user
 RUN groupadd --gid $USER_GID $USERNAME \
@@ -61,16 +66,17 @@ RUN groupadd --gid $USER_GID $USERNAME \
 
 # Install git-delta (from Claude Code setup)
 RUN ARCH=$(dpkg --print-architecture) && \
-  wget "https://github.com/dandavison/delta/releases/download/0.18.2/git-delta_0.18.2_${ARCH}.deb" && \
+  wget -q "https://github.com/dandavison/delta/releases/download/0.18.2/git-delta_0.18.2_${ARCH}.deb" && \
   dpkg -i "git-delta_0.18.2_${ARCH}.deb" && \
   rm "git-delta_0.18.2_${ARCH}.deb"
 
-# Install Claude Code CLI (as root first, then fix permissions)
+# Install Claude Code CLI (as root first, then fix permissions). Unpinned on
+# purpose: the dev container should get the current CLI.
+# hadolint ignore=DL3016
 RUN npm install -g @anthropic-ai/claude-code
 
 # Set up command history persistence (from Claude Code setup)
-RUN SNIPPET="export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhistory/.bash_history" \
-  && mkdir /commandhistory \
+RUN mkdir /commandhistory \
   && touch /commandhistory/.bash_history \
   && chown -R $USERNAME /commandhistory
 
@@ -88,7 +94,7 @@ USER $USERNAME
 RUN gem install overcommit:0.67.1
 
 # Set up ZSH with powerline10k theme (from Claude Code setup)
-RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/v1.1.5/zsh-in-docker.sh)" -- \
+RUN sh -c "$(wget -qO- https://github.com/deluan/zsh-in-docker/releases/download/v1.1.5/zsh-in-docker.sh)" -- \
   -t https://github.com/romkatv/powerlevel10k \
   -a 'ZSH_THEME="powerlevel10k/powerlevel10k"' \
   -p git \
@@ -98,11 +104,15 @@ RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/
   -a 'bindkey "\$terminfo[kcud1]" history-substring-search-down'
 
 # Copy Gemfile and Gemfile.lock for better Docker layer caching
-COPY Gemfile Gemfile.lock *.gemspec ./
-COPY lib/sequelizer/version.rb ./lib/sequelizer/version.rb
+COPY --chown=$USERNAME:$USERNAME Gemfile Gemfile.lock *.gemspec ./
+COPY --chown=$USERNAME:$USERNAME lib/sequelizer/version.rb ./lib/sequelizer/version.rb
 
-# Configure bundler and install gems
-RUN bundle config set --local path "/home/${USERNAME}/.bundle" \
+# Install the bundler that Gemfile.lock was written with (BUNDLED WITH): the Ruby
+# image ships a newer bundler that refuses an older lockfile. CI's setup-ruby does
+# the same thing. Then configure bundler and install gems.
+RUN gem install bundler --no-document \
+    -v "$(awk '/^BUNDLED WITH/ { getline; print $1 }' Gemfile.lock)" \
+  && bundle config set --local path "/home/${USERNAME}/.bundle" \
   && bundle config set --local bin "/home/${USERNAME}/.bundle/bin" \
   && bundle install
 
@@ -119,7 +129,7 @@ ENV PATH="/home/$USERNAME/.bundle/bin:$PATH"
 ENV BUNDLE_PATH="/home/$USERNAME/.bundle"
 ENV BUNDLE_BIN="/home/$USERNAME/.bundle/bin"
 
-USER root
+USER 0
 
 # Copy the credential setup scripts
 COPY .devcontainer/copy-claude-credentials.sh /usr/local/bin/
