@@ -12,20 +12,20 @@ bump-oi:
     bundle lock --update sequel-duckdb sequel-hexspace
     @git --no-pager diff --stat -- Gemfile.lock
 
-# Rewrite files to canonical format. Run deliberately; never from a hook.
-fmt:
-    bundle exec rubocop -a
-    git ls-files "*.sh" | xargs -r shfmt -w
-    just --fmt --unstable
-    git ls-files "*.md" | xargs -r mdformat
+# Installs the pinned tools (mise.toml) and the bundle. A clone needs git and mise.
+setup:
+    mise install
+    bundle install
 
-# Report format drift without changing anything. This is what the hooks run —
-# a formatter that rewrites files mid-commit changes what you already reviewed.
+# Formats every tracked file in every language here (treefmt.toml), including
+# RuboCop's safe autocorrections.
+fmt:
+    treefmt
+
+# Fails if `fmt` would change anything. It formats the tree first and THEN fails
+# (fix-and-fail): re-stage what it changed. It never rewrites and succeeds.
 fmt-check:
-    bundle exec rubocop
-    git ls-files "*.sh" | xargs -r shfmt -d
-    just --fmt --check --unstable
-    git ls-files "*.md" | xargs -r mdformat --check
+    treefmt --fail-on-change
 
 # Full local CI equivalent — run this before pushing.
 # The recipe IS the contract: if CI runs a check and this does not, the gate is
