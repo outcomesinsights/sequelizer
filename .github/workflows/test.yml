@@ -43,19 +43,26 @@ jobs:
       - name: Run Tests
         run: bundle exec rake test
 
+  # The check branch protection requires and release.yml trusts. Green means every
+  # needed job RAN and passed: anything but success fails it, including skipped
+  # (a gate that passes by not running), cancelled, and any future state.
   Run-Tests:
     if: always()
     needs: [lint, test]
     runs-on: ubuntu-latest
     steps:
       - name: Check CI status
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
         run: |
-          if [[ "${{ contains(needs.*.result, 'failure') }}" == "true" ]]; then
-            echo "One or more CI jobs failed"
+          if [[ -z "$RESULTS" ]]; then
+            echo "no needed job results; refusing to report green"
             exit 1
           fi
-          if [[ "${{ contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
-            echo "One or more CI jobs were cancelled"
-            exit 1
-          fi
+          for result in $RESULTS; do
+            if [[ "$result" != "success" ]]; then
+              echo "a needed job ended '$result'; refusing to report green"
+              exit 1
+            fi
+          done
           echo "All CI jobs passed"
