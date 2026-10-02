@@ -1,9 +1,15 @@
+# Cooldown: Dependabot only proposes versions public for 7+ days. On the
+# monthly schedule, a release younger than that at check time waits for the
+# NEXT monthly run, so a bump can lag about five weeks. That is expected.
+# Security updates are not delayed by the cooldown.
 version: 2
 updates:
   - package-ecosystem: bundler
     directory: "/"
     schedule:
       interval: monthly
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 10
     groups:
       minor-and-patch:
@@ -12,6 +18,8 @@ updates:
     directory: "/"
     schedule:
       interval: monthly
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 10
     groups:
       actions:
