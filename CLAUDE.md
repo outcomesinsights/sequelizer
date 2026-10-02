@@ -30,46 +30,26 @@ bundle exec ruby -I lib test/lib/sequelizer/test_connection_maker.rb
 
 ### Linting and Formatting
 
-```bash
-# Check code style and lint issues
-bundle exec rake lint
-bundle exec rubocop
-
-# Auto-fix safe linting issues  
-bundle exec rake lint_fix
-bundle exec rubocop --auto-correct
-
-# Auto-fix all issues (including unsafe corrections)
-bundle exec rake format
-bundle exec rubocop --auto-correct-all
-
-# Run linter on specific files
-bundle exec rubocop lib/sequelizer.rb
-```
-
-### Pre-commit Hooks
+The recipes follow the fleet standard (gator's standard/, seed gator-rga):
 
 ```bash
-# Install pre-commit hooks (done automatically after bundle install)
-bundle exec overcommit --install
-
-# Sign configuration (if you modify .overcommit.yml)
-bundle exec overcommit --sign
-
-# Run pre-commit hooks manually
-bundle exec overcommit --run
-
-# Skip hooks for a specific commit (use sparingly)
-git commit --no-verify -m "commit message"
+just setup      # mise install (pinned tools, mise.toml) + bundle install
+just fmt        # treefmt: every tracked file, every language (treefmt.toml)
+just fmt-check  # treefmt --fail-on-change: formats, then FAILS if anything changed
+just lint       # rubocop, actionlint, zizmor --offline, cog check (commit subjects)
+just ci         # fmt-check lint test hygiene: the full local CI equivalent
 ```
 
-The pre-commit hooks automatically run:
+### Git Hooks
 
-- RuboCop linting with auto-correction
-- Full test suite
-- YAML/JSON syntax validation
-- Trailing whitespace and merge conflict checks
-- Commit message formatting validation
+The hooks are untracked files in `.git/hooks/`, shared by every worktree:
+
+- `pre-commit`: beads' managed block, then `just pre-commit` (fmt-check, lint, test,
+  hygiene; about 5s). If fmt-check reformats anything, the commit fails: re-stage the
+  changes and commit again.
+- `pre-push`: `just pre-push` (the full `ci`), then `bd dolt push` to publish beads.
+
+Never skip them with `--no-verify`; a failing hook is a real problem to fix.
 
 ### Build and Release
 
