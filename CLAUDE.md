@@ -148,7 +148,9 @@ The gem supports various database adapters with special handling for:
 
 ## Coding Standards
 
-This project follows standard Ruby community conventions enforced by RuboCop, emphasizing readability, consistency, and Ruby idioms.
+Style is whatever `.rubocop.yml` enforces: the fleet's ruled config, rubocop-rails-omakase
+plus the Lint department (gator's standard/rubocop.yml). Run `bundle exec rubocop -a`
+rather than formatting by hand; where this section and RuboCop disagree, RuboCop wins.
 
 ### Style Conventions
 
@@ -169,8 +171,7 @@ This project follows standard Ruby community conventions enforced by RuboCop, em
 
 **Strings:**
 
-- Single quotes for simple strings: `'postgres'`, `'mock'`
-- Double quotes for interpolation: `"SET #{key}=#{value}"`
+- Double quotes: `"postgres"`, `"SET #{key}=#{value}"` (omakase's Style/StringLiterals)
 
 ### Code Organization
 
