@@ -1,8 +1,8 @@
-require_relative 'sequelizer/version'
-require_relative 'sequelizer/connection_maker'
-require_relative 'sequelizer/monkey_patches/database_in_after_connect'
-require_relative 'sequel/extensions/db_opts'
-require_relative 'sequel/extensions/settable'
+require_relative "sequelizer/version"
+require_relative "sequelizer/connection_maker"
+require_relative "sequelizer/monkey_patches/database_in_after_connect"
+require_relative "sequel/extensions/db_opts"
+require_relative "sequel/extensions/settable"
 
 # = Sequelizer
 #
@@ -42,7 +42,6 @@ require_relative 'sequel/extensions/settable'
 #   new_db(adapter: 'postgres', host: 'localhost')
 #
 module Sequelizer
-
   # Returns the default options hash for database connections.
   #
   # @return [Hash] the default connection options
@@ -92,5 +91,4 @@ module Sequelizer
     @_sequelizer_cache ||= {}
     @_sequelizer_cache[options]
   end
-
 end

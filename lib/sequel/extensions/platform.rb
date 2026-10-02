@@ -18,18 +18,15 @@
 #
 # Related module: Sequel::Platform
 
-require 'kvcsv'
+require "kvcsv"
 
 module Sequel
-
   # The Platform module provides database platform abstraction through
   # configuration-driven capabilities and code-driven function translations.
   module Platform
-
     # Base platform class with KVCSV config loading and default implementations.
     # Subclasses override function translation methods for platform-specific SQL.
     class Base
-
       attr_reader :db, :config
 
       # Initialize platform with database connection and config paths.
@@ -122,27 +119,23 @@ module Sequel
       def days_between(from, to)
         date_diff(from, to)
       end
-
     end
 
     # PostgreSQL platform with Postgres-specific function translations.
     class Postgres < Base
-
       def date_diff(from, to)
         # Postgres uses date subtraction
-        Sequel.lit('(? - ?)', to, from)
+        Sequel.lit("(? - ?)", to, from)
       end
 
       def days_between(from, to)
         # Postgres date subtraction returns integer days
-        Sequel.lit('(? - ?)', to, from)
+        Sequel.lit("(? - ?)", to, from)
       end
-
     end
 
     # Spark platform with Spark SQL-specific function translations.
     class Spark < Base
-
       def date_diff(from, to)
         # Spark datediff has reversed argument order (end, start)
         Sequel.function(:datediff, to, from)
@@ -151,35 +144,30 @@ module Sequel
       def str_to_date(value, format)
         Sequel.function(:to_date, Sequel.cast_string(value), format)
       end
-
     end
 
     # Snowflake platform with Snowflake-specific function translations.
     class Snowflake < Base
-
       def date_diff(from, to)
         # Snowflake requires unit parameter
-        Sequel.function(:datediff, 'day', from, to)
+        Sequel.function(:datediff, "day", from, to)
       end
 
       def days_between(from, to)
-        Sequel.function(:datediff, 'day', from, to)
+        Sequel.function(:datediff, "day", from, to)
       end
-
     end
 
     # Athena platform (Presto/Trino based) with Athena-specific function translations.
     class Athena < Base
-
       def date_diff(from, to)
         # Athena/Presto uses date_diff with unit
-        Sequel.function(:date_diff, 'day', from, to)
+        Sequel.function(:date_diff, "day", from, to)
       end
 
       def days_between(from, to)
-        Sequel.function(:date_diff, 'day', from, to)
+        Sequel.function(:date_diff, "day", from, to)
       end
-
     end
 
     # Map adapter schemes to platform classes
@@ -190,22 +178,21 @@ module Sequel
       athena: Athena,
       presto: Athena,
       trino: Athena,
-      snowflake: Snowflake,
+      snowflake: Snowflake
     }.freeze
 
     # Map adapter schemes to config file names
     ADAPTER_CONFIG_NAMES = {
-      postgres: 'postgres',
-      postgresql: 'postgres',
-      spark: 'spark',
-      athena: 'athena',
-      presto: 'athena',
-      trino: 'athena',
-      snowflake: 'snowflake',
+      postgres: "postgres",
+      postgresql: "postgres",
+      spark: "spark",
+      athena: "athena",
+      presto: "athena",
+      trino: "athena",
+      snowflake: "snowflake"
     }.freeze
 
     class << self
-
       # Find the config directory, searching gem paths
       def config_dir
         @config_dir ||= find_config_dir
@@ -218,16 +205,15 @@ module Sequel
 
       def find_config_dir
         # Check relative to this file (gem's config)
-        gem_config = File.expand_path('../../../config/platforms', __dir__)
+        gem_config = File.expand_path("../../../config/platforms", __dir__)
         return gem_config if File.directory?(gem_config)
 
         # Fallback to working directory
-        local_config = File.join(Dir.pwd, 'config/platforms')
+        local_config = File.join(Dir.pwd, "config/platforms")
         return local_config if File.directory?(local_config)
 
         nil
       end
-
     end
 
     # Build config paths for the given adapter
@@ -239,12 +225,12 @@ module Sequel
       paths = []
 
       if config_dir
-        base_config = File.join(config_dir, 'base.csv')
+        base_config = File.join(config_dir, "base.csv")
         paths << base_config if File.exist?(base_config)
 
         adapter_name = ADAPTER_CONFIG_NAMES[adapter_scheme]
         if adapter_name
-          rdbms_config = File.join(config_dir, 'rdbms', "#{adapter_name}.csv")
+          rdbms_config = File.join(config_dir, "rdbms", "#{adapter_name}.csv")
           paths << rdbms_config if File.exist?(rdbms_config)
         end
       end
@@ -292,9 +278,7 @@ module Sequel
     def platform
       @platform
     end
-
   end
 
   Database.register_extension(:platform, Platform)
-
 end

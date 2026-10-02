@@ -1,13 +1,11 @@
-require 'psych'
-require 'erb'
+require "psych"
+require "erb"
 
 module Sequelizer
   class YamlConfig
-
     attr_reader :config_file_path
 
     class << self
-
       def local_config
         new
       end
@@ -19,13 +17,12 @@ module Sequelizer
       def user_config_path
         return nil unless Dir.home
 
-        Pathname.new(Dir.home).join('.config', 'sequelizer', 'database.yml')
+        Pathname.new(Dir.home).join(".config", "sequelizer", "database.yml")
       end
-
     end
 
     def initialize(config_file_path = nil)
-      @config_file_path = Pathname.new(config_file_path || Pathname.pwd.join('config', 'sequelizer.yml')).expand_path
+      @config_file_path = Pathname.new(config_file_path || Pathname.pwd.join("config", "sequelizer.yml")).expand_path
     end
 
     # Returns a set of options pulled from config/database.yml
@@ -46,7 +43,7 @@ module Sequelizer
     # Lastly, if none of those environment variables are specified, the
     # environment defaults to 'development'
     def environment
-      ENV['SEQUELIZER_ENV'] || ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'development'
+      ENV["SEQUELIZER_ENV"] || ENV["RAILS_ENV"] || ENV["RACK_ENV"] || "development"
     end
 
     private
@@ -55,6 +52,5 @@ module Sequelizer
     def config
       @config ||= Psych.load(ERB.new(File.read(config_file_path)).result)
     end
-
   end
 end

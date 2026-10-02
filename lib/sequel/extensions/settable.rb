@@ -19,12 +19,10 @@
 # Related module: Sequel::Settable
 
 module Sequel
-
   # The Settable module provides database configuration functionality through
   # SET statements. When loaded as an extension, it adds the +set+ method to
   # database connections.
   module Settable
-
     # Execute SET statements for the given options hash.
     #
     # Each key-value pair in the options hash is converted to a SET statement
@@ -73,9 +71,7 @@ module Sequel
     def set_sql(opts)
       opts.map { |k, v| "SET #{k}=#{v}" }
     end
-
   end
 
   Database.register_extension(:settable, Settable)
-
 end

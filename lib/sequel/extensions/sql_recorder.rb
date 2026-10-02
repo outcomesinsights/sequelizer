@@ -32,12 +32,10 @@
 # Related module: Sequel::SqlRecorder
 
 module Sequel
-
   # Extension module that adds SQL recording capabilities to Sequel databases.
   # When included, it provides a +sql_recorder+ method that returns an array
   # of all SQL statements executed against the database.
   module SqlRecorder
-
     # Returns the array of recorded SQL statements.
     #
     # The array accumulates all SQL statements sent to the database since the
@@ -77,9 +75,7 @@ module Sequel
         @sql_recorder ||= []
       end
     end
-
   end
 
   Database.register_extension(:sql_recorder, SqlRecorder)
-
 end

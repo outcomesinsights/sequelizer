@@ -1,5 +1,4 @@
 module Sequel
-
   # = Usable
   #
   # Sequel extension that provides a convenient +use+ method for switching
@@ -12,7 +11,6 @@ module Sequel
   #   db.use(:my_schema)
   #   # Executes: USE `my_schema`
   module Usable
-
     # Switches to the specified database or schema.
     #
     # Executes a USE statement to change the current database context.
@@ -36,9 +34,7 @@ module Sequel
     def use_sql(schema_name)
       "USE #{literal(schema_name)}"
     end
-
   end
 
   Database.register_extension(:usable, Usable)
-
 end

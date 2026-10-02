@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 module Sequel
-
   # Provides additional SQL helper methods for database operations.
   #
   # The more_sql extension adds convenience methods for SQL operations that
@@ -19,7 +18,6 @@ module Sequel
   #   DB.create_schema(:staging, if_not_exists: true)
   #   # Executes: CREATE SCHEMA IF NOT EXISTS "staging"
   module MoreSql
-
     # Creates a database schema.
     #
     # Generates and executes a CREATE SCHEMA statement with optional
@@ -63,14 +61,12 @@ module Sequel
     #   create_schema_sql(:test, if_not_exists: true)
     #   # => 'CREATE SCHEMA IF NOT EXISTS "test"'
     def create_schema_sql(schema_name, opts)
-      sql = 'CREATE SCHEMA '
-      sql += 'IF NOT EXISTS ' if opts[:if_not_exists]
+      sql = "CREATE SCHEMA "
+      sql += "IF NOT EXISTS " if opts[:if_not_exists]
       sql += literal(schema_name)
       sql
     end
-
   end
 
   Database.register_extension(:more_sql, MoreSql)
-
 end

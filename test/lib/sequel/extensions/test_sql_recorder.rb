@@ -1,9 +1,8 @@
-require_relative '../../../test_helper'
-require 'sequel'
-require 'sequel/extensions/sql_recorder'
+require_relative "../../../test_helper"
+require "sequel"
+require "sequel/extensions/sql_recorder"
 
 class TestSqlRecorder < Minitest::Test
-
   def setup
     # Use mock database for these tests since we're not conflicting anymore
     @db = Sequel.mock
@@ -22,39 +21,39 @@ class TestSqlRecorder < Minitest::Test
   def test_records_select_statements
     @db[:users].all
 
-    assert_operator(@db.sql_recorder.length, :>=, 1, 'Should record at least one SQL statement')
+    assert_operator(@db.sql_recorder.length, :>=, 1, "Should record at least one SQL statement")
     assert(@db.sql_recorder.any? do |sql|
-      sql.include?('SELECT * FROM users') || sql.include?('SELECT * FROM `users`')
-    end, 'Should record the SELECT statement')
+      sql.include?("SELECT * FROM users") || sql.include?("SELECT * FROM `users`")
+    end, "Should record the SELECT statement")
   end
 
   def test_records_insert_statements
-    @db[:users].insert(name: 'John', email: 'john@example.com', age: 30)
+    @db[:users].insert(name: "John", email: "john@example.com", age: 30)
 
-    assert_operator(@db.sql_recorder.length, :>=, 1, 'Should record at least one SQL statement')
+    assert_operator(@db.sql_recorder.length, :>=, 1, "Should record at least one SQL statement")
     assert(@db.sql_recorder.any? do |sql|
-      sql.include?('INSERT INTO users') || sql.include?('INSERT INTO `users`')
-    end, 'Should record INSERT statement')
-    assert(@db.sql_recorder.any? { |sql| sql.include?('John') }, 'Should include the data')
+      sql.include?("INSERT INTO users") || sql.include?("INSERT INTO `users`")
+    end, "Should record INSERT statement")
+    assert(@db.sql_recorder.any? { |sql| sql.include?("John") }, "Should include the data")
   end
 
   def test_records_update_statements
-    @db[:users].where(id: 1).update(name: 'Jane')
+    @db[:users].where(id: 1).update(name: "Jane")
 
-    assert_operator(@db.sql_recorder.length, :>=, 1, 'Should record at least one SQL statement')
+    assert_operator(@db.sql_recorder.length, :>=, 1, "Should record at least one SQL statement")
     assert(@db.sql_recorder.any? do |sql|
-      sql.include?('UPDATE users SET') || sql.include?('UPDATE `users` SET')
-    end, 'Should record UPDATE statement')
-    assert(@db.sql_recorder.any? { |sql| sql.include?('Jane') }, 'Should include the updated data')
+      sql.include?("UPDATE users SET") || sql.include?("UPDATE `users` SET")
+    end, "Should record UPDATE statement")
+    assert(@db.sql_recorder.any? { |sql| sql.include?("Jane") }, "Should include the updated data")
   end
 
   def test_records_delete_statements
     @db[:users].where(id: 1).delete
 
-    assert_operator(@db.sql_recorder.length, :>=, 1, 'Should record at least one SQL statement')
+    assert_operator(@db.sql_recorder.length, :>=, 1, "Should record at least one SQL statement")
     assert(@db.sql_recorder.any? do |sql|
-      sql.include?('DELETE FROM users') || sql.include?('DELETE FROM `users`')
-    end, 'Should record DELETE statement')
+      sql.include?("DELETE FROM users") || sql.include?("DELETE FROM `users`")
+    end, "Should record DELETE statement")
   end
 
   def test_records_multiple_sql_statements
@@ -64,16 +63,16 @@ class TestSqlRecorder < Minitest::Test
     @db[:posts].where(id: 1).first
     @db[:comments].count
 
-    assert_operator(@db.sql_recorder.length, :>=, initial_count + 3, 'Should record at least 3 more SQL statements')
+    assert_operator(@db.sql_recorder.length, :>=, initial_count + 3, "Should record at least 3 more SQL statements")
     assert(@db.sql_recorder.any? do |sql|
-      sql.include?('SELECT * FROM users') || sql.include?('SELECT * FROM `users`')
-    end, 'Should record users query')
+      sql.include?("SELECT * FROM users") || sql.include?("SELECT * FROM `users`")
+    end, "Should record users query")
     assert(@db.sql_recorder.any? do |sql|
-      sql.include?('SELECT * FROM posts WHERE (id = 1)')
-    end, 'Should record posts query')
+      sql.include?("SELECT * FROM posts WHERE (id = 1)")
+    end, "Should record posts query")
     assert(@db.sql_recorder.any? do |sql|
-      sql.include?('SELECT count(*) AS count FROM comments')
-    end, 'Should record count query')
+      sql.include?("SELECT count(*) AS count FROM comments")
+    end, "Should record count query")
   end
 
   def test_sql_recorder_accumulates_across_multiple_operations
@@ -82,24 +81,24 @@ class TestSqlRecorder < Minitest::Test
     @db[:users].all
     count_after_first = @db.sql_recorder.length
 
-    assert_operator(count_after_first, :>, initial_count, 'Should record first query')
+    assert_operator(count_after_first, :>, initial_count, "Should record first query")
 
     @db[:posts].first
     count_after_second = @db.sql_recorder.length
 
-    assert_operator(count_after_second, :>, count_after_first, 'Should record second query')
+    assert_operator(count_after_second, :>, count_after_first, "Should record second query")
 
-    @db[:comments].insert(text: 'Hello')
+    @db[:comments].insert(text: "Hello")
     count_after_third = @db.sql_recorder.length
 
-    assert_operator(count_after_third, :>, count_after_second, 'Should record third query')
+    assert_operator(count_after_third, :>, count_after_second, "Should record third query")
   end
 
   def test_sql_recorder_persists_until_manually_cleared
     @db[:users].all
     @db[:posts].all
 
-    assert_operator(@db.sql_recorder.length, :>=, 2, 'Should record multiple statements')
+    assert_operator(@db.sql_recorder.length, :>=, 2, "Should record multiple statements")
 
     # Manually clear (this is how consumers would reset the log)
     @db.sql_recorder.clear
@@ -108,28 +107,28 @@ class TestSqlRecorder < Minitest::Test
 
     @db[:comments].all
 
-    assert_operator(@db.sql_recorder.length, :>=, 1, 'Should record new statements after clear')
+    assert_operator(@db.sql_recorder.length, :>=, 1, "Should record new statements after clear")
   end
 
   def test_handles_complex_queries_with_joins
     @db[:users].join(:posts, user_id: :id).where(Sequel[:users][:active] => true).all
 
-    assert_operator(@db.sql_recorder.length, :>=, 1, 'Should record at least one SQL statement')
-    recorded_sql = @db.sql_recorder.join(' ')
+    assert_operator(@db.sql_recorder.length, :>=, 1, "Should record at least one SQL statement")
+    recorded_sql = @db.sql_recorder.join(" ")
 
-    assert_includes(recorded_sql, 'SELECT', 'Should contain SELECT')
-    assert(recorded_sql.include?('FROM users') || recorded_sql.include?('FROM `users`'), 'Should contain FROM users')
-    assert_includes(recorded_sql, 'JOIN', 'Should contain JOIN')
+    assert_includes(recorded_sql, "SELECT", "Should contain SELECT")
+    assert(recorded_sql.include?("FROM users") || recorded_sql.include?("FROM `users`"), "Should contain FROM users")
+    assert_includes(recorded_sql, "JOIN", "Should contain JOIN")
   end
 
   def test_handles_queries_with_parameters
-    @db[:users].where(name: 'John', age: 25).all
+    @db[:users].where(name: "John", age: 25).all
 
-    assert_operator(@db.sql_recorder.length, :>=, 1, 'Should record at least one SQL statement')
-    recorded_sql = @db.sql_recorder.join(' ')
+    assert_operator(@db.sql_recorder.length, :>=, 1, "Should record at least one SQL statement")
+    recorded_sql = @db.sql_recorder.join(" ")
 
-    assert_includes(recorded_sql, 'John', 'Should include name parameter')
-    assert_includes(recorded_sql, '25', 'Should include age parameter')
+    assert_includes(recorded_sql, "John", "Should include name parameter")
+    assert_includes(recorded_sql, "25", "Should include age parameter")
   end
 
   def test_thread_safety_with_concurrent_queries
@@ -144,7 +143,7 @@ class TestSqlRecorder < Minitest::Test
     threads.each(&:join)
 
     # Should have recorded all 10 queries
-    assert_operator(@db.sql_recorder.length, :>=, 10, 'Should record at least 10 queries')
+    assert_operator(@db.sql_recorder.length, :>=, 10, "Should record at least 10 queries")
     (0..9).each do |i|
       assert(@db.sql_recorder.any? { |sql| sql.include?("WHERE (id = #{i})") }, "Should record query for id #{i}")
     end
@@ -214,7 +213,7 @@ class TestSqlRecorder < Minitest::Test
 
   def test_manual_sql_recording_functionality
     # Test that we can manually record SQL using the method structure
-    test_sql = 'SELECT * FROM manual_test'
+    test_sql = "SELECT * FROM manual_test"
 
     # Verify sql_recorder starts empty or with existing content
     initial_count = @db.sql_recorder.length
@@ -227,5 +226,4 @@ class TestSqlRecorder < Minitest::Test
     assert_equal initial_count + 1, @db.sql_recorder.length
     assert_includes @db.sql_recorder, test_sql
   end
-
 end

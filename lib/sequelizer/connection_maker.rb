@@ -1,5 +1,5 @@
-require 'sequel'
-require_relative 'options'
+require "sequel"
+require_relative "options"
 
 module Sequelizer
   # = ConnectionMaker
@@ -14,7 +14,6 @@ module Sequelizer
   #   maker = ConnectionMaker.new(adapter: 'postgres', host: 'localhost')
   #   db = maker.connection
   class ConnectionMaker
-
     # @!attribute [r] options
     #   @return [Options] the database connection options
     attr_reader :options
@@ -74,6 +73,5 @@ module Sequelizer
     def configure_adapter_specific_options(opts)
       # No adapter-specific configuration needed currently
     end
-
   end
 end

@@ -21,9 +21,7 @@
 # Related module: Sequel::SmartSelectRemove
 
 module Sequel
-
   module SmartSelectRemove
-
     # Override select_remove to attempt static column resolution before
     # falling back to the original implementation.
     #
@@ -90,12 +88,10 @@ module Sequel
         col.value.to_sym
       end
     end
-
   end
 
   Database.register_extension(:smart_select_remove) do |db|
     db.extension(:select_remove)
     db.extend_datasets(SmartSelectRemove)
   end
-
 end

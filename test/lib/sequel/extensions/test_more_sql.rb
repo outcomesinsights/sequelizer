@@ -1,11 +1,10 @@
 # frozen_string_literal: true
 
-require 'test_helper'
-require 'sequel'
-require 'sequel/extensions/more_sql'
+require "test_helper"
+require "sequel"
+require "sequel/extensions/more_sql"
 
 class TestMoreSql < Minitest::Test
-
   def setup
     @db = Sequel.mock
     @db.extension :more_sql
@@ -17,11 +16,11 @@ class TestMoreSql < Minitest::Test
     sqls = @db.sqls
 
     assert_equal 1, sqls.length
-    assert_equal 'CREATE SCHEMA test_schema', sqls.first
+    assert_equal "CREATE SCHEMA test_schema", sqls.first
   end
 
   def test_create_schema_with_string_name
-    @db.create_schema('my_schema')
+    @db.create_schema("my_schema")
 
     sqls = @db.sqls
 
@@ -35,7 +34,7 @@ class TestMoreSql < Minitest::Test
     sqls = @db.sqls
 
     assert_equal 1, sqls.length
-    assert_equal 'CREATE SCHEMA IF NOT EXISTS analytics', sqls.first
+    assert_equal "CREATE SCHEMA IF NOT EXISTS analytics", sqls.first
   end
 
   def test_create_schema_without_if_not_exists_option
@@ -44,7 +43,7 @@ class TestMoreSql < Minitest::Test
     sqls = @db.sqls
 
     assert_equal 1, sqls.length
-    assert_equal 'CREATE SCHEMA reports', sqls.first
+    assert_equal "CREATE SCHEMA reports", sqls.first
   end
 
   def test_create_schema_with_empty_options
@@ -53,11 +52,11 @@ class TestMoreSql < Minitest::Test
     sqls = @db.sqls
 
     assert_equal 1, sqls.length
-    assert_equal 'CREATE SCHEMA staging', sqls.first
+    assert_equal "CREATE SCHEMA staging", sqls.first
   end
 
   def test_create_schema_with_special_characters_in_name
-    @db.create_schema('schema-with-dashes')
+    @db.create_schema("schema-with-dashes")
 
     sqls = @db.sqls
 
@@ -74,13 +73,13 @@ class TestMoreSql < Minitest::Test
   def test_create_schema_multiple_calls
     @db.create_schema(:first_schema)
     @db.create_schema(:second_schema, if_not_exists: true)
-    @db.create_schema('third_schema')
+    @db.create_schema("third_schema")
 
     sqls = @db.sqls
 
     assert_equal 3, sqls.length
-    assert_equal 'CREATE SCHEMA first_schema', sqls[0]
-    assert_equal 'CREATE SCHEMA IF NOT EXISTS second_schema', sqls[1]
+    assert_equal "CREATE SCHEMA first_schema", sqls[0]
+    assert_equal "CREATE SCHEMA IF NOT EXISTS second_schema", sqls[1]
     assert_equal "CREATE SCHEMA 'third_schema'", sqls[2]
   end
 
@@ -111,7 +110,7 @@ class TestMoreSql < Minitest::Test
     sqls = @db.sqls
 
     assert_equal 1, sqls.length
-    assert_equal 'CREATE SCHEMA test_schema', sqls.first
+    assert_equal "CREATE SCHEMA test_schema", sqls.first
   end
 
   def test_create_schema_handles_nil_options
@@ -120,7 +119,7 @@ class TestMoreSql < Minitest::Test
     sqls = @db.sqls
 
     assert_equal 1, sqls.length
-    assert_equal 'CREATE SCHEMA test_schema', sqls.first
+    assert_equal "CREATE SCHEMA test_schema", sqls.first
   end
 
   def test_private_create_schema_sql_method_not_accessible
@@ -128,5 +127,4 @@ class TestMoreSql < Minitest::Test
       @db.create_schema_sql(:test, {})
     end
   end
-
 end

@@ -1,14 +1,13 @@
-require_relative '../../test_helper'
-require 'sequelizer'
+require_relative "../../test_helper"
+require "sequelizer"
 
 class TestConnectionMaker < Minitest::Test
-
   def setup
-    @options = { 'adapter' => 'mock', 'host' => 'postgres' }
+    @options = { "adapter" => "mock", "host" => "postgres" }
   end
 
   def test_accepts_options_as_params
-    Sequelizer::YamlConfig.stub :user_config_path, Pathname.new('/completely/made/up/path/that/does/not/exist') do
+    Sequelizer::YamlConfig.stub :user_config_path, Pathname.new("/completely/made/up/path/that/does/not/exist") do
       assert_equal :postgres, Sequelizer::ConnectionMaker.new(@options).connection.database_type
     end
   end
@@ -49,7 +48,7 @@ class TestConnectionMaker < Minitest::Test
         conn = Sequelizer::ConnectionMaker.new.connection
         conn.test_connection
 
-        assert_equal(['SET flim=flam'], conn.sqls)
+        assert_equal([ "SET flim=flam" ], conn.sqls)
       end
     end
   end
@@ -60,7 +59,7 @@ class TestConnectionMaker < Minitest::Test
         conn = Sequelizer::ConnectionMaker.new.connection
         conn.test_connection
 
-        assert_equal(['SET flim=flam'] * 2, conn.sqls)
+        assert_equal([ "SET flim=flam" ] * 2, conn.sqls)
       end
     end
   end
@@ -82,18 +81,18 @@ class TestConnectionMaker < Minitest::Test
   end
 
   def test_applies_configuration_to_connection
-    opts = @options.merge(postgres_db_opt_search_path: 'searchy', impala_db_opt_search_path: 'searchy2')
+    opts = @options.merge(postgres_db_opt_search_path: "searchy", impala_db_opt_search_path: "searchy2")
     with_yaml_config(opts) do
       conn = Sequelizer::ConnectionMaker.new.connection
       conn.test_connection
 
-      assert_equal({ search_path: 'searchy' }, conn.db_opts.to_hash)
-      assert_equal(['SET search_path=searchy'], conn.db_opts.sql_statements)
+      assert_equal({ search_path: "searchy" }, conn.db_opts.to_hash)
+      assert_equal([ "SET search_path=searchy" ], conn.db_opts.sql_statements)
     end
   end
 
   def test_applies_nothing_when_no_configuration
-    Sequelizer::YamlConfig.stub :user_config_path, Pathname.new('/completely/made/up/path/that/does/not/exist') do
+    Sequelizer::YamlConfig.stub :user_config_path, Pathname.new("/completely/made/up/path/that/does/not/exist") do
       conn = Sequelizer::ConnectionMaker.new(@options).connection
       conn.test_connection
 
@@ -103,13 +102,13 @@ class TestConnectionMaker < Minitest::Test
   end
 
   def test_applies_quotes_when_necessary
-    Sequelizer::YamlConfig.stub :user_config_path, Pathname.new('/completely/made/up/path/that/does/not/exist') do
-      @options.merge!(postgres_db_opt_search_path: 'searchy,path')
+    Sequelizer::YamlConfig.stub :user_config_path, Pathname.new("/completely/made/up/path/that/does/not/exist") do
+      @options.merge!(postgres_db_opt_search_path: "searchy,path")
       conn = Sequelizer::ConnectionMaker.new(@options).connection
       conn.test_connection
 
       assert_equal({ search_path: "'searchy,path'" }, conn.db_opts.to_hash)
-      assert_equal(["SET search_path='searchy,path'"], conn.db_opts.sql_statements)
+      assert_equal([ "SET search_path='searchy,path'" ], conn.db_opts.sql_statements)
     end
   end
 
@@ -121,7 +120,7 @@ class TestConnectionMaker < Minitest::Test
   end
 
   def test_passes_duckdb_adapter_options_through_to_sequel
-    options = { adapter: 'duckdb', database: '/tmp/test.duckdb' }
+    options = { adapter: "duckdb", database: "/tmp/test.duckdb" }
     connected = nil
     fake_db = Object.new
     fake_db.define_singleton_method(:extension) { |*| self }
@@ -133,26 +132,25 @@ class TestConnectionMaker < Minitest::Test
       Sequelizer::ConnectionMaker.new(options).connection
     end
 
-    assert_equal('duckdb', connected['adapter'])
-    assert_equal('/tmp/test.duckdb', connected['database'])
-    assert_instance_of(Proc, connected['after_connect'])
+    assert_equal("duckdb", connected["adapter"])
+    assert_equal("/tmp/test.duckdb", connected["database"])
+    assert_instance_of(Proc, connected["after_connect"])
   end
 
   def test_passes_hexspace_url_through_to_sequel
-    options = { url: 'hexspace://localhost:10000/default' }
+    options = { url: "hexspace://localhost:10000/default" }
     connected = nil
     fake_db = Object.new
     fake_db.define_singleton_method(:extension) { |*| self }
 
     Sequel.stub(:connect, lambda { |url, opts|
-      connected = [url, opts]
+      connected = [ url, opts ]
       fake_db
     }) do
       Sequelizer::ConnectionMaker.new(options).connection
     end
 
-    assert_equal('hexspace://localhost:10000/default', connected.first)
-    assert_instance_of(Proc, connected.last['after_connect'])
+    assert_equal("hexspace://localhost:10000/default", connected.first)
+    assert_instance_of(Proc, connected.last["after_connect"])
   end
-
 end

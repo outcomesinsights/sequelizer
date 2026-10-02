@@ -1,16 +1,16 @@
 # frozen_string_literal: true
 
-require_relative '../../../test_helper'
-require_relative '../../../../lib/sequel/extensions/cold_col'
+require_relative "../../../test_helper"
+require_relative "../../../../lib/sequel/extensions/cold_col"
 
 describe Sequel::ColdColDatabase do
   let(:db) do
     @db = Sequel.mock.extension(:cold_col)
     @db.cold_col_registry.set_schemas({
-                                        Sequel.lit('tab1') => [[:col1]],
-                                        Sequel.lit('tab2') => [[:col2]],
-                                        Sequel.lit('tab3') => [[:col3], [:col4]],
-                                        Sequel.lit('q.tab4') => [[:col5]],
+                                        Sequel.lit("tab1") => [ [ :col1 ] ],
+                                        Sequel.lit("tab2") => [ [ :col2 ] ],
+                                        Sequel.lit("tab3") => [ [ :col3 ], [ :col4 ] ],
+                                        Sequel.lit("q.tab4") => [ [ :col5 ] ]
                                       })
     @db.extend_datasets do
       def supports_cte?
@@ -30,66 +30,66 @@ describe Sequel::ColdColDatabase do
     _(ds.columns).must_equal(cols)
   end
 
-  it 'should know columns from select * FROM tab' do
+  it "should know columns from select * FROM tab" do
     expect_columns(db[:tab1], :col1)
   end
 
-  it 'should know columns after append' do
+  it "should know columns after append" do
     expect_columns(db[:tab1].select_append(Sequel.function(:min, :col1).as(:mini)), :col1, :mini)
   end
 
-  it 'should know columns after select_all' do
+  it "should know columns after select_all" do
     expect_columns(db[:tab1].select_all, :col1)
   end
 
-  it 'should know columns after select_all(:tab1)' do
+  it "should know columns after select_all(:tab1)" do
     expect_columns(db[:tab1].select_all(:tab1), :col1)
   end
 
-  it 'should know columns after from_self' do
+  it "should know columns after from_self" do
     expect_columns(db[:tab1].from_self, :col1)
   end
 
-  it 'should know columns after a CTE' do
+  it "should know columns after a CTE" do
     ds = db[:cte1]
          .with(:cte1, db[:tab1])
     expect_columns(ds, :col1)
   end
 
-  it 'should know columns after a JOIN' do
+  it "should know columns after a JOIN" do
     ds = db[:tab1]
          .join(:tab2)
     expect_columns(ds, :col1, :col2)
   end
 
-  it 'should know columns after a different kind of JOIN' do
+  it "should know columns after a different kind of JOIN" do
     ds = db[:tab1]
          .join(db[:tab2])
     expect_columns(ds, :col1, :col2)
   end
 
-  it 'should know columns from a JOIN and CTE' do
+  it "should know columns from a JOIN and CTE" do
     ds = db[:tab1]
          .with(:cte1, db[:tab2])
          .join(db[:cte1])
     expect_columns(ds, :col1, :col2)
   end
 
-  it 'should know columns from a select_all JOIN' do
+  it "should know columns from a select_all JOIN" do
     ds = db[:tab1]
          .join(db[:tab2], { Sequel[:tab1][:col1] => Sequel[:tab2][:col3] })
          .select_all(:tab1)
     expect_columns(ds, :col1)
   end
 
-  it 'should know columns from an aliased select_all JOIN' do
+  it "should know columns from an aliased select_all JOIN" do
     ds = db[:tab1].from_self(alias: :l)
                   .join(db[:tab2], { col3: :col1 })
                   .select_all(:l)
     expect_columns(ds, :col1)
   end
 
-  it 'should know columns from an aliased select_all and added rhs column JOIN' do
+  it "should know columns from an aliased select_all and added rhs column JOIN" do
     ds = db[:tab1].from_self(alias: :l)
                   .join(db[:tab2], { col3: :col1 }, table_alias: :r)
                   .select_all(:l)
@@ -97,33 +97,33 @@ describe Sequel::ColdColDatabase do
     expect_columns(ds, :col1, :col4)
   end
 
-  it 'should know columns from an aliased select_all rhs JOIN' do
+  it "should know columns from an aliased select_all rhs JOIN" do
     ds = db[:tab1].from_self(alias: :l)
                   .join(db[:tab2], { col3: :col1 }, table_alias: :r)
                   .select_all(:r)
     expect_columns(ds, :col2)
   end
 
-  it 'should know columns from a directly aliased select_all rhs JOIN' do
+  it "should know columns from a directly aliased select_all rhs JOIN" do
     ds = db[:tab1].from_self(alias: :l)
                   .join(:tab2, { col3: :col1 }, table_alias: :r)
                   .select_all(:r)
     expect_columns(ds, :col2)
   end
 
-  it 'should know columns from a a qualified JOIN' do
+  it "should know columns from a a qualified JOIN" do
     ds = db[:tab1].from_self(alias: :l)
                   .join(Sequel[:q][:tab4], { col3: :col1 }, table_alias: :r)
                   .select_all(:r)
     expect_columns(ds, :col5)
   end
-  it 'should remember columns from ctas' do
+  it "should remember columns from ctas" do
     db.create_table(:ctas_table, as: db.select(Sequel[1].as(:a)))
     ds = db[:ctas_table]
     expect_columns(ds, :a)
   end
 
-  it 'should remember columns from create table' do
+  it "should remember columns from create table" do
     db.create_table(:ddl_table) do
       String :a
     end
@@ -131,43 +131,43 @@ describe Sequel::ColdColDatabase do
     expect_columns(ds, :a)
   end
 
-  it 'should remember columns from view' do
+  it "should remember columns from view" do
     db.create_view(:ctas_view, db.select(Sequel[1].as(:a)))
     ds = db[:ctas_view]
     expect_columns(ds, :a)
   end
 
-  it 'should not raise when create_view receives string SQL' do
-    db.create_view(:string_view, 'SELECT 1 AS A')
+  it "should not raise when create_view receives string SQL" do
+    db.create_view(:string_view, "SELECT 1 AS A")
     # View is created but columns are not recorded (string has no .columns)
     assert_raises(RuntimeError) { db[:string_view].columns }
   end
 
-  it 'should skip column recording with dont_record option' do
-    db.create_view(:ctas_view, 'SELECT 1 AS A', dont_record: true)
+  it "should skip column recording with dont_record option" do
+    db.create_view(:ctas_view, "SELECT 1 AS A", dont_record: true)
   end
 
-  it 'should not raise when create_table_as receives string SQL' do
-    db.create_table(:string_ctas, as: 'SELECT 1 AS B')
+  it "should not raise when create_table_as receives string SQL" do
+    db.create_table(:string_ctas, as: "SELECT 1 AS B")
     # Table is created but columns are not recorded
     assert_raises(RuntimeError) { db[:string_ctas].columns }
   end
 
-  it 'should still register columns when create_table_as receives a dataset' do
+  it "should still register columns when create_table_as receives a dataset" do
     db.create_table(:dataset_ctas, as: db[:tab1].select(:col1))
     expect_columns(db[:dataset_ctas], :col1)
   end
 
-  it 'should still register columns when create_view receives a dataset' do
+  it "should still register columns when create_view receives a dataset" do
     db.create_view(:dataset_view, db[:tab1].select(:col1))
     expect_columns(db[:dataset_view], :col1)
   end
 
-  it 'should handle load_schema with empty file' do
-    require 'tempfile'
-    require 'yaml'
+  it "should handle load_schema with empty file" do
+    require "tempfile"
+    require "yaml"
 
-    Tempfile.create(['schema', '.yml']) do |f|
+    Tempfile.create([ "schema", ".yml" ]) do |f|
       f.write({}.to_yaml)
       f.flush
 
@@ -177,55 +177,55 @@ describe Sequel::ColdColDatabase do
     end
   end
 
-  it 'should handle add_table_schema with symbol and string table names' do
-    db.add_table_schema(:new_table, [[:col_a, {}], [:col_b, {}]])
-    db.add_table_schema('string_table', [[:col_c, {}]])
+  it "should handle add_table_schema with symbol and string table names" do
+    db.add_table_schema(:new_table, [ [ :col_a, {} ], [ :col_b, {} ] ])
+    db.add_table_schema("string_table", [ [ :col_c, {} ] ])
 
     expect_columns(db[:new_table], :col_a, :col_b)
     expect_columns(db[:string_table], :col_c)
   end
 
-  it 'should handle complex nested CTEs' do
+  it "should handle complex nested CTEs" do
     ds = db.with(:cte1, db[:tab1])
            .with(:cte2, db[:cte1].select(:col1))
            .from(:cte2)
     expect_columns(ds, :col1)
   end
 
-  it 'should handle qualified table names in schema' do
+  it "should handle qualified table names in schema" do
     expect_columns(db[Sequel[:q][:tab4]], :col5)
   end
 
-  it 'should handle aliased expressions in select' do
+  it "should handle aliased expressions in select" do
     ds = db[:tab1].select(Sequel[:col1].as(:renamed_col))
     expect_columns(ds, :renamed_col)
   end
 
-  it 'should handle function calls with aliases' do
+  it "should handle function calls with aliases" do
     ds = db[:tab1].select(Sequel.function(:count, :col1).as(:count_col1))
     expect_columns(ds, :count_col1)
   end
 
-  it 'should handle multiple table joins with mixed syntax' do
+  it "should handle multiple table joins with mixed syntax" do
     ds = db[:tab1]
          .join(:tab2, { col2: :col1 })
          .join(db[:tab3].as(:t3), { col3: :col1 })
     expect_columns(ds, :col1, :col2, :col3, :col4)
   end
 
-  it 'should handle recursive schema merging with load_schema' do
-    require 'tempfile'
-    require 'yaml'
+  it "should handle recursive schema merging with load_schema" do
+    require "tempfile"
+    require "yaml"
 
     # First schema file
-    Tempfile.create(['schema1', '.yml']) do |f1|
-      f1.write({ 'initial_table' => { columns: { 'col_x' => {} } } }.to_yaml)
+    Tempfile.create([ "schema1", ".yml" ]) do |f1|
+      f1.write({ "initial_table" => { columns: { "col_x" => {} } } }.to_yaml)
       f1.flush
       db.load_schema(f1.path)
 
       # Second schema file
-      Tempfile.create(['schema2', '.yml']) do |f2|
-        f2.write({ 'second_table' => { columns: { 'col_y' => {} } } }.to_yaml)
+      Tempfile.create([ "schema2", ".yml" ]) do |f2|
+        f2.write({ "second_table" => { columns: { "col_y" => {} } } }.to_yaml)
         f2.flush
         db.load_schema(f2.path)
 
@@ -237,16 +237,16 @@ describe Sequel::ColdColDatabase do
   end
 
   # Additional tests to ensure refactoring preserves behavior
-  describe 'Internal schema lookup behavior' do
-    it 'should prioritize created tables over schemas' do
-      db.add_table_schema(:priority_test, [[:schema_col, {}]])
+  describe "Internal schema lookup behavior" do
+    it "should prioritize created tables over schemas" do
+      db.add_table_schema(:priority_test, [ [ :schema_col, {} ] ])
       db.create_table(:priority_test) do
         String :created_col
       end
       expect_columns(db[:priority_test], :created_col)
     end
 
-    it 'should handle deeply nested WITH clauses' do
+    it "should handle deeply nested WITH clauses" do
       ds = db[:cte1]
            .with(:cte1, db[:tab1])
            .with(:cte2, db[:cte1])
@@ -255,7 +255,7 @@ describe Sequel::ColdColDatabase do
       expect_columns(ds, :col1)
     end
 
-    it 'should handle mixed aliased and non-aliased sources' do
+    it "should handle mixed aliased and non-aliased sources" do
       ds = db[:tab1].from_self(alias: :t1)
                     .join(:tab2, { col2: :col1 })
                     .join(db[:tab3].as(:t3), { col3: :col1 })
@@ -264,7 +264,7 @@ describe Sequel::ColdColDatabase do
       expect_columns(ds, :col1, :col4)
     end
 
-    it 'should handle column lookup with empty select lists' do
+    it "should handle column lookup with empty select lists" do
       ds = db.from(db[:tab1].where(id: 1))
       expect_columns(ds, :col1)
     end

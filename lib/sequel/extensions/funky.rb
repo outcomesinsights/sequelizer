@@ -1,9 +1,6 @@
 module Sequel
-
   module Funky
-
     class FunkyBase
-
       def initialize(db)
         @db = db
       end
@@ -11,19 +8,17 @@ module Sequel
       def to_strptime(format)
         return format if format =~ /%/
 
-        format.gsub('yyyy', '%Y').gsub('MM', '%m').gsub('dd', '%d')
+        format.gsub("yyyy", "%Y").gsub("MM", "%m").gsub("dd", "%d")
       end
 
       def from_strptime(format)
         return format unless format =~ /%/
 
-        format.gsub('%Y', 'yyyy').gsub('%m', 'MM').gsub('%d', 'dd')
+        format.gsub("%Y", "yyyy").gsub("%m", "MM").gsub("%d", "dd")
       end
-
     end
 
     class FunkySpark < FunkyBase
-
       def str_to_date(value, format, try: false) # rubocop:disable Lint/UnusedMethodArgument
         Sequel.function(:to_date, Sequel.cast_string(value), format)
       end
@@ -35,9 +30,9 @@ module Sequel
       def make_json_column(ds, key_column, value_column)
         json_object_col = Sequel.function(
           :named_struct,
-          'key',
+          "key",
           key_column,
-          'value',
+          "value",
           value_column,
         ).then do |json_object_col|
           Sequel.function(
@@ -63,11 +58,9 @@ module Sequel
       def collect_list(column)
         Sequel.function(:collect_list, column)
       end
-
     end
 
     class FunkyDuckDB < FunkyBase
-
       def str_to_date(value, format, try: false)
         strptime_func = try ? :try_strptime : :strptime
         Sequel.function(strptime_func, Sequel.cast_string(value), to_strptime(format))
@@ -105,7 +98,6 @@ module Sequel
       def collect_list(column)
         Sequel.function(:list, column)
       end
-
     end
 
     def self.extended(db)
@@ -128,9 +120,7 @@ module Sequel
         raise "No known functions for #{database_type}"
       end
     end
-
   end
 
   Database.register_extension(:funky, Funky)
-
 end

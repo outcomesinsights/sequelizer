@@ -1,13 +1,12 @@
-require_relative '../../../test_helper'
-require 'sequel'
-require 'sequel/extensions/platform'
+require_relative "../../../test_helper"
+require "sequel"
+require "sequel/extensions/platform"
 
 class TestPlatform < Minitest::Test
-
   def setup
     # Point to the gem's config directory
     @original_config_dir = Sequel::Platform.config_dir
-    Sequel::Platform.config_dir = File.expand_path('../../../../config/platforms', __dir__)
+    Sequel::Platform.config_dir = File.expand_path("../../../../config/platforms", __dir__)
   end
 
   def teardown
@@ -78,7 +77,7 @@ class TestPlatform < Minitest::Test
   end
 
   def test_selects_base_platform_for_mock_duckdb_connection
-    db = Sequel.connect('mock://duckdb')
+    db = Sequel.connect("mock://duckdb")
     db.extension :platform
 
     # DuckDB doesn't have a platform class yet, so it falls back to Base
@@ -123,7 +122,7 @@ class TestPlatform < Minitest::Test
     db = Sequel.mock(host: :postgres)
     db.extension :platform
 
-    assert_equal 'search_path', db.platform[:schema_switching_method]
+    assert_equal "search_path", db.platform[:schema_switching_method]
   end
 
   def test_config_stacking_overrides_base
@@ -147,7 +146,7 @@ class TestPlatform < Minitest::Test
     # Should produce subtraction syntax - use dataset.literal to get SQL
     sql = db.literal(expr)
 
-    assert_includes sql, '-'
+    assert_includes sql, "-"
   end
 
   def test_spark_date_diff_uses_datediff_function
@@ -159,7 +158,7 @@ class TestPlatform < Minitest::Test
     # Should use datediff function with reversed args
     sql = db.literal(expr)
 
-    assert_includes sql.downcase, 'datediff'
+    assert_includes sql.downcase, "datediff"
   end
 
   def test_snowflake_date_diff_includes_day_unit
@@ -170,8 +169,8 @@ class TestPlatform < Minitest::Test
 
     sql = db.literal(expr)
 
-    assert_includes sql.downcase, 'datediff'
-    assert_includes sql, 'day'
+    assert_includes sql.downcase, "datediff"
+    assert_includes sql, "day"
   end
 
   def test_athena_date_diff_uses_date_diff_function
@@ -182,8 +181,8 @@ class TestPlatform < Minitest::Test
 
     sql = db.literal(expr)
 
-    assert_includes sql.downcase, 'date_diff'
-    assert_includes sql, 'day'
+    assert_includes sql.downcase, "date_diff"
+    assert_includes sql, "day"
   end
 
   def test_cast_date_returns_cast_expression
@@ -223,9 +222,8 @@ class TestPlatform < Minitest::Test
     db.extension :platform
 
     # Known key
-    assert_equal 'search_path', db.platform.fetch(:schema_switching_method, 'default')
+    assert_equal "search_path", db.platform.fetch(:schema_switching_method, "default")
     # Unknown key
-    assert_equal 'default', db.platform.fetch(:unknown_key, 'default')
+    assert_equal "default", db.platform.fetch(:unknown_key, "default")
   end
-
 end

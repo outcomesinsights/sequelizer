@@ -1,7 +1,7 @@
-require 'uri'
-require_relative 'yaml_config'
-require_relative 'env_config'
-require_relative 'options_hash'
+require "uri"
+require_relative "yaml_config"
+require_relative "env_config"
+require_relative "options_hash"
 
 module Sequelizer
   # = Options
@@ -32,7 +32,6 @@ module Sequelizer
   #   options = Options.new
   #   puts options.adapter  # => 'postgres'
   class Options
-
     # @!attribute [r] extensions
     #   @return [Array<Symbol>] list of Sequel extensions to load
     attr_reader :extensions
@@ -103,7 +102,7 @@ module Sequelizer
       adapter ||= URI.parse(sequelizer_options[:url].to_s).scheme if sequelizer_options[:url]
 
       if adapter =~ /^postgres/
-        sequelizer_options[:adapter] = 'postgres'
+        sequelizer_options[:adapter] = "postgres"
         paths = %w[search_path schema_search_path schema].map { |key| sequelizer_options.delete(key) }.compact
 
         unless paths.empty?
@@ -156,8 +155,8 @@ module Sequelizer
     # @example Array input
     #   callback = after_connect(['public', 'app_schema'])
     def after_connect(search_path)
-      schemas = Array(search_path).flat_map { |p| p.to_s.split(',') }.map(&:strip)
-      path_string = schemas.join(', ')
+      schemas = Array(search_path).flat_map { |p| p.to_s.split(",") }.map(&:strip)
+      path_string = schemas.join(", ")
       proc do |conn|
         schemas.each do |schema|
           conn.execute("CREATE SCHEMA IF NOT EXISTS #{schema}")
@@ -184,10 +183,9 @@ module Sequelizer
       extension_keys = options.keys.select { |k| k.to_s =~ extension_regexp }
       extensions = extension_keys.map do |key|
         options.delete(key)
-        key.to_s.gsub(extension_regexp, '').to_sym
+        key.to_s.gsub(extension_regexp, "").to_sym
       end
-      [options, extensions]
+      [ options, extensions ]
     end
-
   end
 end

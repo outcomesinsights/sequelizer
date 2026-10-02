@@ -1,8 +1,7 @@
-require_relative '../../test_helper'
-require 'sequelizer'
+require_relative "../../test_helper"
+require "sequelizer"
 
 class TestEnvConfig < Minitest::Test
-
   def setup
     @env_config = Sequelizer::EnvConfig.new
   end
@@ -21,17 +20,16 @@ class TestEnvConfig < Minitest::Test
   end
 
   def test_converts_sequelizer_vars_to_options
-    ENV['SEQUELIZER_ADAPTER'] = 'sqlite'
+    ENV["SEQUELIZER_ADAPTER"] = "sqlite"
 
-    assert_equal({ 'adapter' => 'sqlite' }, @env_config.options)
-    ENV.delete('SEQUELIZER_ADAPTER')
+    assert_equal({ "adapter" => "sqlite" }, @env_config.options)
+    ENV.delete("SEQUELIZER_ADAPTER")
   end
 
   def test_converts_db_opts_to_options
-    ENV['POSTGRES_DB_OPT_HEY'] = 'there'
+    ENV["POSTGRES_DB_OPT_HEY"] = "there"
 
-    assert_equal({ 'postgres_db_opt_hey' => 'there' }, @env_config.options)
-    ENV.delete('POSTGRES_DB_OPT_HEY')
+    assert_equal({ "postgres_db_opt_hey" => "there" }, @env_config.options)
+    ENV.delete("POSTGRES_DB_OPT_HEY")
   end
-
 end

@@ -1,5 +1,4 @@
 module Sequel
-
   # = MakeReadyable
   #
   # Sequel extension that provides database readiness functionality,
@@ -17,7 +16,6 @@ module Sequel
   # @example External file sources
   #   db.make_ready(search_path: [Pathname.new('data.parquet')])
   module MakeReadyable
-
     # Prepares the database by setting up schemas, views, and external data sources.
     #
     # This method is primarily geared towards Spark SQL-based databases.
@@ -48,7 +46,6 @@ module Sequel
     def make_ready(opts = {})
       ReadyMaker.new(self, opts).run
     end
-
   end
 
   # = ReadyMaker
@@ -57,7 +54,6 @@ module Sequel
   # This class processes the make_ready options and executes the necessary
   # SQL statements to set up schemas, views, and external data sources.
   class ReadyMaker
-
     # @!attribute [r] db
     #   @return [Sequel::Database] the database instance
     # @!attribute [r] opts
@@ -146,7 +142,6 @@ module Sequel
     # This class creates temporary views that read from external files
     # like Parquet, ORC, etc.
     class FileSourcerer
-
       # @!attribute [r] db
       #   @return [Sequel::Database] the database instance
       # @!attribute [r] schema
@@ -167,7 +162,7 @@ module Sequel
       # @param _opts [Hash] unused options parameter
       # @return [Array<Symbol>] array containing the table name
       def tables(_opts = {})
-        [schema.basename(schema.extname).to_s.to_sym]
+        [ schema.basename(schema.extname).to_s.to_sym ]
       end
 
       # Creates a temporary view that reads from the external file.
@@ -181,7 +176,7 @@ module Sequel
           db.create_view(table, {
             temp: true,
             using: format,
-            options: { path: schema.expand_path },
+            options: { path: schema.expand_path }
           }.merge(opts))
         when :duckdb
           # DuckDB uses direct file reading with read_* functions
@@ -199,20 +194,20 @@ module Sequel
       # @param _opts [Hash] additional options to merge (currently unused for DuckDB)
       def create_duckdb_view(table, _opts)
         file_path = if schema.directory?
-                      schema.expand_path.join('**').join("*.#{format}").to_s
-                    else
+                      schema.expand_path.join("**").join("*.#{format}").to_s
+        else
                       schema.expand_path.to_s
-                    end
+        end
         read_function = case format
-                        when 'parquet'
+        when "parquet"
                           :read_parquet
-                        when 'csv'
+        when "csv"
                           :read_csv_auto
-                        when 'json'
+        when "json"
                           :read_json_auto
-                        else
+        else
                           raise Sequel::Error, "Unsupported file format '#{format}' for DuckDB"
-                        end
+        end
 
         # DuckDB doesn't support TEMPORARY views, use regular CREATE VIEW
         db.create_view(table, db.from(Sequel.function(read_function, file_path)))
@@ -224,11 +219,8 @@ module Sequel
       def format
         schema.extname[1..]
       end
-
     end
-
   end
 
   Database.register_extension(:make_readyable, MakeReadyable)
-
 end

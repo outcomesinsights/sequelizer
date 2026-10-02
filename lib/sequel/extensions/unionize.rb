@@ -1,9 +1,8 @@
 # frozen_string_literal: true
 
-require 'digest'
+require "digest"
 
 module Sequel
-
   # Provides efficient handling of large UNION operations.
   #
   # The unionize extension allows combining many datasets through UNION operations
@@ -20,14 +19,12 @@ module Sequel
   # @example With options
   #   DB.unionize(datasets, chunk_size: 50, all: true, temp_table_prefix: 'my_union')
   module Unionize
-
     # Handles the chunking and union of multiple datasets.
     #
     # This class manages the process of splitting a large collection of datasets
     # into smaller chunks, creating temporary tables/views for each chunk, and
     # then recursively combining them until a single unified dataset is produced.
     class Unionizer
-
       # Default number of datasets to combine in each chunk
       DEFAULT_CHUNK_SIZE = 100
 
@@ -36,7 +33,6 @@ module Sequel
       # Each chunk handles a subset of datasets, creates a temporary table/view
       # for the combined result, and provides access to the unified dataset.
       class Chunk
-
         # @!attribute [r] db
         #   @return [Sequel::Database] The database connection
         # @!attribute [r] dses
@@ -90,7 +86,6 @@ module Sequel
             raise "Unsupported database type: #{db.database_type}"
           end
         end
-
       end
 
       # @!attribute [r] db
@@ -111,7 +106,7 @@ module Sequel
         @ds_set = ds_set
         @opts = opts
         opts[:chunk_size] ||= DEFAULT_CHUNK_SIZE
-        opts[:temp_table_prefix] ||= 'temp_union'
+        opts[:temp_table_prefix] ||= "temp_union"
         opts[:all] ||= false
         opts[:from_self] = opts.fetch(:from_self, true)
       end
@@ -132,7 +127,6 @@ module Sequel
 
         unionize(chunks.each(&:create).map { |chunk| db[chunk.name] })
       end
-
     end
 
     # Efficiently combines multiple datasets using UNION operations.
@@ -161,9 +155,7 @@ module Sequel
     def unionize(ds_set, opts = {})
       Unionizer.new(self, ds_set, opts).unionize
     end
-
   end
 
   Database.register_extension(:unionize, Unionize)
-
 end

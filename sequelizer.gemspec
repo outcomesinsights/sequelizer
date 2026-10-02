@@ -5,8 +5,8 @@ require 'sequelizer/version'
 Gem::Specification.new do |spec|
   spec.name          = 'sequelizer'
   spec.version       = Sequelizer::VERSION
-  spec.authors       = ['Ryan Duryea']
-  spec.email         = ['aguynamedryan@gmail.com']
+  spec.authors       = [ 'Ryan Duryea' ]
+  spec.email         = [ 'aguynamedryan@gmail.com' ]
   spec.summary       = 'Sequel database connections via config/database.yml or .env'
   spec.description   = 'Easily establish a connection to a database via Sequel gem using options specified in config/database.yml or .env files'
   spec.homepage      = 'https://github.com/outcomesinsights/sequelizer'
@@ -17,8 +17,8 @@ Gem::Specification.new do |spec|
   spec.files         = %w[CHANGELOG.md LICENSE README.md bin/sequelizer] +
                        Dir['lib/**/*.rb'] + Dir['config/platforms/**/*.csv']
   spec.bindir        = 'bin'
-  spec.executables   = ['sequelizer']
-  spec.require_paths = ['lib']
+  spec.executables   = [ 'sequelizer' ]
+  spec.require_paths = [ 'lib' ]
   spec.required_ruby_version = '>= 3.3.0'
 
   spec.add_development_dependency 'bundler', '>= 2.0'
@@ -30,6 +30,9 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rake', '~> 13.3'
   spec.add_development_dependency 'rubocop', '~> 1.0'
   spec.add_development_dependency 'rubocop-minitest', '~> 0.25'
+  spec.add_development_dependency 'rubocop-rails-omakase', '~> 1.1'
+  spec.add_development_dependency 'rubocop-rake', '~> 0.7'
+  spec.add_development_dependency 'rubocop-sequel', '~> 0.4'
   spec.add_development_dependency 'simplecov', '~> 1.0'
   spec.add_dependency 'activesupport', '>= 7', '< 9'
   spec.add_dependency 'dotenv', '>= 2.1', '< 4.0'

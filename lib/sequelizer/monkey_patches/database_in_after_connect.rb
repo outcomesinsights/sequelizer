@@ -1,6 +1,5 @@
 module Sequel
   class ConnectionPool
-
     # Return a new connection by calling the connection proc with the given server name,
     # and checking for connection errors.
     def make_new(server)
@@ -19,10 +18,9 @@ module Sequel
       rescue StandardError => e
         raise Sequel.convert_exception_class(e, Sequel::DatabaseConnectionError)
       end
-      raise(Sequel::DatabaseConnectionError, 'Connection parameters not valid') unless conn
+      raise(Sequel::DatabaseConnectionError, "Connection parameters not valid") unless conn
 
       conn
     end
-
   end
 end

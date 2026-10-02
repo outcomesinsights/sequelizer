@@ -38,18 +38,15 @@
 #
 #   DB.extension :cold_col
 
-require 'active_support/core_ext/object/try'
-require 'active_support/core_ext/object/blank'
+require "active_support/core_ext/object/try"
+require "active_support/core_ext/object/blank"
 
 module Sequel
-
   module ColdColDatabase
-
     # Internal schema registry for managing column information across different sources.
     # This class centralizes the storage and retrieval of table/view column metadata
     # from multiple sources including created tables, views, and manually loaded schemas.
     class SchemaRegistry
-
       # Initialize a new schema registry for the given database.
       #
       # @param db [Sequel::Database] the database instance this registry belongs to
@@ -99,7 +96,7 @@ module Sequel
         literal_name = @db.literal(name)
         table_name = name_to_string(name)
 
-        [@created_views, @created_tables, @schemas].each do |registry|
+        [ @created_views, @created_tables, @schemas ].each do |registry|
           next unless registry
 
           if (columns = Sequel.synchronize { registry[literal_name] })
@@ -145,7 +142,6 @@ module Sequel
           name.to_s
         end
       end
-
     end
 
     # Sets up the cold column tracking when the extension is loaded
@@ -165,8 +161,8 @@ module Sequel
     def load_schema(path)
       schema_data = Psych.load_file(path) || {}
       schemas = schema_data.to_h do |table, info|
-        columns = (info[:columns] || {}).map { |column_name, col_info| [column_name.to_sym, col_info] }
-        [table.to_s, columns]
+        columns = (info[:columns] || {}).map { |column_name, col_info| [ column_name.to_sym, col_info ] }
+        [ table.to_s, columns ]
       end
       cold_col_registry.merge_schemas(schemas)
     end
@@ -223,13 +219,11 @@ module Sequel
     end
 
     def columns_from_generator(generator)
-      generator.columns.map { |c| [c[:name], c] }
+      generator.columns.map { |c| [ c[:name], c ] }
     end
-
   end
 
   module ColdColDataset
-
     # Return the columns for the dataset without executing a query
     def columns
       columns_search
@@ -249,7 +243,7 @@ module Sequel
 
     protected
 
-    WILDCARD = Sequel.lit('*').freeze
+    WILDCARD = Sequel.lit("*").freeze
 
     # Determine the probable columns for a dataset based on its query options.
     # This is the main entry point for column determination logic.
@@ -452,9 +446,7 @@ module Sequel
         a.is_a?(SQL::Identifier) ? a.value.to_sym : a.to_sym
       end
     end
-
   end
 
   Database.register_extension(:cold_col, Sequel::ColdColDatabase)
-
 end

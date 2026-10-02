@@ -1,5 +1,4 @@
 module Sequel
-
   # = DbOpts
   #
   # Sequel extension that provides database-specific options handling.
@@ -19,10 +18,8 @@ module Sequel
   #   SET work_mem='256MB'
   #   SET shared_preload_libraries='pg_stat_statements'
   module DbOpts
-
     # Handles extraction and application of database-specific options.
     class DbOptions
-
       # @!attribute [r] db
       #   @return [Sequel::Database] the database instance
       attr_reader :db
@@ -53,7 +50,7 @@ module Sequel
 
         db.opts.select do |k, _|
           k.to_s.match(opt_regexp)
-        end.to_h { |k, v| [k.to_s.gsub(opt_regexp, '').to_sym, prep_value(k, v)] }
+        end.to_h { |k, v| [ k.to_s.gsub(opt_regexp, "").to_sym, prep_value(k, v) ] }
       end
 
       # Applies the database options to the given connection.
@@ -85,7 +82,6 @@ module Sequel
       def sql_statements
         db.send(:set_sql, to_hash)
       end
-
     end
 
     # Returns a DbOptions instance for this database.
@@ -94,9 +90,7 @@ module Sequel
     def db_opts
       @db_opts ||= DbOptions.new(self)
     end
-
   end
 
   Database.register_extension(:db_opts, DbOpts)
-
 end
