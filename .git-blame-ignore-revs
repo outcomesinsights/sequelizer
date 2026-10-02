@@ -1,0 +1,5 @@
+# Mechanical reformatting, skipped by `git blame` (git config blame.ignoreRevsFile .git-blame-ignore-revs;
+# GitHub reads this file automatically).
+
+# style: adopt the ruled RuboCop config (rubocop-rails-omakase + Lint)
+212b2515c356e0f5b2739a6dff8d093cb9d5c53d
