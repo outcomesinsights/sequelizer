@@ -1,7 +1,14 @@
 # Run the full test suite (matches CI)
 test:
-    bundle exec rubocop
     bundle exec rake test
+
+# Every non-rewriting check. `fmt` rewrites; this only reports. Tools come from
+# mise.toml; a missing one fails the recipe.
+lint:
+    bundle exec rubocop
+    actionlint
+    zizmor --offline .
+    cog check --from-latest-tag --ignore-merge-commits
 
 bundle-update *ARGS:
     bundle update {{ ARGS }}
@@ -30,15 +37,16 @@ fmt-check:
 # Full local CI equivalent — run this before pushing.
 # The recipe IS the contract: if CI runs a check and this does not, the gate is
 # decorative (see ~/.config/home-manager/docs/ci-gates.md).
-ci: fmt-check test hygiene
+ci: fmt-check lint test hygiene
 
 # What actually runs before a push. Defaults to the complete `ci`; point it at
 # something smaller ONLY where running complete CI locally is impractical.
 pre-push: ci
 
 # Runs on every commit, so it must stay FAST — a sub-minute budget. Tests belong
-# here when they fit; lint alone when they do not. fmt-check never rewrites.
-pre-commit: fmt-check test hygiene
+# here when they fit; lint alone when they do not. If fmt-check reformats
+# anything it fails the commit: re-stage its changes and commit again.
+pre-commit: fmt-check lint test hygiene
 
 # Content checks inherited from overcommit when it was removed (2026-09-12):
 # MergeConflicts, YamlSyntax, JsonSyntax. RuboCop and the test target were already
