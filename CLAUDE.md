@@ -10,8 +10,8 @@ The gem includes:
 
 - A main module that provides `db` (cached connection) and `new_db` (fresh connection) methods
 - CLI commands for configuration management and Gemfile updating
-- Support for multiple database adapters including PostgreSQL, Impala, and Hive2
-- Sequel extensions for enhanced functionality
+- Connections for any Sequel adapter (PostgreSQL, DuckDB, Spark via sequel-hexspace, ...)
+- Sequel extensions for enhanced functionality, including the Platform abstraction
 
 ## Development Commands
 
@@ -106,19 +106,27 @@ bundle exec sequelizer init_env --adapter postgres --host localhost --database m
 
 Located in `lib/sequel/extensions/`:
 
-- **db_opts**: Database-specific options handling
-- **make_readyable**: Readiness checking functionality
-- **settable**: Dynamic property setting
-- **sqls**: SQL statement management
-- **usable**: Connection usability features
+- **cold_col**: column information for datasets without querying a live database
+- **db_opts**: database-specific configuration options
+- **funky**: database-specific function translations (e.g. Spark date parsing)
+- **make_readyable**: prepares a database for use (temporary views, schema setup), mainly
+  for Spark SQL and DuckDB
+- **more_sql**: additional SQL helper methods
+- **platform**: one interface for platform-specific behaviour. Capabilities and preferences
+  come from `config/platforms/*.csv`, which ship in the gem and are loaded at runtime from
+  the installed gem directory, so they must stay in the gemspec's file list.
+- **settable**: a `set` method on connections
+- **smart_select_remove**: `select_remove` that resolves columns from the dataset's
+  expression tree before falling back to querying
+- **sql_recorder**: records each SQL statement sent to the database
+- **unionize**: efficient handling of large UNION operations
+- **usable**: a `use` method for switching database/schema context
 
 ### Database Support
 
-The gem supports various database adapters with special handling for:
-
-- PostgreSQL (including search_path/schema management)
-- JDBC-based connections (Hive2, Impala, PostgreSQL)
-- Kerberos authentication for enterprise databases
+- PostgreSQL, with search_path/schema handling in `Sequelizer::Options`
+- Any other Sequel adapter by URL or options, for example DuckDB (sequel-duckdb) and Spark
+  (sequel-hexspace), which the test suite exercises through mock connections
 
 ### Test Structure
 
@@ -199,9 +207,13 @@ rather than formatting by hand; where this section and RuboCop disagree, RuboCop
   - Great commit messages
   - Wonderful changelog messages
 
-## Platform Abstraction Project (In Planning)
+## Platform Abstraction
 
-There is a separate, planned evolution of this gem documented in `oimnibus/projects/in-development/sequelizer/` with 31 ADRs. That project would add a `Platform` object to `Sequel::Database` instances with `supports_*?`/`prefers_*?` methods for abstracting RDBMS-specific behavior across Postgres, Spark, Athena, and Snowflake. **This is NOT yet implemented in this gem** — the current gem is DB-connection-only. The platform abstraction is entirely in planning documents.
+The `platform` extension is implemented and shipped: `DB.extension :platform` gives a
+`DB.platform` with `supports?` / `prefers?` / `[]` answers read from
+`config/platforms/base.csv` and `config/platforms/rdbms/<adapter>.csv`, plus function
+translations in code. Its design history (ADRs) lives in the oimnibus repository, not here.
+Open beads extend it (consolidating extensions from other OI repos; `bd ready`).
 
 ## Agent Rules
 
@@ -218,5 +230,5 @@ There is a separate, planned evolution of this gem documented in `oimnibus/proje
 - To test CLI, just call bundle exec bin/sequelizer without installing binstubs
 - **IMPORTANT**: Commands like `docker build`, `devcontainer build`, and `bundle install` can take more than 10 minutes to complete and should be run with extended timeout (e.g., 20 minutes / 1200000ms)
 - **Wait for explicit instructions before reading files or creating plans - do not be proactive**
-- When pushing to github or making pull requests, remember you have a PAT in GITHUB_TOKEN you can use for authentication
-- When making a pull request, push to the "github" remote
+- The only remote is `origin` (github.com/outcomesinsights/sequelizer). Push only when Ryan
+  explicitly asks; the pre-push hook runs the full `just ci` and publishes beads.
