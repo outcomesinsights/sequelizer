@@ -8,6 +8,7 @@ lint:
     bundle exec rubocop
     actionlint
     zizmor --offline .
+    git ls-files '*Dockerfile' '*.Dockerfile' | xargs -r hadolint
     cog check --from-latest-tag --ignore-merge-commits
 
 bundle-update *ARGS:
