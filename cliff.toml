@@ -1,3 +1,11 @@
+# git-cliff config -- the canonical copy (weekly release ceremony, seed gator-4ws.30).
+# Copy as cliff.toml and add the one PER REPO table:
+#
+#   [remote.github]
+#   owner = "outcomesinsights"
+#   repo = "<this repo>"
+#
+# Everything else is identical across the fleet; gator-doctor checks the [bump] rules.
 # git-cliff config, used by the weekly release agent to pick the next version
 # and draft the CHANGELOG.md section. See https://git-cliff.org/docs/configuration
 #
@@ -20,13 +28,13 @@ body = """
 {% if breaking | length > 0 %}
 ### Breaking changes
 {% for commit in breaking -%}
-- {{ commit.message | split(pat="\\n") | first | upper_first | trim }} ([{{ commit.id | truncate(length=7, end="") }}](https://github.com/outcomesinsights/sequelizer/commit/{{ commit.id }})){% if commit.breaking_description and commit.breaking_description != commit.message %}: {{ commit.breaking_description | replace(from="\n", to=" ") | trim }}{% endif %}
+- {{ commit.message | split(pat="\\n") | first | upper_first | trim }} ([{{ commit.id | truncate(length=7, end="") }}](https://github.com/{{ remote.github.owner }}/{{ remote.github.repo }}/commit/{{ commit.id }})){% if commit.breaking_description and commit.breaking_description != commit.message %}: {{ commit.breaking_description | replace(from="\n", to=" ") | trim }}{% endif %}
 {% endfor %}
 {%- endif -%}
 {% for group, commits in commits | filter(attribute="breaking", value=false) | group_by(attribute="group") %}
 ### {{ group }}
 {% for commit in commits -%}
-- {{ commit.message | split(pat="\\n") | first | upper_first | trim }} ([{{ commit.id | truncate(length=7, end="") }}](https://github.com/outcomesinsights/sequelizer/commit/{{ commit.id }}))
+- {{ commit.message | split(pat="\\n") | first | upper_first | trim }} ([{{ commit.id | truncate(length=7, end="") }}](https://github.com/{{ remote.github.owner }}/{{ remote.github.repo }}/commit/{{ commit.id }}))
 {% endfor %}
 {%- endfor %}
 """
@@ -40,40 +48,39 @@ filter_commits = true
 # A `!` or BREAKING CHANGE commit is shown and bumps the version even when its
 # type is one skipped below (e.g. `build!:` raising the Ruby floor).
 protect_breaking_commits = true
-# Releases are v0.x.y (v1-v9 allowed for later). The 2014-2020 Jigsaw
-# release-train tags (year.month.edit, e.g. v16.11.5, and codenames) were
-# never RubyGems versions; they live under train/ so they cannot pass for
-# one. This pattern is defence in depth should a semver-shaped train tag
-# ever reappear outside that namespace. Widen it before v10.
-tag_pattern = "^v(0|[1-9])\\.[0-9]+\\.[0-9]+$"
+tag_pattern = "^v[0-9]+\\.[0-9]+\\.[0-9]+"
 topo_order = false
 sort_commits = "newest"
 
 # First match wins.
 commit_parsers = [
-    # Not part of the shipped gem: no changelog entry, no release.
-    { message = "^chore", skip = true },
-    { message = "^ci", skip = true },
-    { message = "^build", skip = true },
-    { message = "^test", skip = true },
-    { message = "^style", skip = true },
-    { message = "^docs", skip = true },
-    { message = "^bd:", skip = true },
+  # Not part of the shipped gem: no changelog entry, no release.
+  { message = "^chore", skip = true },
+  { message = "^ci", skip = true },
+  { message = "^build", skip = true },
+  { message = "^test", skip = true },
+  { message = "^style", skip = true },
+  { message = "^docs", skip = true },
+  { message = "^bd:", skip = true },
 
-    { message = "^feat", group = "Added" },
-    { message = "^fix", group = "Fixed" },
-    { message = "^perf", group = "Changed" },
-    { message = "^refactor", group = "Changed" },
-    { message = "^revert", group = "Changed" },
+  { message = "^feat", group = "Added" },
+  { message = "^fix", group = "Fixed" },
+  { message = "^perf", group = "Changed" },
+  { message = "^refactor", group = "Changed" },
+  { message = "^revert", group = "Changed" },
 
-    # Deliberately not a silent skip: a type nobody has classified renders
-    # under its own heading rather than vanishing from the release.
-    { message = ".*", group = "Uncategorized" },
+  # Deliberately not a silent skip: a type nobody has classified renders
+  # under its own heading rather than vanishing from the release.
+  { message = ".*", group = "Uncategorized" },
 ]
 
 # 0.x convention: a breaking change bumps the minor version and a feature
-# bumps the patch. Without these, the feat! commit since v0.2.0 (dropping
-# Ruby 3.2) makes --bumped-version answer v1.0.0.
+# bumps the patch. Without these, the build! commit since v0.2.1 makes
+# --bumped-version answer v1.0.0.
 [bump]
 features_always_bump_minor = false
 breaking_always_bump_major = false
+
+[remote.github]
+owner = "outcomesinsights"
+repo = "sequelizer"
