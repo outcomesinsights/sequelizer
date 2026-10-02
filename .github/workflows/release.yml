@@ -13,6 +13,9 @@
 #
 # v* tags cannot be deleted or moved (repository ruleset), so a tag that fails
 # verification is not retried by retagging: fix forward with a new version.
+#
+# Actions are pinned to commit SHAs (a tag can be moved to other code);
+# Dependabot keeps the pins current.
 name: Release
 
 on:
@@ -20,8 +23,7 @@ on:
     tags:
       - "v*"
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
   group: release-${{ github.ref }}
@@ -31,6 +33,8 @@ jobs:
   # CI never runs on a tag, so this job decides whether the tagged commit was
   # tested. It fails closed: a tag pushed before CI finishes, a cancelled run,
   # or an API error blocks the release. Re-run this workflow once CI is green.
+  # Everything that runs the project's own code and its development
+  # dependencies happens here, WITHOUT publish rights.
   verify:
     runs-on: ubuntu-latest
     permissions:
@@ -39,7 +43,7 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.version }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Refuse unless the tag matches Sequelizer::VERSION
@@ -87,7 +91,17 @@ jobs:
             echo "::error::CI on $SHA is '$ci'. Land the commit on main, let CI pass, then re-run this workflow."
             exit 1
           fi
+      - uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
+        with:
+          ruby-version: '4.0'
+          bundler-cache: true
+      # Cheap here, so run it again against exactly what is about to ship.
+      - name: Run the full suite against the tagged commit
+        run: bundle exec rake test
 
+  # Holds publish rights, so it installs no bundle and runs no development
+  # dependency: Ruby, the gemspec, the built gem and its declared runtime
+  # dependencies, nothing else.
   publish:
     needs: verify
     runs-on: ubuntu-latest
@@ -99,29 +113,30 @@ jobs:
     env:
       VERSION: ${{ needs.verify.outputs.version }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: ruby/setup-ruby@v1
+      - uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
         with:
           ruby-version: '4.0'
-          bundler-cache: true
-      # Cheap here, so run it again against exactly what is about to ship.
-      - name: Run the full suite against the tagged commit
-        run: bundle exec rake test
+          bundler-cache: false
       - name: Build the gem
         run: gem build sequelizer.gemspec --output "sequelizer-${VERSION}.gem"
       # The platform extension loads config/platforms/*.csv from the installed
       # gem and quietly runs without them, so prove the built gem carries them.
+      # It is installed with only its declared runtime dependencies, into an
+      # empty GEM_HOME, and loaded from there, not from the checkout.
       - name: Check the built gem resolves its platform config when installed
         run: |
           set -euo pipefail
           home=$(mktemp -d); empty=$(mktemp -d)
-          # Runtime dependencies come from the bundle (vendor/bundle under bundler-cache).
-          deps=$(bundle exec ruby -e 'print((Gem.path + [Bundler.bundle_path.to_s]).uniq.join(":"))')
-          GEM_HOME="$home" gem install --local --ignore-dependencies --no-document "sequelizer-${VERSION}.gem"
+          # GEM_PATH too, so already-installed gems cannot satisfy a dependency:
+          # with GEM_HOME alone, gem install sees the system's sequel, skips it,
+          # and the load from the empty home below fails. Each runtime
+          # dependency is fetched from rubygems.org into the empty home.
+          export GEM_HOME="$home" GEM_PATH="$home"
+          gem install --no-document "sequelizer-${VERSION}.gem"
           cd "$empty"
-          export GEM_HOME="$home" GEM_PATH="$home:$deps"
           ruby -e '
             gem "sequelizer"; require "sequelizer"
             dir = Gem.loaded_specs["sequelizer"].gem_dir
@@ -133,20 +148,23 @@ jobs:
           "$home/bin/sequelizer" help >/dev/null
       # Trusted publishing: exchanges this job's OIDC token for a short-lived
       # rubygems API key.
-      - uses: rubygems/configure-rubygems-credentials@v2.1.0
+      - uses: rubygems/configure-rubygems-credentials@dc5a8d8553e6ee01fc26761a49e99e733d17954a # v2.1.0
       # No retry. A failed push fails the run; investigate before re-running.
       - name: Push to rubygems.org
         run: gem push "sequelizer-${VERSION}.gem"
       # The run's colour is not the evidence; the version on rubygems.org is.
-      # Compared against THIS release's version, so an older gem cannot pass it.
-      # Polled because rubygems' CDN can lag a minute behind the push.
+      # Looked up as THIS release's exact version in the full version list, not
+      # latest.json, which omits pre-releases and served a stale 0.2.0 for
+      # minutes after 0.3.0 published. Polled because rubygems' CDN can lag
+      # behind the push.
       - name: Confirm rubygems.org serves the new version
         run: |
           for i in $(seq 1 30); do
-            latest=$(curl -fsS https://rubygems.org/api/v1/versions/sequelizer/latest.json | jq -r .version || true)
-            echo "attempt $i: rubygems latest=$latest"
-            [[ "$latest" == "$VERSION" ]] && exit 0
+            found=$(curl -fsS https://rubygems.org/api/v1/versions/sequelizer.json \
+              | jq -r --arg v "$VERSION" '[.[] | select(.number == $v)] | length' || true)
+            echo "attempt $i: rubygems lists $VERSION: ${found:-?}"
+            [[ "$found" == "1" ]] && exit 0
             sleep 10
           done
-          echo "::error::rubygems.org still does not report $VERSION as latest"
+          echo "::error::rubygems.org still does not list $VERSION"
           exit 1
