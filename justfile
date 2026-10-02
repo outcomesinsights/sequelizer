@@ -13,12 +13,6 @@ lint:
 bundle-update *ARGS:
     bundle update {{ ARGS }}
 
-# Re-pin this gem's OI git deps to their current main HEAD (lock-only; review the diff).
-# Part of the ordered cascade — see the jigsaw habitat's gem-dependency-order note.
-bump-oi:
-    bundle lock --update sequel-duckdb sequel-hexspace
-    @git --no-pager diff --stat -- Gemfile.lock
-
 # Installs the pinned tools (mise.toml) and the bundle. A clone needs git and mise.
 setup:
     mise install
@@ -51,7 +45,7 @@ pre-commit: fmt-check lint test hygiene
 # Content checks inherited from overcommit when it was removed (2026-09-12):
 # MergeConflicts, YamlSyntax, JsonSyntax. RuboCop and the test target were already
 # covered by fmt-check/lint/test; HardTabs and TrailingWhitespace were dropped because
-# they fight shfmt, .tsv, and generated files. See habituate/standards.md.
+# they fight shfmt, .tsv, and generated files.
 hygiene:
     #!/usr/bin/env bash
     set -uo pipefail
