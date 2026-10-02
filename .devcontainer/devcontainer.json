@@ -8,10 +8,7 @@
       "HOST_HOME": "${localEnv:HOME}"
     }
   },
-  "runArgs": [
-    "--cap-add=NET_ADMIN",
-    "--cap-add=NET_RAW"
-  ],
+  "runArgs": ["--cap-add=NET_ADMIN", "--cap-add=NET_RAW"],
   "mounts": [
     "type=bind,source=${localEnv:HOME}/.claude,target=/tmp/host-claude,readonly",
     "type=bind,source=${localEnv:HOME}/.config/claude,target=/tmp/host-claude-config,readonly",

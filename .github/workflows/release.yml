@@ -93,7 +93,7 @@ jobs:
           fi
       - uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
         with:
-          ruby-version: '4.0'
+          ruby-version: "4.0"
           # No cache: a cache written by a branch or PR run must not supply the
           # gems for the suite that decides whether a release publishes.
           bundler-cache: false
@@ -122,7 +122,7 @@ jobs:
           persist-credentials: false
       - uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
         with:
-          ruby-version: '4.0'
+          ruby-version: "4.0"
           bundler-cache: false
       - name: Build the gem
         run: gem build sequelizer.gemspec --output "sequelizer-${VERSION}.gem"

@@ -12,4 +12,3 @@ database: my_database
 host: localhost
 username: my_user
 password: my_great_password
-
