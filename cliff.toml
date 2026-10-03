@@ -1,25 +1,38 @@
 # git-cliff config -- the canonical copy (weekly release ceremony, seed gator-4ws.30).
-# Copy as cliff.toml and add the one PER REPO table:
+# Copy as cliff.toml and replace OWNER/REPO in the two commit-link URLs with the repo's
+# (`outcomesinsights/sequel-duckdb`). NOT a [remote.github] table: that switches on
+# git-cliff's GitHub integration, which calls the API for pull-request metadata and PANICS
+# on a private repo (404) or needs a token on a public one (measured, 2.13 and 2.14).
 #
-#   [remote.github]
-#   owner = "outcomesinsights"
-#   repo = "<this repo>"
-#
-# Everything else is identical across the fleet; gator-doctor checks the [bump] rules.
+# Everything else is identical across the fleet, EXCEPT the [bump] table at the bottom: its two
+# `= false` lines are the 0.x convention (a breaking change bumps minor, a feature bumps patch)
+# and belong only to a gem whose version is 0.x. A gem at 1.0 or above follows ordinary SemVer
+# and leaves them out -- measured on sequel-hexspace (2.0.0): at >= 1.0 the two settings are
+# inert either way. gator-doctor checks them against the repo's current version.
 # git-cliff config, used by the weekly release agent to pick the next version
 # and draft the CHANGELOG.md section. See https://git-cliff.org/docs/configuration
 #
 #   git-cliff --bumped-version            # next version from commits since the last v* tag
 #   git-cliff --unreleased --bump         # the section to add to CHANGELOG.md
 #
-# Only changes to the shipped gem count. Tooling, CI, tests, docs and
-# dependency bumps are skipped, so a week of nothing but those produces no
-# release. A breaking change is never skipped, whatever its type.
+# Only changes to the shipped gem count. chore, ci, test, style and docs commits are
+# skipped, so a week of nothing but those produces no release. `build:` commits COUNT
+# (under Changed): a dependency or Ruby-floor change changes what a consumer installs.
+# A breaking change is never skipped, whatever its type.
+#
+# Because build: counts toward the bump, the commit that ADOPTS this file must not be
+# typed build: -- `build(release): sync cliff.toml` made --bumped-version answer v0.3.2
+# for an unchanged gem (sequel-duckdb, measured). Type it ci(release):.
 
 [changelog]
 header = ""
 body = """
-{% if version -%}
+{%- if commits | length == 0 -%}
+{#- An empty range renders nothing. Without this guard a deps-only range still emits a
+    bare heading naming the version already published -- precisely the thing somebody
+    pastes in by reflex (sequel-hexspace, gator-uem). No commits, no section. -#}
+{%- else -%}
+{%- if version -%}
 ## [{{ version | trim_start_matches(pat="v") }}] - {{ timestamp | date(format="%Y-%m-%d") }}
 {% else -%}
 ## [Unreleased]
@@ -28,15 +41,16 @@ body = """
 {% if breaking | length > 0 %}
 ### Breaking changes
 {% for commit in breaking -%}
-- {{ commit.message | split(pat="\\n") | first | upper_first | trim }} ([{{ commit.id | truncate(length=7, end="") }}](https://github.com/{{ remote.github.owner }}/{{ remote.github.repo }}/commit/{{ commit.id }})){% if commit.breaking_description and commit.breaking_description != commit.message %}: {{ commit.breaking_description | replace(from="\n", to=" ") | trim }}{% endif %}
+- {{ commit.message | split(pat="\\n") | first | upper_first | trim }} ([{{ commit.id | truncate(length=7, end="") }}](https://github.com/outcomesinsights/sequelizer/commit/{{ commit.id }})){% if commit.breaking_description and commit.breaking_description != commit.message %}: {{ commit.breaking_description | replace(from="\n", to=" ") | trim }}{% endif %}
 {% endfor %}
 {%- endif -%}
 {% for group, commits in commits | filter(attribute="breaking", value=false) | group_by(attribute="group") %}
 ### {{ group }}
 {% for commit in commits -%}
-- {{ commit.message | split(pat="\\n") | first | upper_first | trim }} ([{{ commit.id | truncate(length=7, end="") }}](https://github.com/{{ remote.github.owner }}/{{ remote.github.repo }}/commit/{{ commit.id }}))
+- {{ commit.message | split(pat="\\n") | first | upper_first | trim }} ([{{ commit.id | truncate(length=7, end="") }}](https://github.com/outcomesinsights/sequelizer/commit/{{ commit.id }}))
 {% endfor %}
 {%- endfor %}
+{%- endif -%}
 """
 footer = ""
 trim = true
@@ -57,7 +71,11 @@ commit_parsers = [
   # Not part of the shipped gem: no changelog entry, no release.
   { message = "^chore", skip = true },
   { message = "^ci", skip = true },
-  { message = "^build", skip = true },
+  # build: NOT skipped. A `build:` commit that changes a runtime dependency (add_dependency,
+  # a widened constraint) changes what a consumer installs; two of sequel-hexspace's three
+  # such commits since 1.0.0 were invisible to the changelog when build was skipped
+  # (gator-uem). Tooling-only build commits appearing under Changed are the cost.
+  { message = "^build", group = "Changed" },
   { message = "^test", skip = true },
   { message = "^style", skip = true },
   { message = "^docs", skip = true },
@@ -80,7 +98,3 @@ commit_parsers = [
 [bump]
 features_always_bump_minor = false
 breaking_always_bump_major = false
-
-[remote.github]
-owner = "outcomesinsights"
-repo = "sequelizer"
