@@ -36,7 +36,7 @@ The recipes follow the fleet standard (gator's standard/, seed gator-rga):
 just setup      # mise install (pinned tools, mise.toml) + bundle install
 just fmt        # treefmt: every tracked file, every language (treefmt.toml)
 just fmt-check  # treefmt --fail-on-change: formats, then FAILS if anything changed
-just lint       # rubocop, actionlint, zizmor --offline, cog check (commit subjects)
+just lint       # rubocop, shellcheck, actionlint, zizmor --offline, hadolint, cog check
 just ci         # fmt-check lint test hygiene: the full local CI equivalent
 ```
 
@@ -220,7 +220,7 @@ Open beads extend it (consolidating extensions from other OI repos; `bd ready`).
 1. **NEVER skip, hide, or conditionally disable tests to avoid failures.** If a test fails because a dependency is missing, add the dependency. If a test fails because fixture data is missing, create the fixtures. Wrapping a `require` in `rescue LoadError` and returning early is just as bad as deleting the test. Fix the root cause.
 2. **NEVER exclude files from coverage to dodge SimpleCov thresholds.** If coverage is low because tests aren't running, make the tests run.
 3. **Always test locally across all supported Ruby versions before pushing.** Use `MISE_RUBY_VERSION=X.Y mise exec -- bundle exec rake test` for each version in the CI matrix (3.3, 3.4, 4.0).
-4. **Run both `bundle exec rubocop` and `bundle exec rake test` before every push.** No exceptions.
+4. **Run `just ci` before every push** (the pre-push hook does, and CI runs the same recipes). No exceptions.
 
 ## Development Memories
 
