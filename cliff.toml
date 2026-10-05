@@ -62,7 +62,10 @@ filter_commits = true
 # A `!` or BREAKING CHANGE commit is shown and bumps the version even when its
 # type is one skipped below (e.g. `build!:` raising the Ruby floor).
 protect_breaking_commits = true
-tag_pattern = "^v[0-9]+\\.[0-9]+\\.[0-9]+"
+# Anchored at BOTH ends. Without the `$`, v1.1.0-rc1 and v1.1.0.1 match too and become
+# release boundaries: v1.1.0's section then starts at the rc instead of at v1.0.0, and
+# --bumped-version after a four-part tag answers v1.1.1.0 (measured on 2.14.2, gator-2x6).
+tag_pattern = "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
 topo_order = false
 sort_commits = "newest"
 
