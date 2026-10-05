@@ -6,6 +6,7 @@ test:
 # mise.toml; a missing one fails the recipe.
 lint:
     bundle exec rubocop
+    shellcheck $(git ls-files '*.sh' '*.bash')
     actionlint
     zizmor --offline .
     git ls-files '*Dockerfile' '*.Dockerfile' | xargs -r hadolint
