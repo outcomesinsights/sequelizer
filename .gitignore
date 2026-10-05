@@ -55,3 +55,7 @@ claude_stuff/
 # Beads export — derived. The Dolt remote at refs/dolt/data is the store
 # and the backup; this file is kept on disk for local grep only.
 .beads/issues.jsonl
+
+# Bundler installs gems here on CI (setup-ruby bundler-cache); their own
+# .github/ workflows must not be linted as ours.
+vendor/
