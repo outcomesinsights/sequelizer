@@ -3,34 +3,41 @@ require "sequelizer/options"
 
 class TestOptions < Minitest::Test
   def test_changes_postgresql_adapter_to_postgres
-    options = Sequelizer::Options.new(Sequelizer::OptionsHash.new(adapter: "postgresql"))
+    options = Sequelizer::Options.new({ adapter: "postgresql" })
 
     assert_equal("postgres", options.adapter)
     assert_equal("postgres", options.to_hash[:adapter])
-    assert_equal("postgres", options.to_hash["adapter"])
+  end
+
+  def test_symbolizes_string_keys_at_every_depth
+    options = Sequelizer::Options.new({ "adapter" => "mock", "ignore_yaml" => true, "ignore_env" => true,
+                                        "servers" => { "read_only" => { "host" => "replica" } } })
+
+    assert_equal("mock", options.to_hash[:adapter])
+    assert_nil(options.to_hash["adapter"])
+    assert_equal({ read_only: { host: "replica" } }, options.to_hash[:servers])
   end
 
   def test_finds_search_path_as_search_path
-    options = Sequelizer::Options.new(Sequelizer::OptionsHash.new(adapter: "postgres", search_path: "path"))
+    options = Sequelizer::Options.new({ adapter: "postgres", search_path: "path" })
 
     assert_equal("path", options.search_path)
   end
 
   def test_finds_schema_as_search_path
-    options = Sequelizer::Options.new(Sequelizer::OptionsHash.new(adapter: "postgres", schema: "path"))
+    options = Sequelizer::Options.new({ adapter: "postgres", schema: "path" })
 
     assert_equal("path", options.search_path)
   end
 
   def test_finds_schema_search_path_as_search_path
-    options = Sequelizer::Options.new(Sequelizer::OptionsHash.new(adapter: "postgres", schema_search_path: "path"))
+    options = Sequelizer::Options.new({ adapter: "postgres", schema_search_path: "path" })
 
     assert_equal("path", options.search_path)
   end
 
   def test_prefers_search_path_over_schema_search_path
-    options = Sequelizer::Options.new(Sequelizer::OptionsHash.new(adapter: "postgres", search_path: "path",
-                                                                  schema_search_path: "path2"))
+    options = Sequelizer::Options.new({ adapter: "postgres", search_path: "path", schema_search_path: "path2" })
 
     assert_equal("path", options.search_path)
   end
@@ -68,7 +75,7 @@ class TestOptions < Minitest::Test
 
   def test_url_based_connection_processes_search_path
     options = Sequelizer::Options.new(
-      Sequelizer::OptionsHash.new(url: "postgres://localhost/mydb", search_path: "my_schema"),
+      { url: "postgres://localhost/mydb", search_path: "my_schema" },
     )
 
     assert_equal("my_schema", options.search_path)
@@ -77,7 +84,7 @@ class TestOptions < Minitest::Test
 
   def test_url_based_connection_processes_schema_as_search_path
     options = Sequelizer::Options.new(
-      Sequelizer::OptionsHash.new(url: "postgresql://localhost/mydb", schema: "my_schema"),
+      { url: "postgresql://localhost/mydb", schema: "my_schema" },
     )
 
     assert_equal("my_schema", options.search_path)
@@ -85,7 +92,7 @@ class TestOptions < Minitest::Test
 
   def test_url_based_connection_skips_search_path_processing_for_non_postgres
     options = Sequelizer::Options.new(
-      Sequelizer::OptionsHash.new(url: "mysql2://localhost/mydb", search_path: "my_schema"),
+      { url: "mysql2://localhost/mydb", search_path: "my_schema" },
     )
 
     # search_path key remains but is NOT processed (no schema creation callback)
@@ -96,7 +103,7 @@ class TestOptions < Minitest::Test
 
   def test_handles_array_search_path
     options = Sequelizer::Options.new(
-      Sequelizer::OptionsHash.new(adapter: "postgres", search_path: %w[public my_schema]),
+      { adapter: "postgres", search_path: %w[public my_schema] },
     )
 
     assert_equal(%w[public my_schema], options.search_path)
@@ -110,7 +117,7 @@ class TestOptions < Minitest::Test
 
   def test_handles_mixed_array_search_path
     options = Sequelizer::Options.new(
-      Sequelizer::OptionsHash.new(adapter: "postgres", search_path: [ "public", "schema_a, schema_b" ]),
+      { adapter: "postgres", search_path: [ "public", "schema_a, schema_b" ] },
     )
 
     assert_equal([ "public", "schema_a, schema_b" ], options.search_path)
@@ -125,7 +132,7 @@ class TestOptions < Minitest::Test
 
   def test_handles_string_search_path_in_after_connect
     options = Sequelizer::Options.new(
-      Sequelizer::OptionsHash.new(adapter: "postgres", search_path: "public, my_schema"),
+      { adapter: "postgres", search_path: "public, my_schema" },
     )
 
     assert_after_connect_sql(
