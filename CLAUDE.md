@@ -90,7 +90,7 @@ bundle exec sequelizer init_env --adapter postgres --host localhost --database m
 ### Core Components
 
 - **Sequelizer module** (`lib/sequelizer.rb`): Main interface providing `db` and `new_db` methods
-- **ConnectionMaker** (`lib/sequelizer/connection_maker.rb`): Handles database connection logic and adapter-specific configurations, and applies `db_opts` to every new connection
+- **ConnectionMaker** (`lib/sequelizer/connection_maker.rb`): Handles database connection logic and applies `db_opts` to every new connection
 - **Options** (`lib/sequelizer/options.rb`): Manages configuration from multiple sources with precedence order
 - **CLI** (`lib/sequelizer/cli.rb`): Thor-based command line interface
 

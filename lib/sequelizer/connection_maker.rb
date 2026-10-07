@@ -89,13 +89,8 @@ module Sequelizer
       if (url = opts.delete(:uri) || opts.delete(:url))
         Sequel.connect(url, opts)
       else
-        configure_adapter_specific_options(opts)
         Sequel.connect(opts)
       end
-    end
-
-    def configure_adapter_specific_options(opts)
-      # No adapter-specific configuration needed currently
     end
   end
 end
