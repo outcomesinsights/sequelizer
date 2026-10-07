@@ -1,6 +1,6 @@
 require "thor"
 require "pp"
-require_relative "gemfile_modifier"
+require_relative "options"
 
 module Sequelizer
   # = CLI
@@ -8,31 +8,13 @@ module Sequelizer
   # Command line interface for Sequelizer gem using Thor.
   # Provides commands for:
   #
-  # * Updating Gemfile with database adapters
   # * Initializing .env files with database configuration
   # * Displaying current configuration
   #
   # @example
-  #   sequelizer update_gemfile
   #   sequelizer init_env --adapter postgres --host localhost
   #   sequelizer config
   class CLI < Thor
-    desc "update_gemfile",
-         "adds or replaces a line in your Gemfile to include the correct database adapter to work with Sequel"
-    option "dry-run", type: :boolean, desc: "Only prints out what it would do, but makes no changes"
-    option "skip-bundle", type: :boolean, desc: "Don't run `bundle install` after modifying Gemfile"
-    # Updates the Gemfile to include the appropriate database adapter gem.
-    #
-    # This command analyzes your current database configuration and adds or updates
-    # the corresponding database adapter gem in your Gemfile. It supports various
-    # adapters including PostgreSQL, MySQL, SQLite, and JDBC-based adapters.
-    #
-    # @option options [Boolean] dry-run Only prints what would be done without making changes
-    # @option options [Boolean] skip-bundle Skip running `bundle install` after modification
-    def update_gemfile
-      GemfileModifier.new(options).modify
-    end
-
     desc "init_env", "creates a .env file with the parameters listed"
     option :adapter,
            aliases: :a,

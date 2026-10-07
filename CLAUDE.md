@@ -78,9 +78,6 @@ cannot be deleted or moved, so a bad release is fixed with a new version.
 # Show current configuration
 bundle exec sequelizer config
 
-# Update Gemfile with database adapter
-bundle exec sequelizer update_gemfile
-
 # Initialize .env file
 bundle exec sequelizer init_env --adapter postgres --host localhost --database mydb
 ```
