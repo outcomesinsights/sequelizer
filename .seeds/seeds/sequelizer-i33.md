@@ -4,7 +4,7 @@ title: 'Over-engineering audit 2026-10-07: accept findings 2, 4-8; keep platform
 status: captured
 type: decision
 created_at: 2026-10-07T17:46:53.568935+00:00
-updated_at: 2026-10-07T18:16:34.664249+00:00
+updated_at: 2026-10-07T18:31:37.179438+00:00
 tags:
   - audit
   - dependencies
@@ -29,3 +29,5 @@ Findings, as ranked in the audit (every delete was grep-checked across all outin
 Kept after checking: Sequelizer.options (t_shank and jigsaw-diagram-editor call it); usable, more_sql, unionize, settable, cold_col, smart_select_remove, make_readyable, funky (each loaded by summarb, t_shank, roobetl or conceptql); db_opts (internal); the db/new_db double cache (removing it changes behaviour).
 
 OUTCOME (2026-10-07, /bead-go run, merged to local main 7bf5115, not pushed): 5 of 6 accepted findings implemented. 5 -> sequelizer-2z1 (monkey patch removed; db_opts now via Sequel's public :before_preconnect, because the planned test:false approach broke preconnect) + 8 -> sequelizer-wr7, merged 42ea95b. 4 -> sequelizer-ajb (breaking: update_gemfile removed) + 7 -> sequelizer-zc8 (pp dropped), merged 1b9bf3a. 2 -> sequelizer-9ce (activesupport dropped from runtime deps; it stays in Gemfile.lock only via the rubocop-rails dev dependency), merged 7bf5115. NOT DONE: 6 -> sequelizer-9b2 (hashie) bailed: plain hashes cannot keep Sequelizer.options' indifferent access (both h[:k] and h["k"] work today, asserted by the gem's own test); needs a ruling between symbol keys, string keys, HashWithIndifferentAccess (conflicts with 2) and a custom class. Side effect of 5: Sequelizer.options no longer contains an injected Proc, so it is empty with no config (t_shank's spec_helper .empty? guard is now live).
+
+UPDATE 2026-10-07: 6 -> sequelizer-9b2 done after Ryan ruled option (a), symbol keys: hashie and OptionsHash removed, Sequelizer.options/Options#to_hash return a plain symbol-keyed Hash (keys symbolized at every depth), committed as breaking (refactor!, 490c924), merged 9439329. All six accepted findings are now implemented; runtime deps are dotenv, kvcsv, sequel, thor. Side effect: a servers: override (e.g. a read_only host) now applies instead of being silently ignored; no OI repo configures Sequel servers:.
