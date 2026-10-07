@@ -180,9 +180,9 @@ class TestConnectionMaker < Minitest::Test
       Sequelizer::ConnectionMaker.new(options).connection
     end
 
-    assert_equal("duckdb", connected["adapter"])
-    assert_equal("/tmp/test.duckdb", connected["database"])
-    assert_instance_of(Proc, connected["after_connect"])
+    assert_equal("duckdb", connected[:adapter])
+    assert_equal("/tmp/test.duckdb", connected[:database])
+    assert_instance_of(Proc, connected[:after_connect])
   end
 
   def test_passes_hexspace_url_through_to_sequel
@@ -199,6 +199,6 @@ class TestConnectionMaker < Minitest::Test
     end
 
     assert_equal("hexspace://localhost:10000/default", connected.first)
-    assert_instance_of(Proc, connected.last["after_connect"])
+    assert_instance_of(Proc, connected.last[:after_connect])
   end
 end

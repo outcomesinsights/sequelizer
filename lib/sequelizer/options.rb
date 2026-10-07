@@ -1,7 +1,6 @@
 require "uri"
 require_relative "yaml_config"
 require_relative "env_config"
-require_relative "options_hash"
 
 module Sequelizer
   # = Options
@@ -49,13 +48,13 @@ module Sequelizer
 
     # Returns the processed options as a hash suitable for Sequel.connect.
     #
-    # @return [Hash] the database connection options
+    # @return [Hash{Symbol => Object}] the database connection options, keyed by Symbol
     def to_hash
       @options
     end
 
     # Define accessor methods for common database options
-    %w[adapter database username password search_path].each do |name|
+    %i[adapter database username password search_path].each do |name|
       # @!method #{name}
       #   @return [String, nil] the #{name} option value
       define_method(name) do
@@ -80,7 +79,7 @@ module Sequelizer
     def fix_options(passed_options)
       return passed_options unless passed_options.nil? || passed_options.is_a?(Hash)
 
-      opts = OptionsHash.new(passed_options || {}).to_hash
+      opts = symbolize_keys(passed_options || {})
       sequelizer_options = db_config(opts).merge(opts)
 
       adapter = sequelizer_options[:adapter]
@@ -88,7 +87,7 @@ module Sequelizer
 
       if adapter =~ /^postgres/
         sequelizer_options[:adapter] = "postgres"
-        paths = %w[search_path schema_search_path schema].map { |key| sequelizer_options.delete(key) }.compact
+        paths = %i[search_path schema_search_path schema].map { |key| sequelizer_options.delete(key) }.compact
 
         unless paths.empty?
           sequelizer_options[:search_path] = paths.first
@@ -96,12 +95,7 @@ module Sequelizer
         end
       end
 
-      if sequelizer_options[:timeout]
-        # I'm doing a merge! here because the indifferent access part
-        # of OptionsHash seemed to not work when I tried
-        # sequelizer_options[:timeout] = sequelizer_options[:timeout].to_i
-        sequelizer_options.merge!(timeout: sequelizer_options[:timeout].to_i)
-      end
+      sequelizer_options[:timeout] = sequelizer_options[:timeout].to_i if sequelizer_options[:timeout]
 
       sequelizer_options
     end
@@ -113,14 +107,29 @@ module Sequelizer
     # - environment variables (including .env file if not ignored)
     #
     # @param opts [Hash] base options that may contain ignore flags
-    # @return [OptionsHash] merged configuration from all sources
+    # @return [Hash{Symbol => Object}] merged configuration from all sources
     def db_config(opts)
       @db_config ||= begin
-        opts = OptionsHash.new(opts)
-        opts.merge!(YamlConfig.user_config.options) unless opts[:ignore_yaml]
-        opts.merge!(YamlConfig.local_config.options) unless opts[:ignore_yaml]
-        opts.merge!(EnvConfig.new.options) unless opts[:ignore_env]
+        opts = opts.dup
+        opts.merge!(symbolize_keys(YamlConfig.user_config.options)) unless opts[:ignore_yaml]
+        opts.merge!(symbolize_keys(YamlConfig.local_config.options)) unless opts[:ignore_yaml]
+        opts.merge!(symbolize_keys(EnvConfig.new.options)) unless opts[:ignore_env]
         opts
+      end
+    end
+
+    # Returns a copy of +value+ with every Hash key, at any depth, converted
+    # to a Symbol. Options arrive with String keys from YAML, ENV, and some
+    # callers; Sequel expects Symbols, including for nested hashes such as
+    # +:servers+, which it indexes by server name.
+    #
+    # @param value [Object] a Hash, an Array, or any other value
+    # @return [Object] the converted copy; the caller's objects are not modified
+    def symbolize_keys(value)
+      case value
+      when Hash then value.to_h { |k, v| [ k.to_sym, symbolize_keys(v) ] }
+      when Array then value.map { |v| symbolize_keys(v) }
+      else value
       end
     end
 
