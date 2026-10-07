@@ -61,17 +61,36 @@ module Sequelizer
 
     private
 
+    # Connects with an after_connect proc that applies db_opts to every new
+    # connection. The proc needs the Database, which Sequel does not pass to
+    # after_connect, so it closes over +db+. Sequel hands the Database to
+    # :before_preconnect before it makes any connection (preconnect, the
+    # :extensions option, and the connection test all come after it), so
+    # that is where +db+ is assigned.
     def create_sequel_connection(opts)
+      db = nil
+      user_after_connect = opts[:after_connect]
+      user_before_preconnect = opts[:before_preconnect]
+
+      opts = opts.merge(
+        before_preconnect: proc do |database|
+          db = database
+          user_before_preconnect&.call(database)
+        end,
+        after_connect: proc do |conn, server|
+          if user_after_connect
+            user_after_connect.arity == 2 ? user_after_connect.call(conn, server) : user_after_connect.call(conn)
+          end
+          db.extension :db_opts
+          db.db_opts.apply(conn)
+        end,
+      )
+
       if (url = opts.delete(:uri) || opts.delete(:url))
         Sequel.connect(url, opts)
       else
-        configure_adapter_specific_options(opts)
         Sequel.connect(opts)
       end
-    end
-
-    def configure_adapter_specific_options(opts)
-      # No adapter-specific configuration needed currently
     end
   end
 end

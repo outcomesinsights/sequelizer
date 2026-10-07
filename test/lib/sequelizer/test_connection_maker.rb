@@ -64,6 +64,54 @@ class TestConnectionMaker < Minitest::Test
     end
   end
 
+  def test_applies_settings_to_each_new_connection
+    with_yaml_config(@options.merge(postgres_db_opt_flim: :flam)) do
+      with_env_config do
+        db = Sequelizer::ConnectionMaker.new.connection
+        conns = db.synchronize do |first|
+          Thread.new { db.synchronize { |second| [ first, second ] } }.value
+        end
+
+        refute_same(conns.first, conns.last)
+        assert_equal([ "SET flim=flam" ] * 2, db.sqls)
+      end
+    end
+  end
+
+  def test_tests_the_connection_by_default
+    with_yaml_config(@options.merge(postgres_db_opt_flim: :flam)) do
+      with_env_config do
+        assert_equal([ "SET flim=flam" ], Sequelizer::ConnectionMaker.new.connection.sqls)
+      end
+    end
+  end
+
+  def test_does_not_test_the_connection_when_test_is_false
+    with_yaml_config(@options.merge(postgres_db_opt_flim: :flam, test: false)) do
+      with_env_config do
+        assert_empty(Sequelizer::ConnectionMaker.new.connection.sqls)
+      end
+    end
+  end
+
+  def test_calls_user_after_connect_procs_of_either_arity
+    calls = []
+    [
+      ->(conn) { calls << [ :one, conn.class ] },
+      ->(conn, server) { calls << [ :two, conn.class, server ] }
+    ].each do |after_connect|
+      with_yaml_config(@options.merge(postgres_db_opt_flim: :flam, after_connect: after_connect)) do
+        with_env_config do
+          db = Sequelizer::ConnectionMaker.new.connection
+
+          assert_equal([ "SET flim=flam" ], db.sqls)
+        end
+      end
+    end
+
+    assert_equal([ [ :one, Sequel::Mock::Connection ], [ :two, Sequel::Mock::Connection, :default ] ], calls)
+  end
+
   def test_reads_options_from_env_config_if_no_yaml_config
     with_yaml_config do
       with_env_config(@options) do
