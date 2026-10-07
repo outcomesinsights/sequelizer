@@ -38,9 +38,6 @@
 #
 #   DB.extension :cold_col
 
-require "active_support/core_ext/object/try"
-require "active_support/core_ext/object/blank"
-
 module Sequel
   module ColdColDatabase
     # Internal schema registry for managing column information across different sources.
@@ -253,7 +250,7 @@ module Sequel
     def probable_columns(opts_chain)
       cols = opts_chain[:select]
 
-      return columns_from_sources(opts_chain) if cols.blank?
+      return columns_from_sources(opts_chain) if cols.nil? || cols.empty?
 
       columns_from_select_list(cols, opts_chain)
     end
@@ -392,7 +389,7 @@ module Sequel
     def find_cte_columns(name, opts_chain)
       current_opts = opts_chain
 
-      while current_opts.present?
+      while current_opts && !current_opts.empty?
         with = (current_opts[:with] || []).detect { |wh| literal(wh[:name]) == literal(name) }
         return with[:dataset].columns_search(opts_chain) if with
 
@@ -409,7 +406,10 @@ module Sequel
     # @param opts_chain [Hash] the dataset's query options
     # @return [Array<Symbol>, nil] column names if found, nil otherwise
     def find_join_alias(name, opts_chain)
-      join = (opts_chain[:join] || []).detect { |jc| literal(jc.table_expr.try(:alias)) == literal(name) }
+      join = (opts_chain[:join] || []).detect do |jc|
+        table_alias = jc.table_expr.alias if jc.table_expr.respond_to?(:alias)
+        literal(table_alias) == literal(name)
+      end
       return nil unless join
 
       join_expr = join.table_expr.expression
