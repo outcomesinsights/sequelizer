@@ -1,5 +1,4 @@
 require "thor"
-require "pp"
 require_relative "options"
 
 module Sequelizer
