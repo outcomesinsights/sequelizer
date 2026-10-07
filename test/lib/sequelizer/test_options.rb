@@ -45,8 +45,8 @@ class TestOptions < Minitest::Test
     Sequelizer::YamlConfig.stub :user_config_path, Pathname.new("/completely/made/up/path/that/does/not/exist") do
       options = Sequelizer::Options.new
 
-      assert_equal(1, options.to_hash.length)
-      assert_instance_of(Proc, options.to_hash[:after_connect])
+      assert_kind_of(Hash, options.to_hash)
+      assert_empty(options.to_hash)
     end
   end
 
@@ -56,19 +56,14 @@ class TestOptions < Minitest::Test
     assert_equal "passed", options.search_path
   end
 
-  def test_handles_existing_after_connect
-    db = Sequel.mock(host: :postgres)
-    conny = Minitest::Mock.new
-    conny.expect :db, db
-    conny.expect :db, db
-    conny.expect :db, db
-
+  # Wrapping after_connect (to apply db_opts) is ConnectionMaker's job; see
+  # TestConnectionMaker#test_calls_user_after_connect_procs_of_either_arity.
+  def test_passes_existing_after_connect_through_unchanged
     procky = proc { |conn| conn.db[:table].to_a }
 
     options = Sequelizer::Options.new(after_connect: procky)
-    options.to_hash[:after_connect].call(conny, :default, db)
 
-    assert_equal([ 'SELECT * FROM "table"' ], db.sqls)
+    assert_same(procky, options.to_hash[:after_connect])
   end
 
   def test_url_based_connection_processes_search_path
@@ -151,13 +146,12 @@ class TestOptions < Minitest::Test
 
   private
 
-  # Invokes the inner after_connect proc (the one that creates schemas and
-  # sets search_path) via the make_ac wrapper, and asserts it produced the
-  # expected SQL statements.
+  # Invokes the after_connect proc that creates schemas and sets
+  # search_path, and asserts it produced the expected SQL statements.
   def assert_after_connect_sql(options, expected_sqls)
     db = Sequel.mock(host: :postgres)
     raw_conn = db.synchronize { |c| c }
-    options.to_hash[:after_connect].call(raw_conn, :default, db)
+    options.to_hash[:after_connect].call(raw_conn)
 
     assert_equal(expected_sqls, db.sqls)
   end

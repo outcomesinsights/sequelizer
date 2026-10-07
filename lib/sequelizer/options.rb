@@ -65,21 +65,6 @@ module Sequelizer
 
     private
 
-    # Creates an after_connect callback proc that handles custom callbacks
-    # and applies database-specific options.
-    #
-    # @param opts [Hash] options hash that may contain an :after_connect callback
-    # @return [Proc] callback to be executed after database connection
-    def make_ac(opts)
-      proc do |conn, server, db|
-        if (ac = opts[:after_connect])
-          ac.arity == 2 ? ac.call(conn, server) : ac.call(conn)
-        end
-        db.extension :db_opts
-        db.db_opts.apply(conn)
-      end
-    end
-
     # Processes and fixes the passed options, handling various input types
     # and applying adapter-specific transformations.
     #
@@ -118,7 +103,7 @@ module Sequelizer
         sequelizer_options.merge!(timeout: sequelizer_options[:timeout].to_i)
       end
 
-      sequelizer_options.merge(after_connect: make_ac(sequelizer_options))
+      sequelizer_options
     end
 
     # Loads database configuration from external sources in order of precedence.
