@@ -4,7 +4,7 @@ title: 'smart_select_remove: raise instead of SELECT * when the fallback finds n
 status: captured
 type: question
 created_at: 2026-10-14T17:31:06.348455+00:00
-updated_at: 2026-10-14T17:31:06.348455+00:00
+updated_at: 2026-10-14T19:34:25.743921+00:00
 tags:
   - smart_select_remove
   - hew
@@ -25,3 +25,13 @@ Not ruled. Directions:
 - (a) Raise an error when the fallback resolves zero columns. It is loud, but it differs from Sequel's own `select_remove`.
 - (b) Keep Sequel's behaviour and document the hazard in the extension header.
 - (c) Raise only when the removed column is not among the resolved columns. A mock returns none, so on a mock this is the same as (a).
+
+## RULED 2026-10-14: raise (direction a)
+
+Ryan: "if this is our version of select remove, we can do what we want, so if you think raising is better, let's raise." The agent had recommended raising, because a silent `SELECT *` returns wrong data with no error.
+
+Consequences found on 2026-10-14, before the bead was written:
+
+- Three existing tests in `test/lib/sequel/extensions/test_smart_select_remove.rb` reach the fallback on a plain `Sequel.mock`, which returns no columns: `test_falls_back_for_bare_dataset`, `test_falls_back_for_unresolvable_expression`, and (after sequelizer-ovw) the explicit-select fallback test. Their mock must supply columns (`Sequel.mock(columns: [...])`) so that they still test the fallback. That is a fixture change that follows from the ruling, not a weakened test.
+- conceptql loads smart_select_remove (`lib/conceptql/database.rb`), calls `select_remove` in three operators, and builds SQL on `Sequel.mock(host: :postgres)` in its tests. Any conceptql test that reaches the fallback today gets `SELECT *` silently, and will raise after this change. conceptql pins `sequelizer >= 0.3.0, < 0.4`, so it sees the change only when it moves to 0.4.
+- The change is breaking, so its commit is marked `!`.
