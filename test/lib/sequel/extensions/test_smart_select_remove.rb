@@ -162,6 +162,41 @@ class TestSmartSelectRemove < Minitest::Test
     end
   end
 
+  # --- Removing every column raises instead of producing SELECT * ---
+
+  def test_raises_when_every_column_removed_from_explicit_select
+    db = mock_with_columns(:a, :b)
+
+    assert_raises(Sequel::SmartSelectRemove::AllColumnsRemovedError) do
+      db[:items].select(:a).select_remove(:a)
+    end
+  end
+
+  def test_raises_when_every_column_removed_from_from_self
+    db = mock_with_columns(:a, :b)
+
+    assert_raises(Sequel::SmartSelectRemove::AllColumnsRemovedError) do
+      db[:items].select(:a).from_self.select_remove(:a)
+    end
+  end
+
+  def test_raises_when_every_column_removed_in_fallback
+    db = mock_with_columns(:a, :b)
+
+    assert_raises(Sequel::SmartSelectRemove::AllColumnsRemovedError) do
+      db[:items].select_remove(:a, :b)
+    end
+  end
+
+  def test_removing_all_but_one_column_keeps_that_column
+    db = mock_with_columns(:a, :b)
+
+    assert_equal "SELECT b FROM items", db[:items].select(:a, :b).select_remove(:a).sql
+    assert_equal "SELECT b FROM (SELECT a, b FROM items) AS t1",
+                 db[:items].select(:a, :b).from_self.select_remove(:a).sql
+    assert_equal "SELECT b FROM items", db[:items].select_remove(:a).sql
+  end
+
   # --- select_remove extension is auto-loaded ---
 
   def test_select_remove_is_available

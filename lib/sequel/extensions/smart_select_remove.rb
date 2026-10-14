@@ -17,6 +17,10 @@
 # Sequel::SmartSelectRemove::NoColumnsError instead of producing
 # SELECT *, which would still contain the removed columns.
 #
+# When the columns are known but every one of them is removed, the result
+# would also be SELECT *, so select_remove raises
+# Sequel::SmartSelectRemove::AllColumnsRemovedError.
+#
 # You should load this extension into all of a database's datasets:
 #
 #   DB.extension(:smart_select_remove)
@@ -36,6 +40,15 @@ module Sequel
       end
     end
 
+    # Raised when select_remove would remove every column, so the result
+    # would be SELECT * and would still contain the removed columns.
+    class AllColumnsRemovedError < Sequel::Error
+      def initialize(dataset, cols)
+        super("select_remove(#{cols.map(&:inspect).join(', ')}) would remove every column of " \
+              "#{dataset.sql}; the result would be SELECT * and keep the removed columns")
+      end
+    end
+
     # Override select_remove to attempt static column resolution before
     # falling back to the original implementation.
     #
@@ -52,30 +65,49 @@ module Sequel
     # star), the original select_remove is used. Every such fallback
     # first checks columns, and raises NoColumnsError when it is empty.
     #
+    # On every path, if the result would have an empty select list because
+    # every column is removed, raises AllColumnsRemovedError. An empty
+    # select list renders as SELECT * and keeps the removed columns.
+    #
     # @param cols [Array<Symbol>] columns to remove
     # @return [Sequel::Dataset] dataset with columns removed
     # @raise [NoColumnsError] if the fallback finds no columns
+    # @raise [AllColumnsRemovedError] if every column would be removed
     def select_remove(*cols)
       sel = @opts[:select]
       if sel && !sel.empty?
         names = sel.map { |c| resolve_outer_column_name(c) }
         unless names.any?(&:nil?)
           kept = names.zip(sel).reject { |name, _| cols.include?(name) }.map(&:last)
-          return select(*(kept - cols))
+          return ensure_columns_remain(select(*(kept - cols)), cols)
         end
       elsif (inner_cols = resolve_selected_columns)
         outer_cols = inner_cols.map { |c| resolve_outer_column_name(c) }
-        return select(*(outer_cols - cols)) unless outer_cols.any?(&:nil?)
+        return ensure_columns_remain(select(*(outer_cols - cols)), cols) unless outer_cols.any?(&:nil?)
       end
 
       # Every fallback reaches this point. With no columns, the original
       # select_remove would call select() and produce SELECT *.
       raise NoColumnsError, self if columns.empty?
 
-      super
+      ensure_columns_remain(super, cols)
     end
 
     private
+
+    # Return ds unless its select list is empty or nil. Either renders as
+    # SELECT *, which would keep the removed columns.
+    #
+    # @param ds [Sequel::Dataset] the dataset select_remove would return
+    # @param cols [Array<Symbol>] the columns that were removed
+    # @return [Sequel::Dataset] ds
+    # @raise [AllColumnsRemovedError] if ds selects no columns
+    def ensure_columns_remain(ds, cols)
+      sel = ds.opts[:select]
+      raise AllColumnsRemovedError.new(self, cols) if sel.nil? || sel.empty?
+
+      ds
+    end
 
     # Walk through from_self chains to find the innermost explicit
     # SELECT list. Returns nil if no explicit selection is found.
