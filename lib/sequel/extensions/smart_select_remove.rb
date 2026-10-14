@@ -8,9 +8,14 @@
 #
 # This is essential for lazy query building patterns where datasets
 # reference tables that may not exist yet at query-build time. By
-# walking through from_self chains and inspecting inner SELECT lists,
-# this extension can determine which columns to keep without touching
-# the database.
+# inspecting the dataset's own SELECT list, or walking through from_self
+# chains to an inner SELECT list, this extension can determine which
+# columns to keep without touching the database.
+#
+# When static resolution fails and the database returns no columns (for
+# example on Sequel.mock), select_remove raises
+# Sequel::SmartSelectRemove::NoColumnsError instead of producing
+# SELECT *, which would still contain the removed columns.
 #
 # You should load this extension into all of a database's datasets:
 #
@@ -22,28 +27,50 @@
 
 module Sequel
   module SmartSelectRemove
+    # Raised when select_remove cannot determine the dataset's columns, so
+    # the result would be SELECT * and would still contain the removed columns.
+    class NoColumnsError < Sequel::Error
+      def initialize(dataset)
+        super("select_remove could not determine the columns of #{dataset.sql}; " \
+              "it would produce SELECT * and keep the removed columns")
+      end
+    end
+
     # Override select_remove to attempt static column resolution before
     # falling back to the original implementation.
     #
-    # When the dataset has no explicit SELECT clause, walks through
-    # from_self chains to find inner column expressions and resolves
-    # them to outer-scope symbol names. This avoids the columns! call
-    # that the original select_remove uses, which would execute SQL.
+    # When the dataset has an explicit SELECT clause, resolves the output
+    # name of each entry and keeps the original expressions whose names
+    # are not removed, as the original select_remove does with the
+    # names that columns returns. When the dataset has no explicit SELECT
+    # clause, walks through from_self chains to find inner column
+    # expressions and resolves them to outer-scope symbol names. Both
+    # avoid the columns! call that the original select_remove uses,
+    # which would execute SQL.
+    #
+    # If any entry cannot be resolved (for example a literal string or a
+    # star), the original select_remove is used. Every such fallback
+    # first checks columns, and raises NoColumnsError when it is empty.
     #
     # @param cols [Array<Symbol>] columns to remove
     # @return [Sequel::Dataset] dataset with columns removed
+    # @raise [NoColumnsError] if the fallback finds no columns
     def select_remove(*cols)
-      # If there's an explicit select, original behavior handles it
-      return super if @opts[:select] && !@opts[:select].empty?
-
-      # Try to resolve columns by walking the from_self chain
-      if (inner_cols = resolve_selected_columns)
+      sel = @opts[:select]
+      if sel && !sel.empty?
+        names = sel.map { |c| resolve_outer_column_name(c) }
+        unless names.any?(&:nil?)
+          kept = names.zip(sel).reject { |name, _| cols.include?(name) }.map(&:last)
+          return select(*(kept - cols))
+        end
+      elsif (inner_cols = resolve_selected_columns)
         outer_cols = inner_cols.map { |c| resolve_outer_column_name(c) }
-        # All columns must be resolvable; bail to super if any are opaque
-        return super if outer_cols.any?(&:nil?)
-
-        return select(*(outer_cols - cols))
+        return select(*(outer_cols - cols)) unless outer_cols.any?(&:nil?)
       end
+
+      # Every fallback reaches this point. With no columns, the original
+      # select_remove would call select() and produce SELECT *.
+      raise NoColumnsError, self if columns.empty?
 
       super
     end
@@ -73,12 +100,15 @@ module Sequel
     # After from_self, inner expressions become subquery output columns
     # referenced by their alias or base name in the outer scope.
     #
+    # A star (:* or a qualified :*) selects every column of a table, so
+    # it has no single name and is unresolvable.
+    #
     # @param col [Object] a column expression from the inner SELECT
     # @return [Symbol, nil] the outer column name, or nil if unresolvable
     def resolve_outer_column_name(col)
       case col
       when Symbol
-        col
+        col unless col == :*
       when Sequel::SQL::AliasedExpression
         a = col.alias
         a.is_a?(Symbol) ? a : a.to_sym
