@@ -4,7 +4,7 @@ title: "settable: quote SET values through the adapter's literalizer, and make s
 status: captured
 type: idea
 created_at: 2026-10-13T17:51:04.709549+00:00
-updated_at: 2026-10-13T17:51:04.709549+00:00
+updated_at: 2026-10-14T13:53:10.398085+00:00
 tags:
   - settable
   - duckdb
@@ -35,3 +35,28 @@ sequelizer was written mostly for Impala and Spark. Their SET statements may tak
 ## Not in scope
 
 `set_pragma` stays in the sequel-duckdb adapter. PRAGMA is specific to DuckDB and SQLite, and Sequel puts such statements in the adapter. The parent deliberation is sequel-duckdb's seed sequel-duckdb-pbj ("DuckDB DSL features requested by hew to remove raw SQL").
+
+## RULED 2026-10-14: the caller chooses which values are quoted
+
+Ryan chose "Caller chooses" over two other options: quote only on DuckDB, or quote for all databases except Impala, Spark and PostgreSQL. In his words, the option was: "set_sql stays raw for plain strings, and quotes only values that a caller wraps (for example Sequel.lit or a marker). hew would quote its own DuckDB values. No database-type branch."
+
+Why the seed's original plan was not taken: t_shank calls `db.set(search_path: "a,b,public")` and `db.set(enable_nestloop: :off)` on PostgreSQL. With `literal()` on every value, the first becomes `SET search_path='a,b,public'`, which PostgreSQL reads as ONE schema named `a,b,public`. The second becomes the quoted identifier `"off"`.
+
+Other facts found on 2026-10-14:
+
+- sequel_impala defines its own private raw `set_sql`. The settable extension overrides it, because extensions extend the Database instance after the adapter. db_opts always loads settable, so Impala uses sequelizer's `set_sql`.
+- db_opts already quotes any value that contains a non-word character (`prep_value`) before it calls `set_sql`. A `set_sql` that quoted every value would quote those twice.
+
+The marker (an agent's pick, not ruled by Ryan): a value that is a `Sequel::SQL::Expression` goes through `literal()`, and every other value is interpolated raw as before. The caller writes `DB.set(memory_limit: Sequel.expr("1GB"))`. This uses Sequel's own wrapper rather than a new class. Measured on sequel-duckdb 0.2.1 through `Sequel.mock(host: :duckdb)`:
+
+```
+Sequel.expr("1GB")  -> '1GB'
+Sequel.expr("it's") -> 'it''s'
+Sequel.expr(4)      -> 4
+Sequel.expr(true)   -> TRUE
+"#{Sequel.expr('1GB')}" -> #<Sequel::SQL::StringExpression:0x...>   (today's output: invalid SQL, so no caller depends on it)
+```
+
+`Sequel.lit` is a String subclass, not an Expression, so it stays raw. That matches its meaning.
+
+The open question on Impala and Spark is now moot. Plain values keep today's raw form on every database.
