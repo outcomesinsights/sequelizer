@@ -4,7 +4,7 @@ title: 'smart_select_remove: raise instead of SELECT * when the fallback finds n
 status: resolved
 type: question
 created_at: 2026-10-14T17:31:06.348455+00:00
-updated_at: 2026-10-14T19:46:41.495143+00:00
+updated_at: 2026-10-14T20:29:48.252197+00:00
 resolved_at: 2026-10-14T19:46:41.495133+00:00
 resolution: "Ruled (a), raise. Shipped as bead sequelizer-uqk, commit 810a0c7, merged to local main as ed70ada with sequelizer-ovw. Not pushed. lib/sequel/extensions/smart_select_remove.rb:32 defines Sequel::SmartSelectRemove::NoColumnsError, and select_remove raises it before its single fallback super when columns is empty. Verified on main: hew's explicit-select case gives SELECT \"a\", \"partition_id\" FROM \"t\" with no query, and a bare dataset on Sequel.mock raises NoColumnsError. Efficacy: tweaking needed: minor. The bead text claimed that a bare or qualified star does not resolve, but resolve_outer_column_name returned :* for it. The agent made the star unresolvable, which also changed the from_self path (a planning miss: the bead author did not check the helper's Symbol branch). Open after this: removing EVERY column of a non-empty list still renders SELECT *. The ruling limited the raise to zero resolved columns, so this was not changed."
 tags:
@@ -37,3 +37,5 @@ Consequences found on 2026-10-14, before the bead was written:
 - Three existing tests in `test/lib/sequel/extensions/test_smart_select_remove.rb` reach the fallback on a plain `Sequel.mock`, which returns no columns: `test_falls_back_for_bare_dataset`, `test_falls_back_for_unresolvable_expression`, and (after sequelizer-ovw) the explicit-select fallback test. Their mock must supply columns (`Sequel.mock(columns: [...])`) so that they still test the fallback. That is a fixture change that follows from the ruling, not a weakened test.
 - conceptql loads smart_select_remove (`lib/conceptql/database.rb`), calls `select_remove` in three operators, and builds SQL on `Sequel.mock(host: :postgres)` in its tests. Any conceptql test that reaches the fallback today gets `SELECT *` silently, and will raise after this change. conceptql pins `sequelizer >= 0.3.0, < 0.4`, so it sees the change only when it moves to 0.4.
 - The change is breaking, so its commit is marked `!`.
+
+RULED 2026-10-14 (after resolution): raise also when select_remove would remove every column of a known, non-empty column list. Ryan: "raise that too please". Today that case renders SELECT * on all three paths. It became a separate bead with its own error class, AllColumnsRemovedError.
