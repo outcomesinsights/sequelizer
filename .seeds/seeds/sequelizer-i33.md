@@ -1,10 +1,12 @@
 ---
 id: sequelizer-i33
 title: 'Over-engineering audit 2026-10-07: accept findings 2, 4-8; keep platform and sql_recorder'
-status: captured
+status: resolved
 type: decision
 created_at: 2026-10-07T17:46:53.568935+00:00
-updated_at: 2026-10-07T18:31:37.179438+00:00
+updated_at: 2026-10-14T13:59:13.981469+00:00
+resolved_at: 2026-10-14T13:59:13.981462+00:00
+resolution: "All six accepted findings shipped on 2026-10-07 (merges 42ea95b, 1b9bf3a, 7bf5115 and 9439329), as the seed's OUTCOME and UPDATE notes record. The two rejected findings (the platform extension and sql_recorder) stay by ruling. Efficacy: tweaking needed: minor. Two findings changed during implementation. Finding 5 moved from the planned test:false approach to :before_preconnect, because test:false broke preconnect (an inherent unknown). Finding 6 needed a second ruling on symbol keys, because the audit missed that the gem's own test asserts indifferent access (a planning miss: a better bead would have grepped the tests for both h[:k] and h['k'])."
 tags:
   - audit
   - dependencies

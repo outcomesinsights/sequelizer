@@ -1,10 +1,12 @@
 ---
 id: sequelizer-c85
 title: "settable: quote SET values through the adapter's literalizer, and make set_sql public"
-status: captured
+status: resolved
 type: idea
 created_at: 2026-10-13T17:51:04.709549+00:00
-updated_at: 2026-10-14T13:53:10.398085+00:00
+updated_at: 2026-10-14T13:59:13.513258+00:00
+resolved_at: 2026-10-14T13:59:13.513248+00:00
+resolution: "Shipped as bead sequelizer-nqk, merged to local main as 916b6eb (commit 5882d41), not pushed. set_sql is public, and it passes a Sequel::SQL::Expression value through literal(). Every other value stays raw, so a caller writes DB.set(memory_limit: Sequel.expr('1GB')). Efficacy: tweaking needed: none. The bead's pre-written code and tests went in as written (196 tests, green on Ruby 3.3, 3.4 and 4.0). The planning pass caught two defects that the seed's original proposal would have shipped: it would have broken t_shank's PostgreSQL search_path list, and db_opts would have quoted some values twice. hew still has to wrap its DuckDB values in Sequel.expr. That change is hew's work."
 tags:
   - settable
   - duckdb
