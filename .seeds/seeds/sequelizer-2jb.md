@@ -1,10 +1,12 @@
 ---
 id: sequelizer-2jb
 title: 'smart_select_remove: raise instead of SELECT * when the fallback finds no columns?'
-status: captured
+status: resolved
 type: question
 created_at: 2026-10-14T17:31:06.348455+00:00
-updated_at: 2026-10-14T19:34:25.743921+00:00
+updated_at: 2026-10-14T19:46:41.495143+00:00
+resolved_at: 2026-10-14T19:46:41.495133+00:00
+resolution: "Ruled (a), raise. Shipped as bead sequelizer-uqk, commit 810a0c7, merged to local main as ed70ada with sequelizer-ovw. Not pushed. lib/sequel/extensions/smart_select_remove.rb:32 defines Sequel::SmartSelectRemove::NoColumnsError, and select_remove raises it before its single fallback super when columns is empty. Verified on main: hew's explicit-select case gives SELECT \"a\", \"partition_id\" FROM \"t\" with no query, and a bare dataset on Sequel.mock raises NoColumnsError. Efficacy: tweaking needed: minor. The bead text claimed that a bare or qualified star does not resolve, but resolve_outer_column_name returned :* for it. The agent made the star unresolvable, which also changed the from_self path (a planning miss: the bead author did not check the helper's Symbol branch). Open after this: removing EVERY column of a non-empty list still renders SELECT *. The ruling limited the raise to zero resolved columns, so this was not changed."
 tags:
   - smart_select_remove
   - hew
