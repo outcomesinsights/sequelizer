@@ -97,41 +97,69 @@ class TestSmartSelectRemove < Minitest::Test
 
   # --- Fallback to original select_remove ---
 
-  def test_falls_back_for_bare_dataset
-    ds = @db[:items]
-    ds.select_remove(:a)
+  # These tests use a mock that returns columns, because the fallback
+  # raises NoColumnsError when the database returns none.
 
-    refute_empty @db.sqls, "should execute SQL via columns!"
+  def test_falls_back_for_bare_dataset
+    db = mock_with_columns(:a, :b, :c)
+    result = db[:items].select_remove(:a)
+
+    refute_empty db.sqls, "should execute SQL via columns!"
+    assert_equal %i[b c], result.opts[:select]
   end
 
   def test_falls_back_when_explicit_select_has_literal
-    ds = @db[:items].select(:a, Sequel.lit("1 AS flag"))
-    ds.select_remove(:a)
+    db = mock_with_columns(:a, :flag)
+    result = db[:items].select(:a, Sequel.lit("1 AS flag")).select_remove(:a)
 
-    refute_empty @db.sqls, "should fall back when a selected entry cannot be resolved"
-  end
-
-  def test_falls_back_when_explicit_select_has_star
-    @db[:items].select(:*, :a).select_remove(:a)
-
-    refute_empty @db.sqls, "should fall back when the select list has a star"
-
-    @db[:items].select(Sequel[:items][:*], :a).select_remove(:a)
-
-    refute_empty @db.sqls, "should fall back when the select list has a qualified star"
-  end
-
-  def test_falls_back_when_from_self_inner_select_has_star
-    @db[:items].select(:*, :a).from_self.select_remove(:a)
-
-    refute_empty @db.sqls, "should fall back when the inner select list has a star"
+    refute_empty db.sqls, "should fall back when a selected entry cannot be resolved"
+    assert_equal "SELECT 1 AS flag FROM items", result.sql
   end
 
   def test_falls_back_for_unresolvable_expression
-    ds = @db[:items].select(:a, Sequel.lit("1 as flag")).from_self
-    ds.select_remove(:a)
+    db = mock_with_columns(:a, :flag)
+    result = db[:items].select(:a, Sequel.lit("1 as flag")).from_self.select_remove(:a)
 
-    refute_empty @db.sqls, "should fall back when a column cannot be resolved"
+    refute_empty db.sqls, "should fall back when a column cannot be resolved"
+    assert_equal [ :flag ], result.opts[:select]
+  end
+
+  # --- Fallback with no columns raises instead of producing SELECT * ---
+
+  def test_raises_for_bare_dataset_without_columns
+    assert_raises(Sequel::SmartSelectRemove::NoColumnsError) do
+      @db[:items].select_remove(:a)
+    end
+  end
+
+  def test_raises_for_explicit_select_with_literal_without_columns
+    assert_raises(Sequel::SmartSelectRemove::NoColumnsError) do
+      @db[:items].select(:a, Sequel.lit("1 AS flag")).select_remove(:a)
+    end
+  end
+
+  def test_raises_for_unresolvable_from_self_without_columns
+    assert_raises(Sequel::SmartSelectRemove::NoColumnsError) do
+      @db[:items].select(:a, Sequel.lit("1 as flag")).from_self.select_remove(:a)
+    end
+  end
+
+  # A star is unresolvable, so these reach the fallback, which raises on
+  # a mock with no columns instead of keeping the star.
+
+  def test_raises_for_explicit_select_with_star_without_columns
+    assert_raises(Sequel::SmartSelectRemove::NoColumnsError) do
+      @db[:items].select(:*, :a).select_remove(:a)
+    end
+    assert_raises(Sequel::SmartSelectRemove::NoColumnsError) do
+      @db[:items].select(Sequel[:items][:*], :a).select_remove(:a)
+    end
+  end
+
+  def test_raises_for_from_self_inner_select_with_star_without_columns
+    assert_raises(Sequel::SmartSelectRemove::NoColumnsError) do
+      @db[:items].select(:*, :a).from_self.select_remove(:a)
+    end
   end
 
   # --- select_remove extension is auto-loaded ---
@@ -152,5 +180,13 @@ class TestSmartSelectRemove < Minitest::Test
 
     assert_equal %i[a b], result.opts[:select]
     assert_empty @db.sqls, "should not execute SQL"
+  end
+
+  private
+
+  def mock_with_columns(*columns)
+    db = Sequel.mock(columns: columns)
+    db.extension :smart_select_remove
+    db
   end
 end

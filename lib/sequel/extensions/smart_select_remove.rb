@@ -12,6 +12,11 @@
 # chains to an inner SELECT list, this extension can determine which
 # columns to keep without touching the database.
 #
+# When static resolution fails and the database returns no columns (for
+# example on Sequel.mock), select_remove raises
+# Sequel::SmartSelectRemove::NoColumnsError instead of producing
+# SELECT *, which would still contain the removed columns.
+#
 # You should load this extension into all of a database's datasets:
 #
 #   DB.extension(:smart_select_remove)
@@ -22,6 +27,15 @@
 
 module Sequel
   module SmartSelectRemove
+    # Raised when select_remove cannot determine the dataset's columns, so
+    # the result would be SELECT * and would still contain the removed columns.
+    class NoColumnsError < Sequel::Error
+      def initialize(dataset)
+        super("select_remove could not determine the columns of #{dataset.sql}; " \
+              "it would produce SELECT * and keep the removed columns")
+      end
+    end
+
     # Override select_remove to attempt static column resolution before
     # falling back to the original implementation.
     #
@@ -35,10 +49,12 @@ module Sequel
     # which would execute SQL.
     #
     # If any entry cannot be resolved (for example a literal string or a
-    # star), the original select_remove is used.
+    # star), the original select_remove is used. Every such fallback
+    # first checks columns, and raises NoColumnsError when it is empty.
     #
     # @param cols [Array<Symbol>] columns to remove
     # @return [Sequel::Dataset] dataset with columns removed
+    # @raise [NoColumnsError] if the fallback finds no columns
     def select_remove(*cols)
       sel = @opts[:select]
       if sel && !sel.empty?
@@ -51,6 +67,10 @@ module Sequel
         outer_cols = inner_cols.map { |c| resolve_outer_column_name(c) }
         return select(*(outer_cols - cols)) unless outer_cols.any?(&:nil?)
       end
+
+      # Every fallback reaches this point. With no columns, the original
+      # select_remove would call select() and produce SELECT *.
+      raise NoColumnsError, self if columns.empty?
 
       super
     end
