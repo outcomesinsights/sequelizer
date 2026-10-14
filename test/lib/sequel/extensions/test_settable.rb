@@ -86,11 +86,54 @@ class TestSettable < Minitest::Test
     assert_equal expected_sqls, db.sqls
   end
 
-  def test_set_sql_private_method
+  def test_set_sql_is_public_and_does_not_execute
     db = Sequel.mock(host: :sqlite)
     db.extension :settable
 
-    refute_respond_to db, :set_sql
+    assert_equal([ "SET search_path=public" ], db.set_sql(search_path: "public"))
+    assert_empty(db.sqls)
+  end
+
+  def test_set_quotes_expression_string_on_duckdb
+    db = duckdb_mock
+    db.set(memory_limit: Sequel.expr("1GB"))
+
+    assert_equal([ "SET memory_limit='1GB'" ], db.sqls)
+  end
+
+  def test_set_escapes_quote_in_expression_string_on_duckdb
+    db = duckdb_mock
+    db.set(note: Sequel.expr("it's"))
+
+    assert_equal([ "SET note='it''s'" ], db.sqls)
+  end
+
+  def test_set_literalizes_expression_integer_on_duckdb
+    db = duckdb_mock
+    db.set(threads: Sequel.expr(4))
+
+    assert_equal([ "SET threads=4" ], db.sqls)
+  end
+
+  def test_set_literalizes_expression_boolean_on_duckdb
+    db = duckdb_mock
+    db.set(preserve_insertion_order: Sequel.expr(true))
+
+    assert_equal([ "SET preserve_insertion_order=TRUE" ], db.sqls)
+  end
+
+  def test_set_keeps_plain_string_raw_on_duckdb
+    db = duckdb_mock
+    db.set(threads: "4")
+
+    assert_equal([ "SET threads=4" ], db.sqls)
+  end
+
+  def test_set_quotes_only_wrapped_values_in_mixed_hash
+    db = duckdb_mock
+    db.set(memory_limit: Sequel.expr("1GB"), threads: "4")
+
+    assert_equal([ "SET memory_limit='1GB'", "SET threads=4" ], db.sqls)
   end
 
   def test_multiple_set_calls
@@ -103,5 +146,13 @@ class TestSettable < Minitest::Test
     expected_sqls = [ "SET timezone=UTC", "SET search_path=public" ]
 
     assert_equal expected_sqls, db.sqls
+  end
+
+  private
+
+  def duckdb_mock
+    db = Sequel.mock(host: :duckdb)
+    db.extension :settable
+    db
   end
 end

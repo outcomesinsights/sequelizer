@@ -80,7 +80,7 @@ module Sequel
       #
       # @return [Array<String>] array of SQL SET statements
       def sql_statements
-        db.send(:set_sql, to_hash)
+        db.set_sql(to_hash)
       end
     end
 

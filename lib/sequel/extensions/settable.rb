@@ -13,6 +13,16 @@
 #   DB.set(work_mem: '256MB')
 #   # Executes: SET work_mem=256MB
 #
+#   DB.set(memory_limit: Sequel.expr('1GB'))
+#   # Executes: SET memory_limit='1GB'
+#
+# Plain values are interpolated raw into the SET statement, so
+# <tt>search_path: 'a,b,public'</tt> stays a list of schemas. When the database
+# needs an SQL literal (for example DuckDB string settings), the caller wraps
+# the value in +Sequel.expr+, and the extension passes it through +literal+.
+#
+# The +set_sql+ method returns the SET statements without executing them.
+#
 # The extension works with any database adapter and supports various value types
 # including strings, numbers, booleans, and nil values.
 #
@@ -20,8 +30,8 @@
 
 module Sequel
   # The Settable module provides database configuration functionality through
-  # SET statements. When loaded as an extension, it adds the +set+ method to
-  # database connections.
+  # SET statements. When loaded as an extension, it adds the +set+ and
+  # +set_sql+ methods to database connections.
   module Settable
     # Execute SET statements for the given options hash.
     #
@@ -48,6 +58,10 @@ module Sequel
     #   #           SET autocommit=true
     #   #           SET custom_setting=
     #
+    # @example Caller-quoted value
+    #   DB.set(memory_limit: Sequel.expr('1GB'))
+    #   # Executes: SET memory_limit='1GB'
+    #
     # @return [void]
     def set(opts = {})
       set_sql(opts).each do |sql|
@@ -55,21 +69,24 @@ module Sequel
       end
     end
 
-    private
-
-    # Generate SET SQL statements from options hash.
+    # Generate SET SQL statements from options hash, without executing them.
     #
     # Converts each key-value pair in the options hash into a SET SQL statement
-    # string. This is a private helper method used internally by the +set+ method.
+    # string. A value that is a +Sequel::SQL::Expression+ is passed through
+    # +literal+. Every other value is interpolated raw.
     #
     # @param opts [Hash] Hash of options to convert to SET statements
     # @return [Array<String>] Array of SET SQL statement strings
     #
     # @example
-    #   set_sql(timezone: 'UTC', port: 5432)
+    #   DB.set_sql(timezone: 'UTC', port: 5432)
     #   # => ["SET timezone=UTC", "SET port=5432"]
+    #
+    # @example Caller-quoted value
+    #   DB.set_sql(memory_limit: Sequel.expr('1GB'))
+    #   # => ["SET memory_limit='1GB'"]
     def set_sql(opts)
-      opts.map { |k, v| "SET #{k}=#{v}" }
+      opts.map { |k, v| "SET #{k}=#{v.is_a?(Sequel::SQL::Expression) ? literal(v) : v}" }
     end
   end
 
