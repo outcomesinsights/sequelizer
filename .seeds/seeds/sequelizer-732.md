@@ -4,7 +4,7 @@ title: funky.hash on DuckDB gives duplicate ids; should the hash strategy be sel
 status: captured
 type: question
 created_at: 2026-10-15T22:55:14.998273+00:00
-updated_at: 2026-10-15T22:56:05.891341+00:00
+updated_at: 2026-10-15T22:59:11.943557+00:00
 ---
 
 ## The defect (reported by the roobetl session, 2026-10-14)
@@ -55,3 +55,20 @@ Should `funky.hash` take the name of the hash function, with a sensible default,
 ## Hazard
 
 If the default changes, every caller of `funky.hash` gets new ids. Today that is roobetl only (7 calls), by the search above.
+
+## RULED 2026-10-15
+
+Ryan's words, relayed by the roobetl session: "use a named strategy, use md5 whatever you found as the default".
+
+- `funky.hash` takes a named strategy. The default becomes an md5-based strategy.
+- The current forms (DuckDB `hash(concat(...))` and Spark `xxhash64(...)`) stay available under a name.
+- The default change is accepted. roobetl, the only caller found, takes the new ids.
+
+## Verified before building (2026-10-15)
+
+Probes: DuckDB v1.5.6 (CLI) and Spark 3.5.0 (local `spark-sql` in a throwaway container from `spark-image`). Logs: `claude_stuff/md5-duckdb-probe-20261015-155722.log`, `claude_stuff/md5-spark-probe-20261015-155818.log`.
+
+- DuckDB's `md5_number_upper('abc')` is 12704604231530709392, but the first 16 hex characters of `md5('abc')` read as an unsigned number are 10376663631224000432. The two differ because `md5_number_upper` reads the bytes in little-endian order. So `md5_number_upper` cannot give the same ids as Spark.
+- Both engines can read the first 16 hex characters of `md5()` as a number. Spark: `cast(conv(hex, 16, -10) as bigint)`. DuckDB: `('0x' || hex)::UBIGINT`, then the signed fold. For `'abc'` both give -8070080442485551184.
+- `concat_ws` skips NULL parts on both engines: `concat_ws('/', 'a', NULL, 'b')` is `a/b`. Spark's `concat` returns NULL if any part is NULL, but DuckDB's `concat` skips the NULL part. So a NULL part needs an explicit marker.
+- int, double, date and boolean values turn into the same strings on both engines (1, 2.5, 2020-01-02, true).
