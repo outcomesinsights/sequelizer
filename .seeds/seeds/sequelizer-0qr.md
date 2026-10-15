@@ -1,10 +1,12 @@
 ---
 id: sequelizer-0qr
 title: Spin off each Sequel extension into its own gem?
-status: captured
+status: resolved
 type: question
 created_at: 2026-10-14T13:51:16.834225+00:00
-updated_at: 2026-10-14T14:06:27.102832+00:00
+updated_at: 2026-10-15T03:31:12.369250+00:00
+resolved_at: 2026-10-15T03:31:12.369239+00:00
+resolution: 'Ruled 2026-10-14: no split per extension. All extensions stay in the sequelizer gem. Revisit a connection-code vs extensions split after the consolidation beads, if an incoming extension brings a heavy dependency. No code change follows from this ruling.'
 tags:
   - extensions
   - packaging
@@ -53,3 +55,11 @@ Measured in the consumers on 2026-10-14:
 Costs of a split in this fleet: each gem needs gator's standard (treefmt, mise, hooks, cliff.toml), the tag-gated release workflow, a CI matrix and its own tracker. The coupling db_opts → settable → ConnectionMaker means at least those three move together.
 
 Recommendation: no split per extension. If a split is ever made, the defensible line is connection code vs extensions, because two consumers use only the extensions. Revisit that after the consolidation beads move the summarb, roobetl and conceptql extensions in, because they could bring heavier dependencies.
+
+## RULED 2026-10-14
+
+Ryan: "agree with 0qr". The ruling adopts the recommendation above.
+
+- Do not split sequelizer into one gem per extension.
+- Keep the connection code and the extensions in the one sequelizer gem for now.
+- After the consolidation beads move the summarb, roobetl and conceptql extensions into this gem, look again at a split between the connection code and the extensions. A new runtime dependency that one of those extensions brings is the reason to look again.
