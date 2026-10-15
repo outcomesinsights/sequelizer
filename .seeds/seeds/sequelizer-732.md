@@ -4,7 +4,7 @@ title: funky.hash on DuckDB gives duplicate ids; should the hash strategy be sel
 status: captured
 type: question
 created_at: 2026-10-15T22:55:14.998273+00:00
-updated_at: 2026-10-15T22:55:14.998273+00:00
+updated_at: 2026-10-15T22:56:05.891341+00:00
 ---
 
 ## The defect (reported by the roobetl session, 2026-10-14)
@@ -38,7 +38,7 @@ So one row already gets a different id on Spark and on DuckDB. Spark hashes the 
 
 ## Callers (checked 2026-10-15)
 
-- roobetl calls `db.funky.hash` in 3 places: `post_processors/base_processor.rb` (2 calls) and `post_processors/seer_information_periods.rb`.
+- roobetl calls `funky.hash` in 7 places, in 3 files. `transformations/modifier_function.rb` has 4: `make_id` (line 194), `make_id_from_row` (201), `get_ids_from_oi_raw_id` (60) and `get_ids_from_source` (64). `make_id` and `make_id_from_row` make the GDM ids. `post_processors/base_processor.rb` has 2 (lines 46 and 165), and `post_processors/seer_information_periods.rb` has 1 (line 35).
 - No caller was found in conceptql, t_shank, summarb or jigsaw-diagram-editor. The only t_shank match is a copy of sequelizer's own test under t_shank's `claude_stuff/`.
 
 ## The design question (Ryan's)
@@ -54,4 +54,4 @@ Should `funky.hash` take the name of the hash function, with a sensible default,
 
 ## Hazard
 
-If the default changes, every caller of `funky.hash` gets new ids. Today that is roobetl only, by the search above.
+If the default changes, every caller of `funky.hash` gets new ids. Today that is roobetl only (7 calls), by the search above.
