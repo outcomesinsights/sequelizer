@@ -1,10 +1,12 @@
 ---
 id: sequelizer-732
 title: funky.hash on DuckDB gives duplicate ids; should the hash strategy be selectable?
-status: captured
+status: resolved
 type: question
 created_at: 2026-10-15T22:55:14.998273+00:00
-updated_at: 2026-10-15T22:59:11.943557+00:00
+updated_at: 2026-10-15T23:02:41.447103+00:00
+resolved_at: 2026-10-15T23:02:41.447093+00:00
+resolution: 'Shipped 2026-10-15 as sequelizer-18u (5a8ef4e): funky.hash takes strategy:, default :md5 (lib/sequel/extensions/funky.rb FunkyBase#hash, #md5_hex16), :legacy keeps the old SQL. Efficacy: tweaking minor; the relayed recommendation to try md5_number_upper would have broken Spark parity (byte order), caught by probing before building, which is the inherent-unknown kind.'
 ---
 
 ## The defect (reported by the roobetl session, 2026-10-14)
@@ -72,3 +74,5 @@ Probes: DuckDB v1.5.6 (CLI) and Spark 3.5.0 (local `spark-sql` in a throwaway co
 - Both engines can read the first 16 hex characters of `md5()` as a number. Spark: `cast(conv(hex, 16, -10) as bigint)`. DuckDB: `('0x' || hex)::UBIGINT`, then the signed fold. For `'abc'` both give -8070080442485551184.
 - `concat_ws` skips NULL parts on both engines: `concat_ws('/', 'a', NULL, 'b')` is `a/b`. Spark's `concat` returns NULL if any part is NULL, but DuckDB's `concat` skips the NULL part. So a NULL part needs an explicit marker.
 - int, double, date and boolean values turn into the same strings on both engines (1, 2.5, 2020-01-02, true).
+
+UPDATE 2026-10-15: shipped as bead sequelizer-18u, commit 5a8ef4e on local main (not pushed). Strategy names are `:md5` (default) and `:legacy`. Real DuckDB and real Spark 3.5 gave the same ids on 10 probe rows, including NULL parts and the ("1","23") / ("12","3") pair. Remaining hazard: a part whose text contains chr(31), or equals chr(30), can still collide; ordinary data does not contain those control characters. Not checked: whether timestamps and large doubles turn into the same strings on both engines.
