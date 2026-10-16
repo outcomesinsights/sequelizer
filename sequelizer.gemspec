@@ -7,8 +7,8 @@ Gem::Specification.new do |spec|
   spec.version       = Sequelizer::VERSION
   spec.authors       = [ 'Ryan Duryea' ]
   spec.email         = [ 'aguynamedryan@gmail.com' ]
-  spec.summary       = 'Sequel database connections via config/database.yml or .env'
-  spec.description   = 'Easily establish a connection to a database via Sequel gem using options specified in config/database.yml or .env files'
+  spec.summary       = 'Sequel database connections via config/sequelizer.yml or .env'
+  spec.description   = 'Easily establish a connection to a database via Sequel gem using options specified in config/sequelizer.yml or .env files'
   spec.homepage      = 'https://github.com/outcomesinsights/sequelizer'
   spec.license       = 'MIT'
 

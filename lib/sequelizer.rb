@@ -6,7 +6,7 @@ require_relative "sequel/extensions/settable"
 # = Sequelizer
 #
 # Sequelizer is a Ruby gem that simplifies database connections using Sequel.
-# It allows users to configure database connections via config/database.yml
+# It allows users to configure database connections via config/sequelizer.yml
 # or .env files, providing an easy-to-use interface for establishing database
 # connections without hardcoding sensitive information.
 #
@@ -29,7 +29,7 @@ require_relative "sequel/extensions/settable"
 # 1. Passed options
 # 2. .env file
 # 3. Environment variables
-# 4. config/database.yml
+# 4. config/sequelizer.yml
 # 5. ~/.config/sequelizer/database.yml
 #
 # == Examples

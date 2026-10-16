@@ -34,7 +34,7 @@ module Sequelizer
     # in order of precedence:
     # 1. .env file
     # 2. Environment variables
-    # 3. config/database.yml
+    # 3. config/sequelizer.yml
     # 4. ~/.config/sequelizer/database.yml
     #
     # @param options [Hash, String, nil] database connection options, or a
