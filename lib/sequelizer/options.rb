@@ -35,6 +35,10 @@ module Sequelizer
     #   @return [Array<Symbol>] list of Sequel extensions to load
     attr_reader :extensions
 
+    # The three names of the PostgreSQL search path, in the order that decides
+    # between them when one source sets more than one.
+    SEARCH_PATH_KEYS = %i[search_path schema_search_path schema].freeze
+
     # Creates a new Options instance, processing configuration from multiple sources.
     #
     # @param options [Hash, String, nil] database connection options or connection URL
@@ -74,23 +78,31 @@ module Sequelizer
     # Sequel.connect. Handles PostgreSQL schema setup and timeout conversion.
     # A String is a database URL and is processed as <tt>{ url: string }</tt>.
     #
+    # For PostgreSQL, +search_path+, +schema_search_path+ and +schema+ are three
+    # names for one option. The highest-precedence source that sets any of them
+    # decides the search path; within that source, the names rank in the order of
+    # SEARCH_PATH_KEYS. The search path setup runs on each new connection, and
+    # then any +after_connect+ the caller passed.
+    #
     # @param passed_options [Hash, String, nil] the options to process
     # @return [Hash{Symbol => Object}] processed options
     def fix_options(passed_options)
       passed_options = { url: passed_options } if passed_options.is_a?(String)
       opts = symbolize_keys(passed_options || {})
-      sequelizer_options = db_config(opts).merge(opts)
+      sources = [ opts, *config_sources(opts) ]
+      sequelizer_options = sources.reverse.reduce({}, :merge)
 
       adapter = sequelizer_options[:adapter]
       adapter ||= URI.parse(sequelizer_options[:url].to_s).scheme if sequelizer_options[:url]
 
       if adapter =~ /^postgres/
         sequelizer_options[:adapter] = "postgres"
-        paths = %i[search_path schema_search_path schema].map { |key| sequelizer_options.delete(key) }.compact
+        search_path = sources.filter_map { |source| source.values_at(*SEARCH_PATH_KEYS).compact.first }.first
+        SEARCH_PATH_KEYS.each { |key| sequelizer_options.delete(key) }
 
-        unless paths.empty?
-          sequelizer_options[:search_path] = paths.first
-          sequelizer_options[:after_connect] = after_connect(paths.first)
+        if search_path
+          sequelizer_options[:search_path] = search_path
+          sequelizer_options[:after_connect] = after_connect(search_path, sequelizer_options[:after_connect])
         end
       end
 
@@ -99,22 +111,21 @@ module Sequelizer
       sequelizer_options
     end
 
-    # Loads database configuration from external sources in order of precedence.
-    # Sources checked (in order):
-    # - ~/.config/sequelizer.yml (if it exists and not ignored)
-    # - config/database.yml (if it exists and not ignored)
-    # - environment variables (including .env file if not ignored)
+    # Loads database configuration from the external sources that +opts+ does
+    # not ignore. They are read in this order:
+    # - ~/.config/sequelizer/database.yml (unless +:ignore_yaml+)
+    # - config/sequelizer.yml (unless +:ignore_yaml+)
+    # - environment variables, including the .env file (unless +:ignore_env+)
     #
-    # @param opts [Hash] base options that may contain ignore flags
-    # @return [Hash{Symbol => Object}] merged configuration from all sources
-    def db_config(opts)
-      @db_config ||= begin
-        opts = opts.dup
-        opts.merge!(symbolize_keys(YamlConfig.user_config.options)) unless opts[:ignore_yaml]
-        opts.merge!(symbolize_keys(YamlConfig.local_config.options)) unless opts[:ignore_yaml]
-        opts.merge!(symbolize_keys(EnvConfig.new.options)) unless opts[:ignore_env]
-        opts
-      end
+    # @param opts [Hash] passed options that may contain ignore flags
+    # @return [Array<Hash{Symbol => Object}>] one hash per source, highest
+    #   precedence first
+    def config_sources(opts)
+      sources = []
+      sources << YamlConfig.user_config.options unless opts[:ignore_yaml]
+      sources << YamlConfig.local_config.options unless opts[:ignore_yaml]
+      sources << EnvConfig.new.options unless opts[:ignore_env]
+      sources.reverse.map { |source| symbolize_keys(source) }
     end
 
     # Returns a copy of +value+ with every Hash key, at any depth, converted
@@ -138,23 +149,29 @@ module Sequelizer
     # For PostgreSQL connections with a search_path defined, this proc will:
     # 1. Create each schema in the search path if it doesn't exist
     # 2. Set the search_path for the connection
+    # 3. Call +user_after_connect+, if given, with the connection (and the
+    #    server, if it takes two arguments, as Sequel does)
     #
     # @param search_path [String, Array<String>] PostgreSQL schema names as a
     #   comma-separated string, an Array of schema names, or a mixed Array
     #   containing comma-separated strings
+    # @param user_after_connect [Proc, nil] the caller's own after_connect
     # @return [Proc] callback to execute after connection
     # @example String input
     #   callback = after_connect('public,app_schema')
     # @example Array input
     #   callback = after_connect(['public', 'app_schema'])
-    def after_connect(search_path)
+    def after_connect(search_path, user_after_connect = nil)
       schemas = Array(search_path).flat_map { |p| p.to_s.split(",") }.map(&:strip)
       path_string = schemas.join(", ")
-      proc do |conn|
+      proc do |conn, server|
         schemas.each do |schema|
           conn.execute("CREATE SCHEMA IF NOT EXISTS #{schema}")
         end
         conn.execute("SET search_path TO #{path_string}")
+        if user_after_connect
+          user_after_connect.arity == 2 ? user_after_connect.call(conn, server) : user_after_connect.call(conn)
+        end
       end
     end
 

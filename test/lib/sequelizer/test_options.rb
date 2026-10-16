@@ -42,6 +42,45 @@ class TestOptions < Minitest::Test
     assert_equal("path", options.search_path)
   end
 
+  def test_passed_schema_wins_over_search_path_from_env
+    with_sources(env: { "search_path" => "from_env" }) do
+      options = Sequelizer::Options.new(adapter: "postgres", schema: "passed")
+
+      assert_equal("passed", options.search_path)
+      assert_nil(options.to_hash[:schema])
+    end
+  end
+
+  def test_passed_schema_search_path_wins_over_search_path_from_yaml
+    with_sources(yaml: { "search_path" => "from_yaml" }) do
+      options = Sequelizer::Options.new(adapter: "postgres", schema_search_path: "passed")
+
+      assert_equal("passed", options.search_path)
+    end
+  end
+
+  def test_schema_from_env_wins_over_search_path_from_yaml
+    with_sources(env: { "schema" => "from_env" }, yaml: { "adapter" => "postgres", "search_path" => "from_yaml" }) do
+      assert_equal("from_env", Sequelizer::Options.new.search_path)
+    end
+  end
+
+  def test_runs_search_path_setup_and_the_callers_after_connect
+    calls = []
+    [
+      ->(conn) { calls << [ :one, conn.class ] },
+      ->(conn, server) { calls << [ :two, conn.class, server ] }
+    ].each do |user_after_connect|
+      options = Sequelizer::Options.new(adapter: "postgres", search_path: "my_schema", after_connect: user_after_connect)
+      db = Sequel.mock(host: :postgres)
+      db.synchronize { |conn| options.to_hash[:after_connect].call(conn, :default) }
+
+      assert_equal([ "CREATE SCHEMA IF NOT EXISTS my_schema", "SET search_path TO my_schema" ], db.sqls)
+    end
+
+    assert_equal([ [ :one, Sequel::Mock::Connection ], [ :two, Sequel::Mock::Connection, :default ] ], calls)
+  end
+
   def test_returns_timeout_as_an_integer_even_if_given_string
     options = Sequelizer::Options.new({ timeout: "30" })
 
@@ -160,6 +199,19 @@ class TestOptions < Minitest::Test
   end
 
   private
+
+  # Replaces both YAML sources and the env source with the given hashes.
+  def with_sources(env: {}, yaml: {}, &)
+    yaml_config = Sequelizer::YamlConfig.new
+    env_config = Sequelizer::EnvConfig.new
+    yaml_config.stub(:options, yaml) do
+      env_config.stub(:options, env) do
+        Sequelizer::YamlConfig.stub(:new, yaml_config) do
+          Sequelizer::EnvConfig.stub(:new, env_config, &)
+        end
+      end
+    end
+  end
 
   # Invokes the after_connect proc that creates schemas and sets
   # search_path, and asserts it produced the expected SQL statements.

@@ -74,6 +74,8 @@ passed_options > .env > manually defined environment variables > config/database
 
 So if config/database.yml specifies a connection, you can set an environment variable (either manually, or through .env) to override one of those options. Similarly, if you pass an option to the method directly, that option will override the YAML and ENV-based options. See #3 for further discussion.
 
+For PostgreSQL, `search_path`, `schema_search_path` and `schema` are three names for one option. The highest-precedence source that sets any of them decides the search path, so a `schema:` you pass overrides a `search_path` from .env or YAML. If one source sets more than one name, `search_path` wins over `schema_search_path`, which wins over `schema`. Sequelizer creates the schemas and sets the search path on each new connection, and then runs any `after_connect` you pass.
+
 Take a look at the examples directory for a few ways you can specify your database configuration options.
 
 ## Frustrations
