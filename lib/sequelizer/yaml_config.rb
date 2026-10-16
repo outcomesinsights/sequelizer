@@ -25,15 +25,16 @@ module Sequelizer
       @config_file_path = Pathname.new(config_file_path || Pathname.pwd.join("config", "sequelizer.yml")).expand_path
     end
 
-    # Returns a set of options pulled from config/database.yml
-    # or +nil+ if config/database.yml doesn't exist
+    # Returns a set of options pulled from the YAML file at +config_file_path+
+    # (config/sequelizer.yml by default), or an empty hash if that file
+    # doesn't exist
     def options
       return {} unless config_file_path.exist?
 
       config[environment] || config
     end
 
-    # The environment to load from database.yml
+    # The environment to load from the YAML file
     #
     # Searches the following environment variables in this order:
     # * SEQUELIZER_ENV
@@ -48,7 +49,7 @@ module Sequelizer
 
     private
 
-    # The config as read from config/database.yml
+    # The config as read from the YAML file at +config_file_path+
     def config
       @config ||= Psych.load(ERB.new(File.read(config_file_path)).result)
     end

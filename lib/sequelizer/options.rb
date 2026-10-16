@@ -19,7 +19,7 @@ module Sequelizer
   # 1. Passed options (highest priority)
   # 2. .env file
   # 3. Environment variables
-  # 4. config/database.yml
+  # 4. config/sequelizer.yml
   # 5. ~/.config/sequelizer/database.yml (lowest priority)
   #
   # @example Basic usage

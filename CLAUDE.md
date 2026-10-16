@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Sequelizer is a Ruby gem that simplifies database connections using Sequel. It allows users to configure database connections via config/database.yml or .env files, providing an easy-to-use interface for establishing database connections without hardcoding sensitive information.
+Sequelizer is a Ruby gem that simplifies database connections using Sequel. It allows users to configure database connections via config/sequelizer.yml or .env files, providing an easy-to-use interface for establishing database connections without hardcoding sensitive information.
 
 The gem includes:
 
@@ -96,7 +96,7 @@ bundle exec sequelizer init_env --adapter postgres --host localhost --database m
 1. Passed options
 2. .env file
 3. Environment variables
-4. config/database.yml
+4. config/sequelizer.yml
 5. ~/.config/sequelizer/database.yml
 
 ### Sequel Extensions

@@ -4,7 +4,7 @@ I was tired of writing the code to bootstrap a connection to my databases.
 
 [Sequel](https://github.com/jeremyevans/sequel/) provides an easy mechanism for connecting to a database, but I didn't want to store my username/password/other sensitive information in the scripts I was writing.
 
-So I wrote this gem that lets me store my database configuration options in either config/database.yml or .env and then lets me call `db` to get a connection to my database.
+So I wrote this gem that lets me store my database configuration options in either config/sequelizer.yml or .env and then lets me call `db` to get a connection to my database.
 
 I normally use this gem when I'm writing a quick script or a Thor-based command line utility.
 
@@ -30,7 +30,7 @@ $ gem install sequelizer
 
 ## Usage
 
-To get the most out of Sequelizer, you'll need to create a config/database.yml file or a .env file and specify your database configuration options in that file.
+To get the most out of Sequelizer, you'll need to create a config/sequelizer.yml file or a .env file and specify your database configuration options in that file.
 
 Sequelizer comes with a handy command that will print out your connection parameters. Just run:
 
@@ -66,13 +66,13 @@ end
 
 `new_db` will create a new connection to the database on each call.
 
-Both take a hash of database options if you don't want to create a config/database.yml or .env file, or simply wish to override those options. Options are merged together from all sources with the following precedence:
+Both take a hash of database options if you don't want to create a config/sequelizer.yml or .env file, or simply wish to override those options. Options are merged together from all sources with the following precedence:
 
 ```
-passed_options > .env > manually defined environment variables > config/database.yml > ~/.config/sequelizer/database.yml
+passed_options > .env > manually defined environment variables > config/sequelizer.yml > ~/.config/sequelizer/database.yml
 ```
 
-So if config/database.yml specifies a connection, you can set an environment variable (either manually, or through .env) to override one of those options. Similarly, if you pass an option to the method directly, that option will override the YAML and ENV-based options. See #3 for further discussion.
+So if config/sequelizer.yml specifies a connection, you can set an environment variable (either manually, or through .env) to override one of those options. Similarly, if you pass an option to the method directly, that option will override the YAML and ENV-based options. See #3 for further discussion.
 
 For PostgreSQL, `search_path`, `schema_search_path` and `schema` are three names for one option. The highest-precedence source that sets any of them decides the search path, so a `schema:` you pass overrides a `search_path` from .env or YAML. If one source sets more than one name, `search_path` wins over `schema_search_path`, which wins over `schema`. Sequelizer creates the schemas and sets the search path on each new connection, and then runs any `after_connect` you pass.
 
