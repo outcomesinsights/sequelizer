@@ -52,7 +52,8 @@ module Sequelizer
   # the connection on the first call and then memoizes itself so only a single
   # connection is used on repeated calls.
   #
-  # @param options [Hash] an optional set of database connection options.
+  # @param options [Hash, String] an optional set of database connection options,
+  #   or a database URL string, which means { url: string }.
   #   If no options are provided, options are read from config/sequelizer.yml
   #   or from .env or from environment variables.
   # @return [Sequel::Database] the memoized database connection
@@ -66,7 +67,8 @@ module Sequelizer
 
   # Instantiates and returns a new database connection on each call.
   #
-  # @param options [Hash] an optional set of database connection options.
+  # @param options [Hash, String] an optional set of database connection options,
+  #   or a database URL string, which means { url: string }.
   #   If no options are provided, options are read from config/sequelizer.yml
   #   or from .env or from environment variables.
   # @return [Sequel::Database] a new database connection
@@ -76,6 +78,7 @@ module Sequelizer
   #   conn2 = new_db  # Different connection instance
   #   new_db(force_new: true)  # Bypasses cache entirely
   def new_db(options = {})
+    options = { url: options } if options.is_a?(String)
     cached = find_cached(options)
     return cached if cached && !options[:force_new]
 
@@ -84,9 +87,11 @@ module Sequelizer
 
   # Finds a cached connection for the given options.
   #
-  # @param options [Hash] the connection options to look up
+  # @param options [Hash, String] the connection options to look up, or a
+  #   database URL string, which means { url: string }
   # @return [Sequel::Database, nil] the cached connection or nil if not found
   def find_cached(options)
+    options = { url: options } if options.is_a?(String)
     @_sequelizer_cache ||= {}
     @_sequelizer_cache[options]
   end
