@@ -38,6 +38,16 @@ class TestConnectionMaker < Minitest::Test
     end
   end
 
+  def test_raises_a_clear_error_when_no_source_sets_an_adapter_or_url
+    with_yaml_config do
+      with_env_config do
+        error = assert_raises(Sequelizer::MissingAdapterError) { Sequelizer::ConnectionMaker.new.connection }
+
+        assert_match(/:adapter or a :url/, error.message)
+      end
+    end
+  end
+
   def test_reads_options_from_yaml_config
     with_yaml_config(@options) do
       assert_equal :postgres, Sequelizer::ConnectionMaker.new.connection.database_type

@@ -2,6 +2,16 @@ require "sequel"
 require_relative "options"
 
 module Sequelizer
+  # Raised when no configuration source names an adapter or a URL, so there
+  # is no database to connect to.
+  class MissingAdapterError < ArgumentError
+    def initialize(msg = nil)
+      super(msg || "no database configured: none of the passed options, .env, SEQUELIZER_* " \
+                   "environment variables, config/sequelizer.yml or ~/.config/sequelizer/database.yml " \
+                   "sets an :adapter or a :url")
+    end
+  end
+
   # = ConnectionMaker
   #
   # Class that handles loading/interpreting the database options and
@@ -46,6 +56,7 @@ module Sequelizer
     # using the configured options.
     #
     # @return [Sequel::Database] configured database connection
+    # @raise [MissingAdapterError] if no source sets an adapter or a URL
     # @raise [Sequel::Error] if connection fails
     #
     # @example
@@ -53,6 +64,8 @@ module Sequelizer
     #   users = connection[:users].all
     def connection
       opts = options.to_hash
+      raise MissingAdapterError unless opts[:adapter] || opts[:url] || opts[:uri]
+
       extensions = options.extensions
 
       conn = create_sequel_connection(opts)
