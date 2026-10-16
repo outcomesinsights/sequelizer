@@ -1,5 +1,5 @@
-# A normal database.yml file contains a file with many different database
-# configurations specified, one for each "environment".
+# A config/sequelizer.yml file usually holds several database configurations,
+# one for each "environment", like the database.yml file of a Rails app.
 #
 # This is a Rails convention, but frankly, most of the time I have a single
 # environment in my one-off scripts and don't want to bother with specifying

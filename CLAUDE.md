@@ -9,7 +9,7 @@ Sequelizer is a Ruby gem that simplifies database connections using Sequel. It a
 The gem includes:
 
 - A main module that provides `db` (cached connection) and `new_db` (fresh connection) methods
-- CLI commands for configuration management and Gemfile updating
+- CLI commands for configuration management (`init_env`, `config`)
 - Connections for any Sequel adapter (PostgreSQL, DuckDB, Spark via sequel-hexspace, ...)
 - Sequel extensions for enhanced functionality, including the Platform abstraction
 

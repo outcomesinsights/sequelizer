@@ -1,5 +1,5 @@
-# An example of a database.yml file that is very much like the kind we'd
-# find in a Rails app.
+# An example of a config/sequelizer.yml file, laid out like the database.yml
+# file of a Rails app.
 #
 # There are three environments defined.
 #

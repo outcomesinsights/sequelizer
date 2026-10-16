@@ -66,7 +66,7 @@ end
 
 `new_db` will create a new connection to the database on each call.
 
-Both take a hash of database options if you don't want to create a config/sequelizer.yml or .env file, or simply wish to override those options. Options are merged together from all sources with the following precedence:
+Both take a hash of database options, or a database URL string such as `"postgres://localhost/my_db"`, if you don't want to create a config/sequelizer.yml or .env file, or simply wish to override those options. Options are merged together from all sources with the following precedence:
 
 ```
 passed_options > .env > manually defined environment variables > config/sequelizer.yml > ~/.config/sequelizer/database.yml
@@ -76,7 +76,7 @@ So if config/sequelizer.yml specifies a connection, you can set an environment v
 
 For PostgreSQL, `search_path`, `schema_search_path` and `schema` are three names for one option. The highest-precedence source that sets any of them decides the search path, so a `schema:` you pass overrides a `search_path` from .env or YAML. If one source sets more than one name, `search_path` wins over `schema_search_path`, which wins over `schema`. Sequelizer creates the schemas and sets the search path on each new connection, and then runs any `after_connect` you pass.
 
-Take a look at the examples directory for a few ways you can specify your database configuration options.
+Take a look at the examples directory for a few ways you can specify your database configuration options. Copy a `sequelizer*.yml` example to `config/sequelizer.yml` to use it.
 
 ## Frustrations
 
