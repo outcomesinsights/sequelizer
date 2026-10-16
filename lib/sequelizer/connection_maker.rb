@@ -27,7 +27,8 @@ module Sequelizer
     # 3. config/database.yml
     # 4. ~/.config/sequelizer/database.yml
     #
-    # @param options [Hash, nil] database connection options
+    # @param options [Hash, String, nil] database connection options, or a
+    #   database URL String, which is the same as passing <tt>{ url: string }</tt>
     # @option options [String] :adapter database adapter (e.g., 'postgres', 'mysql2')
     # @option options [String] :host database host
     # @option options [Integer] :port database port

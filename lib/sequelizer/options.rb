@@ -39,7 +39,10 @@ module Sequelizer
     #
     # @param options [Hash, String, nil] database connection options or connection URL
     #   If a Hash is provided, it will be merged with configuration from other sources.
-    #   If a String is provided, it's treated as a database URL and returned as-is.
+    #   If a String is provided, it is a database URL, the way Sequel.connect accepts one:
+    #   <tt>Options.new("postgres://host/db")</tt> is the same as
+    #   <tt>Options.new(url: "postgres://host/db")</tt>, so it is merged with the other
+    #   sources too.
     #   If nil, configuration is loaded entirely from external sources.
     def initialize(options = nil)
       opts = fix_options(options)
@@ -67,18 +70,14 @@ module Sequelizer
     # Processes and fixes the passed options, handling various input types
     # and applying adapter-specific transformations.
     #
-    # If passed a hash, scans hash for certain options and sets up hash
-    # to be fed to Sequel.connect. Handles PostgreSQL schema setup and
-    # timeout conversion.
-    #
-    # If passed anything else (like a string that represents a database URL),
-    # the value is returned without modification.
+    # Scans the options for certain keys and sets up a hash to be fed to
+    # Sequel.connect. Handles PostgreSQL schema setup and timeout conversion.
+    # A String is a database URL and is processed as <tt>{ url: string }</tt>.
     #
     # @param passed_options [Hash, String, nil] the options to process
-    # @return [Hash, String] processed options or original string
+    # @return [Hash{Symbol => Object}] processed options
     def fix_options(passed_options)
-      return passed_options unless passed_options.nil? || passed_options.is_a?(Hash)
-
+      passed_options = { url: passed_options } if passed_options.is_a?(String)
       opts = symbolize_keys(passed_options || {})
       sequelizer_options = db_config(opts).merge(opts)
 

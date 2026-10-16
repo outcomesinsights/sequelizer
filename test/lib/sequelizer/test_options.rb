@@ -82,6 +82,14 @@ class TestOptions < Minitest::Test
     assert_instance_of(Proc, options.to_hash[:after_connect])
   end
 
+  def test_treats_a_url_string_as_the_url_option
+    options = Sequelizer::Options.new("postgres://localhost/mydb")
+
+    assert_equal("postgres://localhost/mydb", options.to_hash[:url])
+    assert_equal("postgres", options.adapter)
+    assert_equal(Sequelizer::Options.new(url: "postgres://localhost/mydb").to_hash, options.to_hash)
+  end
+
   def test_url_based_connection_processes_schema_as_search_path
     options = Sequelizer::Options.new(
       { url: "postgresql://localhost/mydb", schema: "my_schema" },
