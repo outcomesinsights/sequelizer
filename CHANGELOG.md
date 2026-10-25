@@ -2,6 +2,35 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0] - 2026-10-25
+
+### Breaking changes
+
+- **options:** Passed schema wins, and a caller's after_connect still runs ([8656edc](https://github.com/outcomesinsights/sequelizer/commit/8656edc9bf9d7a5d8f3c8242139c9f779af9b3e0)): when a lower-precedence source (.env, ENV or YAML) sets search_path and the caller passes schema: or schema_search_path:, the passed value is now the search path. Before, the lower-precedence search_path was used. A source that set schema while a lower-precedence source set search_path changes the same way.
+- **funky:** Hash takes a named strategy, and md5 is the default ([5a8ef4e](https://github.com/outcomesinsights/sequelizer/commit/5a8ef4e6df604f40a943f15a30c1618fe08db27a)): funky.hash returns different ids by default. Pass strategy: :legacy to get the ids that earlier versions built.
+- **smart_select_remove:** Raise AllColumnsRemovedError when every column is removed ([d8eeca4](https://github.com/outcomesinsights/sequelizer/commit/d8eeca42bbb5e365290bc4ea911e150ba9799d1f)): code that removed every column with select_remove got SELECT * and now raises AllColumnsRemovedError.
+- **smart_select_remove:** Raise NoColumnsError instead of producing SELECT * ([810a0c7](https://github.com/outcomesinsights/sequelizer/commit/810a0c7fe8406683a185b129797d9818ba4c871e)): code that got SELECT * from select_remove on a database that returns no columns now raises NoColumnsError. conceptql loads this extension and builds SQL on Sequel.mock(host: :postgres) in its tests, so it may see this error when it moves to sequelizer 0.4.
+- Drop hashie and OptionsHash for symbol-keyed hashes ([490c924](https://github.com/outcomesinsights/sequelizer/commit/490c924cba0c87d331607a49ed7dcb5963741e36)): Sequelizer.options and Options#to_hash now return a plain Hash with Symbol keys; look keys up with symbols (h[:adapter]).
+- Remove the update_gemfile command and GemfileModifier ([4837ff4](https://github.com/outcomesinsights/sequelizer/commit/4837ff470477b8e092afaa9de612bf3cf7582580)): the update_gemfile command and Sequelizer::GemfileModifier are removed; use `bundle add <adapter gem>` instead.
+
+### Added
+
+- **settable:** Quote Sequel expression values and make set_sql public ([5882d41](https://github.com/outcomesinsights/sequelizer/commit/5882d416429d88a5cc08a391e249e51d76399770))
+
+### Changed
+
+- **deps:** Drop the activesupport runtime dependency ([3380d25](https://github.com/outcomesinsights/sequelizer/commit/3380d25805b5608fc87226eaf8a2521262aaa655))
+- **deps:** Drop the pp dependency and require ([8f186b3](https://github.com/outcomesinsights/sequelizer/commit/8f186b34c2011382ed12a67e166dab909e99d93f))
+- Delete empty ConnectionMaker#configure_adapter_specific_options ([33da14e](https://github.com/outcomesinsights/sequelizer/commit/33da14ed0ad8acd41026d4c9e27cba6c62fb1a2b))
+- Apply db_opts without patching ConnectionPool#make_new ([3507790](https://github.com/outcomesinsights/sequelizer/commit/350779069a72e7def64717dbb93eb2266e1cde00))
+
+### Fixed
+
+- **sequelizer:** A URL string at new_db and db means { url: string } ([a2e6091](https://github.com/outcomesinsights/sequelizer/commit/a2e6091f735d9f496f521430fb9942898e4bae50))
+- **connection_maker:** Raise MissingAdapterError when nothing is configured ([c531242](https://github.com/outcomesinsights/sequelizer/commit/c531242e84c66390effa145cea5e4412eabaaaf4))
+- **options:** Accept a database URL string as the url option ([73c5f61](https://github.com/outcomesinsights/sequelizer/commit/73c5f61df0c3c2037605d3b53d9c301e087b1c32))
+- **smart_select_remove:** Resolve an explicit select list without querying the database ([f23c851](https://github.com/outcomesinsights/sequelizer/commit/f23c851f1f3ef987bc41869d43e04bb776db44fc))
+
 ## [0.3.0] - 2026-10-01
 
 ### Breaking changes
@@ -142,3 +171,5 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - The project itself
+
+[0.4.0]: https://github.com/outcomesinsights/sequelizer/compare/v0.3.0...v0.4.0
