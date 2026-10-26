@@ -28,7 +28,17 @@ module Sequel
       # strategy: :md5 (the default) casts each part to a string, writes a NULL
       # part as chr(30), joins the parts with chr(31), and reads the first 16
       # hex characters of their md5 as a signed integer. It gives the same id
-      # on DuckDB and on Spark.
+      # on DuckDB and on Spark when each part turns into the same string on
+      # both. Measured on DuckDB 1.5 and Spark 3.5, that is true for strings,
+      # integers, booleans, decimals, dates, timestamps without a time zone,
+      # and doubles that are zero or from 0.001 up to (not including)
+      # 10,000,000 in absolute value. It is false for other doubles, which
+      # Spark writes in E notation (1.0E7) and DuckDB does not (10000000.0),
+      # and for DuckDB's TIMESTAMPTZ, whose text ends in a UTC offset.
+      # Before you pass such a part, cast a TIMESTAMPTZ to a timestamp, and
+      # cast a double to a decimal. The decimal gives the same text for
+      # 123456789.5, but not for 1e20 at DECIMAL(38,6), where DuckDB keeps
+      # the double's rounding error.
       #
       # strategy: :legacy is each database's form before :md5 existed:
       # hash(concat(...)) on DuckDB and xxhash64(...) on Spark. Use it only to
