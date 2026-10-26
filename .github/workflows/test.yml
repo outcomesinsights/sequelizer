@@ -1,7 +1,16 @@
 name: CI
 on:
+  # A push that changes only seeds, beads or agent files runs no CI. pull_request has
+  # no filter: Run-Tests is a required check, and a pull request whose workflow never
+  # runs never gets it, so GitHub would block the merge. A release commit always
+  # changes lib/sequelizer/version.rb, so release.yml still finds CI on it.
   push:
     branches: [main]
+    paths-ignore:
+      - ".seeds/**"
+      - ".beads/**"
+      - ".claude/**"
+      - "claude_stuff/**"
   pull_request:
 permissions: {}
 concurrency:
