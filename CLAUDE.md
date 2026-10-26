@@ -42,14 +42,22 @@ just ci         # fmt-check lint test hygiene: the full local CI equivalent
 
 ### Git Hooks
 
-The hooks are untracked files in `.git/hooks/`, shared by every worktree:
+The hooks follow gator's githooks standard. They are tracked in `.githooks/`, and
+`just setup` arms a checkout with `git config core.hooksPath .githooks`. Each clone,
+host and worktree runs `just setup` once.
 
-- `pre-commit`: beads' managed block, then `just pre-commit` (fmt-check, lint, test,
-  hygiene; about 5s). If fmt-check reformats anything, the commit fails: re-stage the
+- `pre-commit`: `just pre-commit` on the working tree (fmt-check, lint, test, hygiene,
+  seeds-check; about 5s). If fmt-check reformats anything, the commit fails: re-stage the
   changes and commit again.
-- `pre-push`: `just pre-push` (the full `ci`), then `bd dolt push` to publish beads.
+- `pre-push`: `just ci` at each pushed commit, in a gate worktree under
+  `~/.cache/gator-gate/`, then `bd-publish` to publish beads.
 
-Never skip them with `--no-verify`; a failing hook is a real problem to fix.
+The five files in `.githooks/` are copies of gator's `standard/githooks/`. Never edit
+them here. `.beads/hooks/pre-commit` and `.beads/hooks/pre-push` forward to them, and
+the `pre-push` recipe stays, so a checkout that has not run `just setup` yet is still
+checked. Those three are removed when every checkout is armed.
+
+Never skip the hooks with `--no-verify`; a failing hook is a real problem to fix.
 
 ### Build and Release
 

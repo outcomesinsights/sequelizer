@@ -19,6 +19,8 @@ bundle-update *ARGS:
 setup:
     mise install
     bundle install
+    @if [ -d .beads ] && [ ! -d .beads/embeddeddolt ] && command -v bd >/dev/null 2>&1; then bd bootstrap; fi
+    @if [ -d .githooks ]; then git config core.hooksPath .githooks; fi
 
 # Formats every tracked file in every language here (treefmt.toml), including
 # RuboCop's safe autocorrections.
