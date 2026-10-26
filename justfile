@@ -42,7 +42,17 @@ pre-push: ci
 # Runs on every commit, so it must stay FAST — a sub-minute budget. Tests belong
 # here when they fit; lint alone when they do not. If fmt-check reformats
 # anything it fails the commit: re-stage its changes and commit again.
-pre-commit: fmt-check lint test hygiene
+pre-commit: fmt-check lint test hygiene seeds-check
+
+# Gator's standard seeds-check: `seeds check --against-git` compares the seed store
+# with HEAD, so a seed body rewritten in place fails the commit. It belongs at commit
+# (at push it would compare HEAD~1 with HEAD only). It skips where there is no seed
+# store, and where seeds is not installed (CI, a fresh clone).
+seeds-check:
+    #!/usr/bin/env sh
+    [ -d .seeds ] || exit 0
+    command -v seeds >/dev/null 2>&1 || exit 0
+    exec seeds check --against-git
 
 # Content checks inherited from overcommit when it was removed (2026-09-12):
 # MergeConflicts, YamlSyntax, JsonSyntax. RuboCop and the test target were already
