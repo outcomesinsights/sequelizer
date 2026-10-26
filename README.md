@@ -1,4 +1,4 @@
-# Sequelizer [![Build Status](https://travis-ci.org/outcomesinsights/sequelizer.svg?branch=master)](https://travis-ci.org/outcomesinsights/sequelizer)
+# Sequelizer [![CI](https://github.com/outcomesinsights/sequelizer/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/outcomesinsights/sequelizer/actions/workflows/test.yml)
 
 I was tired of writing the code to bootstrap a connection to my databases.
 
@@ -77,6 +77,37 @@ So if config/sequelizer.yml specifies a connection, you can set an environment v
 For PostgreSQL, `search_path`, `schema_search_path` and `schema` are three names for one option. The highest-precedence source that sets any of them decides the search path, so a `schema:` you pass overrides a `search_path` from .env or YAML. If one source sets more than one name, `search_path` wins over `schema_search_path`, which wins over `schema`. Sequelizer creates the schemas and sets the search path on each new connection, and then runs any `after_connect` you pass.
 
 Take a look at the examples directory for a few ways you can specify your database configuration options. Copy a `sequelizer*.yml` example to `config/sequelizer.yml` to use it.
+
+## Loading Sequel extensions
+
+An option named `extension_<name>` loads the Sequel extension `<name>` on each connection that Sequelizer makes. The option's value does not matter. For example, this line in .env loads `funky`:
+
+```
+SEQUELIZER_EXTENSION_FUNKY=1
+```
+
+In config/sequelizer.yml, write `extension_funky: 1`. You can also load an extension yourself with `db.extension :funky`.
+
+An option named `<database type>_db_opt_<setting>` becomes a `SET <setting>=<value>` statement on each new connection. For example, `postgres_db_opt_work_mem: 256MB` runs `SET work_mem=256MB`.
+
+## Sequel extensions
+
+Sequelizer ships these Sequel extensions. You can load each one on any Sequel connection, not only on one that Sequelizer made.
+
+- **cold_col**: gives the columns of a dataset without a query to the database. It reads table schemas from a YAML file (`db.load_schema`), from `db.add_table_schema`, and from the tables and views that the session creates.
+- **db_opts**: applies the `<database type>_db_opt_<setting>` options above. Sequelizer loads it on every connection.
+- **funky**: functions that are written differently on Spark and on DuckDB, through `db.funky`. It supports only those two databases, and it raises an error on any other.
+  - `db.funky.hash(*parts)` returns a signed 64-bit integer that hashes the parts. The default strategy, `:md5`, gives the same id on DuckDB and on Spark when each part turns into the same string on both. That is true for strings, integers, booleans, decimals, dates and timestamps without a time zone. It is false for doubles of 10,000,000 or more, or under 0.001, in absolute value, and for DuckDB's TIMESTAMPTZ. Cast such a part to a decimal or a timestamp first.
+  - `db.funky.hash(*parts, strategy: :legacy)` gives the ids that sequelizer 0.3 and earlier built. Use it only to reproduce those ids, because on DuckDB it gives duplicate ids. An unknown strategy raises `Sequel::Funky::UnknownHashStrategyError`.
+  - `str_to_date(value, format)`, `collect_list(column)` and `make_json_column(dataset, key_column, value_column)` write the same operation for each database.
+- **make_readyable**: `db.make_ready(use_schema:, search_path:, only:, except:)` prepares a Spark or DuckDB database for queries. It creates temporary views for the tables in a list of schemas, in order of precedence, and for external Parquet, ORC or other files given as `Pathname`s.
+- **more_sql**: `db.create_schema(name, if_not_exists: true)`.
+- **platform**: `db.platform` answers what the database supports and prefers (`supports?(:cte)`, `prefers?(:parquet)`, `[:interim_schema]`), and translates functions such as `date_diff(from, to)` and `days_between(from, to)`. The answers come from the CSV files in config/platforms/.
+- **settable**: `db.set(timezone: "UTC")` runs `SET timezone=UTC`. A value is written into the statement as it is. Wrap a value in `Sequel.expr` when the database needs a quoted literal. `db.set_sql` returns the statements and runs nothing.
+- **smart_select_remove**: replaces Sequel's `select_remove`. It finds the columns from the dataset's own SELECT list, or through `from_self` chains, so it does not need to query the database. It raises `Sequel::SmartSelectRemove::NoColumnsError` when it cannot find the columns, and `Sequel::SmartSelectRemove::AllColumnsRemovedError` when every column would be removed. In both cases Sequel's own `select_remove` would produce `SELECT *`, which still contains the removed columns.
+- **sql_recorder**: `db.sql_recorder` is an array of every SQL statement sent to the database. Call `db.sql_recorder.clear` to empty it.
+- **unionize**: `db.unionize(datasets, chunk_size: 100, all: true)` combines many datasets with UNION, one chunk at a time, for databases that cannot run one very large UNION. Each chunk goes into a temporary view on Spark and a temporary table on DuckDB. It supports only those two databases.
+- **usable**: `db.use(:my_schema)` runs a USE statement that switches to that schema.
 
 ## Frustrations
 
