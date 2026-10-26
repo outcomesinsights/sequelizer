@@ -4,7 +4,7 @@ title: funky.hash on DuckDB gives duplicate ids; should the hash strategy be sel
 status: resolved
 type: question
 created_at: 2026-10-15T22:55:14.998273+00:00
-updated_at: 2026-10-15T23:06:16.069002+00:00
+updated_at: 2026-10-26T15:12:58.401736+00:00
 resolved_at: 2026-10-15T23:02:41.447093+00:00
 resolution: 'Shipped 2026-10-15 as sequelizer-18u (5a8ef4e): funky.hash takes strategy:, default :md5 (lib/sequel/extensions/funky.rb FunkyBase#hash, #md5_hex16), :legacy keeps the old SQL. Efficacy: tweaking minor; the relayed recommendation to try md5_number_upper would have broken Spark parity (byte order), caught by probing before building, which is the inherent-unknown kind.'
 ---
@@ -78,3 +78,12 @@ Probes: DuckDB v1.5.6 (CLI) and Spark 3.5.0 (local `spark-sql` in a throwaway co
 UPDATE 2026-10-15: shipped as bead sequelizer-18u, commit 5a8ef4e on local main (not pushed). Strategy names are `:md5` (default) and `:legacy`. Real DuckDB and real Spark 3.5 gave the same ids on 10 probe rows, including NULL parts and the ("1","23") / ("12","3") pair. Remaining hazard: a part whose text contains chr(31), or equals chr(30), can still collide; ordinary data does not contain those control characters. Not checked: whether timestamps and large doubles turn into the same strings on both engines.
 
 UPDATE 2026-10-15 (reported by the roobetl session): roobetl's id parts are VARCHAR and BIGINT source columns (33 and 15 of 48), string literals, and DATE values in the post-processors. No part is a timestamp or a double. The roobetl session ran the SQL from 5a8ef4e for (bigint, bigint, date, date) on DuckDB and on Spark, including a NULL date, and got identical ids. Both engines write a DATE as yyyy-MM-dd. So the open point about timestamps and doubles does not affect roobetl.
+
+UPDATE 2026-10-26: the open point about timestamps and doubles is now measured, on DuckDB 1.5.6 and Spark 3.5.0 (logs claude_stuff/funky-types-*-20261026-*.log, not committed). Each value was cast to VARCHAR on DuckDB and to STRING on Spark, which is what the :md5 strategy hashes.
+
+- Same text on both: TIMESTAMP with seconds, milliseconds, microseconds and midnight; DECIMAL(10,2) 12.30; BOOLEAN; DATE; BIGINT 9007199254740993; FLOAT 0.1; DOUBLE 2.5, 0.1, 1/3, 100, 1234567.25, 9999999.0, 0.001, 0.0.
+- Different text: DOUBLE 10000000.0 (Spark `1.0E7`), -12345678.0 (`-1.2345678E7`), 123456789.5 (`1.234567895E8`), 1e20 (DuckDB `1e+20`, Spark `1.0E20`), 1e-7 (DuckDB `1e-07`, Spark `1.0E-7`), 0.000999 (Spark `9.99E-4`). Spark uses E notation at 1e7 and above and below 1e-3 in absolute value.
+- DuckDB TIMESTAMPTZ text ends in an offset (`2020-01-02 03:04:05+00`). Cast to TIMESTAMP, it matches Spark.
+- A cast of the double to DECIMAL(38,6) matches for 123456789.5 but not for 1e20 (DuckDB `100000000000000004764.729344`, Spark `100000000000000000000.000000`).
+
+The :md5 definition was not changed, because a change would change every id built with it. The FunkyBase#hash comment now states these limits.
