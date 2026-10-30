@@ -53,8 +53,9 @@ module Sequelizer
   @dataset_dbs_mutex = Mutex.new
 
   # Returns a read-only connection to one DuckDB dataset, cached per process
-  # by (url, schema). Every thread that asks for the same (url, schema) gets
-  # the same Sequel::Database.
+  # by (dataset file, schema). The dataset file is the real path of the file
+  # that +url+ resolves to, so two URLs for one file share a connection. Every
+  # thread that asks for the same dataset gets the same Sequel::Database.
   #
   # The connection is an in-memory DuckDB database that attaches the dataset
   # file read-only, so a write to a dataset table fails. Its search path puts
@@ -86,10 +87,10 @@ module Sequelizer
   # @return [Sequel::Database] the cached read-only connection
   # @raise [ReadWriteDatasetError] if +readonly+ is false
   # @raise [UnsupportedDatasetURLError] if +url+ is not a duckdb:// URL
-  # @raise [MissingDatasetError] if a directory URL has no single DuckDB file
-  #   for +schema+
-  # @raise [DatasetSettingsConflictError] if (url, schema) is cached with other
-  #   DuckDB settings
+  # @raise [MissingDatasetError] if the URL's path is neither a file nor a
+  #   directory, or if a directory URL has no single DuckDB file for +schema+
+  # @raise [DatasetSettingsConflictError] if (dataset file, schema) is cached
+  #   with other DuckDB settings
   #
   # @example
   #   db = Sequelizer.dataset_db(url: "duckdb:///data/datasets", schema: "synpuf",
@@ -101,10 +102,11 @@ module Sequelizer
     raise ReadWriteDatasetError unless readonly
 
     settings = DuckDBDataset.normalize_settings(memory_limit:, temp_directory:, max_temp_directory_size:, threads:)
-    key = [ url.to_s, schema.to_s ]
+    dataset = DuckDBDataset.new(url:, schema:, settings:)
+    key = [ dataset.dataset_file.realpath.to_s, dataset.schema ]
 
     @dataset_dbs_mutex.synchronize do
-      cached = @dataset_dbs[key] ||= { db: DuckDBDataset.new(url:, schema:, settings:).connection, settings: }
+      cached = @dataset_dbs[key] ||= { db: dataset.connection, settings: }
       raise DatasetSettingsConflictError.new(*key, cached[:settings], settings) unless cached[:settings] == settings
 
       cached[:db]

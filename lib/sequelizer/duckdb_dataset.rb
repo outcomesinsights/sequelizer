@@ -35,13 +35,14 @@ module Sequelizer
     end
   end
 
-  # Raised when dataset_db is called again for a cached (url, schema) with
-  # other DuckDB settings than the cached connection uses.
+  # Raised when dataset_db is called again for a cached (dataset file, schema)
+  # with other DuckDB settings than the cached connection uses. The URL of the
+  # second call can differ from the first, because both resolve to one file.
   class DatasetSettingsConflictError < ArgumentError
-    def initialize(url, schema, held, requested)
-      super("the dataset connection for url #{url.inspect}, schema #{schema.inspect} is already open " \
+    def initialize(file, schema, held, requested)
+      super("the dataset connection for file #{file.inspect}, schema #{schema.inspect} is already open " \
             "in this process with the DuckDB settings #{held.inspect}, not the requested settings " \
-            "#{requested.inspect}. The first dataset_db call for a (url, schema) fixes its settings.")
+            "#{requested.inspect}. The first dataset_db call for a (dataset file, schema) fixes its settings.")
     end
   end
 
@@ -57,7 +58,8 @@ module Sequelizer
   # dataset file. Otherwise +path+ is a directory of datasets, and the dataset
   # file is the one <tt>*.duckdb</tt> file in <tt><path>/<schema></tt>.
   #
-  # Use Sequelizer.dataset_db, which caches one connection per (url, schema).
+  # Use Sequelizer.dataset_db, which caches one connection per (dataset file,
+  # schema).
   #
   # @example
   #   DuckDBDataset.new(url: "duckdb:///data/datasets", schema: "synpuf").connection

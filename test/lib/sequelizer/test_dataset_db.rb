@@ -65,6 +65,24 @@ class TestDatasetDb < Minitest::Test
     assert_same dataset_db(url: directory_url, schema: SCHEMA), dataset_db(url: directory_url, schema: SCHEMA.to_sym)
   end
 
+  def test_urls_for_one_dataset_file_return_the_same_connection
+    file = make_dataset
+    db = dataset_db(url: directory_url, schema: SCHEMA)
+
+    assert_same db, dataset_db(url: "#{directory_url}/", schema: SCHEMA)
+    assert_same db, dataset_db(url: "duckdb://#{file}", schema: SCHEMA)
+  end
+
+  def test_other_settings_under_another_url_for_one_file_raise
+    file = make_dataset
+    dataset_db(url: directory_url, schema: SCHEMA, memory_limit: "1GiB")
+    error = assert_raises(Sequelizer::DatasetSettingsConflictError) do
+      Sequelizer.dataset_db(url: "duckdb://#{file}", schema: SCHEMA, memory_limit: "2GiB")
+    end
+
+    assert_includes error.message, file.realpath.to_s.inspect
+  end
+
   def test_another_schema_gets_another_connection
     make_dataset
     make_dataset("seer")

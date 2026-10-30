@@ -94,7 +94,7 @@ db[:patients].count
 - The connection is an in-memory DuckDB database that attaches the dataset file read-only, so a write to a dataset table fails. A `CREATE` without a catalog goes to the in-memory database.
 - `memory_limit:`, `temp_directory:`, `max_temp_directory_size:` and `threads:` are DuckDB settings. A setting that you do not pass keeps DuckDB's default. DuckDB's default `memory_limit` is 80% of the memory that the container may use, for each DuckDB database in the process.
 - `readonly:` must be true. `readonly: false` raises an `ArgumentError`, because read-write connections are not supported yet.
-- Each process caches one connection for each (`url`, `schema`), and every thread gets the same one. A second call for a cached (`url`, `schema`) with other DuckDB settings raises `Sequelizer::DatasetSettingsConflictError`.
+- Each process caches one connection for each dataset file and schema, and every thread gets the same one. The dataset file is the real path of the file that `url:` resolves to, so `duckdb:///data/datasets`, `duckdb:///data/datasets/` and the file's own URL share one connection. A second call for a cached dataset with other DuckDB settings raises `Sequelizer::DatasetSettingsConflictError`.
 - The .env file, environment variables and YAML files are not read.
 
 ## Loading Sequel extensions
