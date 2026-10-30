@@ -117,8 +117,11 @@ class TestDatasetDb < Minitest::Test
     make_dataset
     db = dataset_db(url: directory_url, schema: SCHEMA)
 
-    assert_raises(Sequel::DatabaseError) { db[:patients].insert(id: 3, gender_concept_id: 8507) }
-    assert_raises(Sequel::DatabaseError) { db[Sequel.qualify(SCHEMA, :patients)].delete }
+    insert = assert_raises(Sequel::DatabaseError) { db[:patients].insert(id: 3, gender_concept_id: 8507) }
+    delete = assert_raises(Sequel::DatabaseError) { db[Sequel.qualify(SCHEMA, :patients)].delete }
+
+    assert_match(/"INSERT" on database "dataset" which is attached in read-only mode/, insert.message)
+    assert_match(/"DELETE" on database "dataset" which is attached in read-only mode/, delete.message)
     assert_equal 2, db[:patients].count
   end
 
