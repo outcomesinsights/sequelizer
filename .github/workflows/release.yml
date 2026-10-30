@@ -91,6 +91,10 @@ jobs:
             echo "::error::CI on $SHA is '$ci'. Land the commit on main, let CI pass, then re-run this workflow."
             exit 1
           fi
+      # The bundle's duckdb gem compiles against the DuckDB C library. The
+      # production library version; test.yml has the same one.
+      - name: Install DuckDB C library
+        run: bin/install-libduckdb 1.5.6
       - uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
         with:
           ruby-version: "4.0"
