@@ -95,6 +95,7 @@ db[:patients].count
 - `memory_limit:`, `temp_directory:`, `max_temp_directory_size:` and `threads:` are DuckDB settings. A setting that you do not pass keeps DuckDB's default. DuckDB's default `memory_limit` is 80% of the memory that the container may use, for each DuckDB database in the process.
 - `readonly:` must be true. `readonly: false` raises an `ArgumentError`, because read-write connections are not supported yet.
 - Each process caches one connection for each dataset file and schema, and every thread gets the same one. The dataset file is the real path of the file that `url:` resolves to, so `duckdb:///data/datasets`, `duckdb:///data/datasets/` and the file's own URL share one connection. A second call for a cached dataset with other DuckDB settings raises `Sequelizer::DatasetSettingsConflictError`.
+- A connection reads the dataset file that existed at its first call. A file that is replaced on disk later is not read, even after `disconnect`. `Sequelizer.close_dataset_dbs` closes every cached dataset connection and empties the cache, so the next `dataset_db` call opens the file that is on disk then. Call it when no thread runs a query on a dataset connection, for example between tests or after a dataset file is replaced. Do not use a connection that `dataset_db` returned before the call.
 - The .env file, environment variables and YAML files are not read.
 
 ## Loading Sequel extensions

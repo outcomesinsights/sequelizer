@@ -142,7 +142,9 @@ module Sequelizer
     #
     # The configuration sources (.env, environment variables and the YAML
     # files) are ignored: the URL and the settings passed here decide the
-    # connection.
+    # connection. Sequel::DATABASES does not hold the connection
+    # (keep_reference: false), so a connection that Sequelizer.close_dataset_dbs
+    # drops can be garbage collected.
     #
     # @return [Sequel::Database] the connection, already tested
     # @raise [MissingDatasetError] if the dataset file cannot be found
@@ -152,7 +154,7 @@ module Sequelizer
       sqls = nil
       after_connect = ->(conn) { sqls.each { |sql| conn.query(sql) } }
       db = ConnectionMaker.new(url: MEMORY_URL, config: settings, after_connect: after_connect,
-                               test: false, ignore_yaml: true, ignore_env: true).connection
+                               test: false, keep_reference: false, ignore_yaml: true, ignore_env: true).connection
       sqls = [
         db.attach_sql(file.to_s, as: DATASET_CATALOG, read_only: true, if_not_exists: true),
         "SET search_path = #{db.literal("#{MEMORY_CATALOG}.main,#{DATASET_CATALOG}.#{schema}")}"

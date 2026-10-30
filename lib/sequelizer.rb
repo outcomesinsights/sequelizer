@@ -68,6 +68,11 @@ module Sequelizer
   # is 80% of the memory that the container may use, for each DuckDB database
   # in the process, so pass memory_limit where more than one runs.
   #
+  # A connection reads the dataset file that existed at its first call. The
+  # in-memory database never closes, so a file that is replaced on disk later
+  # is not read, even after +disconnect+. Call close_dataset_dbs, or restart
+  # the process, to read the new file.
+  #
   # The .env file, environment variables and YAML files are not read.
   #
   # @param url [String] <tt>duckdb://<directory></tt>, a directory that holds
@@ -110,6 +115,25 @@ module Sequelizer
       raise DatasetSettingsConflictError.new(*key, cached[:settings], settings) unless cached[:settings] == settings
 
       cached[:db]
+    end
+  end
+
+  # Closes every cached dataset connection and empties the cache, so the next
+  # dataset_db call opens the dataset file that is on disk then. Each
+  # connection detaches its dataset file and disconnects.
+  #
+  # Call it when no thread runs a query on a dataset connection, for example
+  # between tests, at shutdown, or after a dataset file is replaced. Do not use
+  # a Sequel::Database that dataset_db returned before the call.
+  #
+  # @return [void]
+  def self.close_dataset_dbs
+    @dataset_dbs_mutex.synchronize do
+      @dataset_dbs.each_value do |cached|
+        cached[:db].detach(DuckDBDataset::DATASET_CATALOG, if_exists: true)
+        cached[:db].disconnect
+      end
+      @dataset_dbs.clear
     end
   end
 
