@@ -78,25 +78,37 @@ For PostgreSQL, `search_path`, `schema_search_path` and `schema` are three names
 
 Take a look at the examples directory for a few ways you can specify your database configuration options. Copy a `sequelizer*.yml` example to `config/sequelizer.yml` to use it.
 
-## Read-only DuckDB dataset connections
+## Read-only DuckDB datasets
 
-`Sequelizer.dataset_db` returns a read-only connection to one DuckDB dataset. It needs the `sequel-duckdb` and `duckdb` gems.
+Sequelizer attaches DuckDB datasets read-only to one in-memory DuckDB database for each process. It needs the `sequel-duckdb` and `duckdb` gems.
 
 ```ruby
-db = Sequelizer.dataset_db(url: "duckdb:///data/datasets", schema: "synpuf",
-                           memory_limit: "51GB", temp_directory: "/scratch/duckdb",
-                           max_temp_directory_size: "500GB")
-db[:patients].count
+opts = { memory_limit: "51GB", temp_directory: "/scratch/duckdb", max_temp_directory_size: "500GB",
+         max_connections: 5 }
+
+# Name a dataset's tables with its catalog and schema anywhere:
+db = Sequelizer.dataset_db(url: "duckdb:///data/datasets", schema: "synpuf", **opts)
+db[Sequel[Sequelizer.dataset_catalog(:synpuf)][:synpuf][:patients]].count
+
+# Or read them without a schema, as ConceptQL's SQL does, inside with_dataset:
+Sequelizer.with_dataset(url: "duckdb:///data/datasets", schema: "synpuf", **opts) do |db|
+  db[:patients].count
+end
 ```
 
-- `url:` is `duckdb://<directory>` or `duckdb://<file>`. For a directory, the dataset file is the one `*.duckdb` file in `<directory>/<schema>/`. A URL that names an existing DuckDB file uses that file.
-- `schema:` is the schema in the file that holds the dataset's tables. A table name without a schema reads that schema.
-- The connection is an in-memory DuckDB database that attaches the dataset file read-only, so a write to a dataset table fails. A `CREATE` without a catalog goes to the in-memory database.
-- The in-memory database comes first on the search path, so a table that you create hides the dataset table of the same name. After `db.create_table(:patients)`, `db[:patients]` reads the new table, not the dataset's. Every thread in the process shares the connection, so this applies to every thread, and two threads that create one table name use the same table. Give created tables names that the dataset does not use, or qualify dataset tables with their schema (`Sequel.qualify(:synpuf, :patients)`).
-- `memory_limit:`, `temp_directory:`, `max_temp_directory_size:` and `threads:` are DuckDB settings. A setting that you do not pass keeps DuckDB's default. DuckDB's default `memory_limit` is 80% of the memory that the container may use, for each DuckDB database in the process.
+- `url:` is `duckdb://<directory>` or `duckdb://<file>`, with the scheme in any case. For a directory, the dataset file is the one `*.duckdb` file in `<directory>/<schema>/`. A URL that names an existing DuckDB file uses that file.
+- `schema:` is the schema in the file that holds the dataset's tables.
+- `dataset_db` attaches the dataset file at the first call for it and returns the process's one `Sequel::Database`. Every dataset uses the same one. The file is attached under the catalog `dataset_<schema>`, which `Sequelizer.dataset_catalog(schema)` returns as a Symbol. A write to a dataset table fails.
+- Outside `with_dataset`, name a table with all three parts: catalog, schema and table. DuckDB does not find `synpuf.patients` or `patients` there, so a query that misses `with_dataset` fails with an error instead of reading another dataset.
+- `with_dataset` runs the block on one connection whose search path is `memory.main`, then the dataset's schema. When the block ends, the search path is what it was before. A lazy dataset that runs after the block, or a query in a thread that the block starts, uses no dataset path and fails.
+- A `CREATE` without a catalog goes to the in-memory database. Inside `with_dataset`, a table created there hides the dataset table of the same name. The in-memory database is shared by every dataset and thread in the process.
+- A schema name can come from only one file in a process. A second file with the same schema raises `Sequelizer::DatasetSchemaConflictError`. Two URLs for one file (`duckdb:///data/datasets`, `duckdb:///data/datasets/` and the file's own URL) are one dataset.
+- `memory_limit:`, `temp_directory:`, `max_temp_directory_size:` and `threads:` are DuckDB settings of the one database, so the limits are for all the datasets together. `max_connections:` is the size of its connection pool (Sequel's default is 4). The first call fixes all of them, and a later call with other values raises `Sequelizer::DatasetSettingsConflictError`. A setting that you do not pass keeps DuckDB's default. DuckDB's default `memory_limit` is 80% of the memory that the container may use.
+- Two processes must not share one `temp_directory`. DuckDB gives the spill files the same names in every database, so the processes corrupt each other's spills.
 - `readonly:` must be true. `readonly: false` raises an `ArgumentError`, because read-write connections are not supported yet.
-- Each process caches one connection for each dataset file and schema, and every thread gets the same one. The dataset file is the real path of the file that `url:` resolves to, so `duckdb:///data/datasets`, `duckdb:///data/datasets/` and the file's own URL share one connection. A second call for a cached dataset with other DuckDB settings raises `Sequelizer::DatasetSettingsConflictError`.
-- A connection reads the dataset file that existed at its first call. A file that is replaced on disk later is not read, even after `disconnect`. `Sequelizer.close_dataset_dbs` closes every cached dataset connection and empties the cache, so the next `dataset_db` call opens the file that is on disk then. Call it when no thread runs a query on a dataset connection, for example between tests or after a dataset file is replaced. Do not use a connection that `dataset_db` returned before the call.
+- A call that fails, for example because a file is not a DuckDB file, attaches nothing. When no dataset is attached, the database closes too, so a later call starts clean.
+- An attached file stays attached, so a file that is replaced on disk is not read, even after `disconnect`. `Sequelizer.close_dataset_dbs` detaches every file and closes the database, so the next call opens the files that are on disk then. Call it when no thread uses the database, for example between tests or after a dataset file is replaced. Do not use a database that `dataset_db` returned before the call.
+- A forked child process opens its own database.
 - The .env file, environment variables and YAML files are not read.
 
 ## Loading Sequel extensions
