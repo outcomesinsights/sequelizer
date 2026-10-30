@@ -1,5 +1,6 @@
 require_relative "sequelizer/version"
 require_relative "sequelizer/connection_maker"
+require_relative "sequelizer/duckdb_dataset"
 require_relative "sequel/extensions/db_opts"
 require_relative "sequel/extensions/settable"
 
@@ -46,6 +47,68 @@ module Sequelizer
   # @return [Hash] the default connection options
   def self.options
     Options.new.to_hash
+  end
+
+  @dataset_dbs = {}
+  @dataset_dbs_mutex = Mutex.new
+
+  # Returns a read-only connection to one DuckDB dataset, cached per process
+  # by (url, schema). Every thread that asks for the same (url, schema) gets
+  # the same Sequel::Database.
+  #
+  # The connection is an in-memory DuckDB database that attaches the dataset
+  # file read-only, so a write to a dataset table fails. Its search path puts
+  # the dataset's schema after the in-memory database, so a table name without
+  # a schema reads the dataset (<tt>db[:patients]</tt>), and a CREATE without
+  # a catalog goes to the in-memory database. See DuckDBDataset.
+  #
+  # The DuckDB settings apply to the in-memory database when it opens. A
+  # setting that is nil keeps DuckDB's default. DuckDB's default memory_limit
+  # is 80% of the memory that the container may use, for each DuckDB database
+  # in the process, so pass memory_limit where more than one runs.
+  #
+  # The .env file, environment variables and YAML files are not read.
+  #
+  # @param url [String] <tt>duckdb://<directory></tt>, a directory that holds
+  #   one directory for each dataset, <tt><directory>/<schema>/</tt>, with
+  #   exactly one <tt>*.duckdb</tt> file in it; or <tt>duckdb://<file></tt>,
+  #   an existing DuckDB file, which is attached directly
+  # @param schema [String, Symbol] the schema in the DuckDB file that holds the
+  #   dataset's tables
+  # @param readonly [Boolean] must be true; read-write connections are not
+  #   supported yet
+  # @param memory_limit [String, nil] DuckDB's memory_limit, for example "51GB"
+  # @param temp_directory [String, nil] DuckDB's temp_directory, where it
+  #   spills data that does not fit in memory
+  # @param max_temp_directory_size [String, nil] DuckDB's
+  #   max_temp_directory_size, for example "500GB"
+  # @param threads [Integer, String, nil] DuckDB's threads
+  # @return [Sequel::Database] the cached read-only connection
+  # @raise [ReadWriteDatasetError] if +readonly+ is false
+  # @raise [UnsupportedDatasetURLError] if +url+ is not a duckdb:// URL
+  # @raise [MissingDatasetError] if a directory URL has no single DuckDB file
+  #   for +schema+
+  # @raise [DatasetSettingsConflictError] if (url, schema) is cached with other
+  #   DuckDB settings
+  #
+  # @example
+  #   db = Sequelizer.dataset_db(url: "duckdb:///data/datasets", schema: "synpuf",
+  #                              memory_limit: "51GB", temp_directory: "/scratch/duckdb",
+  #                              max_temp_directory_size: "500GB")
+  #   db[:patients].count
+  def self.dataset_db(url:, schema:, readonly: true, memory_limit: nil, temp_directory: nil,
+                      max_temp_directory_size: nil, threads: nil)
+    raise ReadWriteDatasetError unless readonly
+
+    settings = DuckDBDataset.normalize_settings(memory_limit:, temp_directory:, max_temp_directory_size:, threads:)
+    key = [ url.to_s, schema.to_s ]
+
+    @dataset_dbs_mutex.synchronize do
+      cached = @dataset_dbs[key] ||= { db: DuckDBDataset.new(url:, schema:, settings:).connection, settings: }
+      raise DatasetSettingsConflictError.new(*key, cached[:settings], settings) unless cached[:settings] == settings
+
+      cached[:db]
+    end
   end
 
   # Instantiates and memoizes a database connection. The +db+ method instantiates

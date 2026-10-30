@@ -78,6 +78,25 @@ For PostgreSQL, `search_path`, `schema_search_path` and `schema` are three names
 
 Take a look at the examples directory for a few ways you can specify your database configuration options. Copy a `sequelizer*.yml` example to `config/sequelizer.yml` to use it.
 
+## Read-only DuckDB dataset connections
+
+`Sequelizer.dataset_db` returns a read-only connection to one DuckDB dataset. It needs the `sequel-duckdb` and `duckdb` gems.
+
+```ruby
+db = Sequelizer.dataset_db(url: "duckdb:///data/datasets", schema: "synpuf",
+                           memory_limit: "51GB", temp_directory: "/scratch/duckdb",
+                           max_temp_directory_size: "500GB")
+db[:patients].count
+```
+
+- `url:` is `duckdb://<directory>` or `duckdb://<file>`. For a directory, the dataset file is the one `*.duckdb` file in `<directory>/<schema>/`. A URL that names an existing DuckDB file uses that file.
+- `schema:` is the schema in the file that holds the dataset's tables. A table name without a schema reads that schema.
+- The connection is an in-memory DuckDB database that attaches the dataset file read-only, so a write to a dataset table fails. A `CREATE` without a catalog goes to the in-memory database.
+- `memory_limit:`, `temp_directory:`, `max_temp_directory_size:` and `threads:` are DuckDB settings. A setting that you do not pass keeps DuckDB's default. DuckDB's default `memory_limit` is 80% of the memory that the container may use, for each DuckDB database in the process.
+- `readonly:` must be true. `readonly: false` raises an `ArgumentError`, because read-write connections are not supported yet.
+- Each process caches one connection for each (`url`, `schema`), and every thread gets the same one. A second call for a cached (`url`, `schema`) with other DuckDB settings raises `Sequelizer::DatasetSettingsConflictError`.
+- The .env file, environment variables and YAML files are not read.
+
 ## Loading Sequel extensions
 
 An option named `extension_<name>` loads the Sequel extension `<name>` on each connection that Sequelizer makes. The option's value does not matter. For example, this line in .env loads `funky`:
