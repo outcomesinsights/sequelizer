@@ -32,6 +32,8 @@ GEM
     csv (3.3.6)
     dotenv (3.2.0)
     drb (2.2.3)
+    duckdb (2.0.0.1)
+      bigdecimal (>= 3.1.4)
     ffi (1.17.4-x86_64-linux-gnu)
     formatador (1.2.3)
       reline
@@ -160,6 +162,7 @@ PLATFORMS
 
 DEPENDENCIES
   bundler (>= 2.0)
+  duckdb (~> 2.0)
   guard (~> 2.0)
   guard-minitest (~> 3.0)
   minitest (~> 6.0)

@@ -21,7 +21,9 @@ concurrency:
 # with the fleet's tool-setup prelude: checkout, mise-action (the tools in mise.toml),
 # setup-just, `just setup`. ruby/setup-ruby stays, ahead of
 # `just setup`, so the job's Ruby and bundle are in place and setup's `bundle install`
-# is a no-op over bundler-cache.
+# is a no-op over bundler-cache. The DuckDB C library goes in before ruby/setup-ruby,
+# whose bundler-cache install compiles the duckdb gem (a test dependency) against it.
+# 1.5.6 is the production DuckDB library version; release.yml has the same one.
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -34,6 +36,8 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
+      - name: Install DuckDB C library
+        run: bin/install-libduckdb 1.5.6
       - uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
         with:
           ruby-version: "4.0"
@@ -58,6 +62,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - name: Install DuckDB C library
+        run: bin/install-libduckdb 1.5.6
       - uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
         with:
           ruby-version: ${{ matrix.ruby }}
