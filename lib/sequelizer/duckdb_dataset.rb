@@ -1,5 +1,4 @@
 require "pathname"
-require_relative "connection_maker"
 
 module Sequelizer
   # Raised when a dataset URL is not a duckdb:// URL.
@@ -35,54 +34,39 @@ module Sequelizer
     end
   end
 
-  # Raised when dataset_db is called again for a cached (dataset file, schema)
-  # with other DuckDB settings than the cached connection uses. The URL of the
-  # second call can differ from the first, because both resolve to one file.
+  # Raised when a dataset_db call asks for other DuckDB settings or another
+  # max_connections than the process's dataset database has.
   class DatasetSettingsConflictError < ArgumentError
-    def initialize(file, schema, held, requested)
-      super("the dataset connection for file #{file.inspect}, schema #{schema.inspect} is already open " \
-            "in this process with the DuckDB settings #{held.inspect}, not the requested settings " \
-            "#{requested.inspect}. The first dataset_db call for a (dataset file, schema) fixes its settings.")
+    def initialize(held, requested)
+      super("the dataset database is already open in this process with #{held.inspect}, not the " \
+            "requested #{requested.inspect}. The first dataset_db call fixes them until " \
+            "Sequelizer.close_dataset_dbs.")
+    end
+  end
+
+  # Raised when a dataset's schema is already attached from another file.
+  # Callers name tables as schema.table, so two attached files with one
+  # schema name would make those names ambiguous.
+  class DatasetSchemaConflictError < ArgumentError
+    def initialize(schema, attached_file, requested_file)
+      super("the schema #{schema.inspect} is already attached from #{attached_file}, so " \
+            "#{requested_file} cannot be attached for it in this process")
     end
   end
 
   # = DuckDBDataset
   #
-  # A read-only connection to one dataset in DuckDB. The connection is an
-  # in-memory DuckDB database, which attaches the dataset's file read-only
-  # as the catalog +dataset+. The search path is <tt>memory.main</tt>, then
-  # <tt>dataset.<schema></tt>, so a table name without a schema reads the
-  # dataset, and a CREATE without a catalog goes to the in-memory database.
-  # A table created there hides the dataset table of the same name, for
-  # every thread that shares the connection (see Sequelizer.dataset_db).
-  #
-  # The URL is <tt>duckdb://<path></tt>. When +path+ is a file, it is the
+  # The dataset that a duckdb:// URL and a schema name identify. The URL is
+  # <tt>duckdb://<path></tt>, in any case. When +path+ is a file, it is the
   # dataset file. Otherwise +path+ is a directory of datasets, and the dataset
   # file is the one <tt>*.duckdb</tt> file in <tt><path>/<schema></tt>.
   #
-  # Use Sequelizer.dataset_db, which caches one connection per (dataset file,
-  # schema).
+  # Sequelizer.dataset_db attaches it; see DuckDBDatasets.
   #
   # @example
-  #   DuckDBDataset.new(url: "duckdb:///data/datasets", schema: "synpuf").connection
+  #   DuckDBDataset.new(url: "duckdb:///data/datasets", schema: "synpuf").dataset_file
   class DuckDBDataset
-    URL_PREFIX = "duckdb://".freeze
-    MEMORY_URL = "duckdb::memory:".freeze
-
-    # The dataset file is attached under this fixed catalog name. A catalog
-    # named like its file can equal the schema inside it (seer_x.duckdb holds
-    # the schema seer_x), and DuckDB then stops with "Ambiguous reference to
-    # catalog or schema".
-    DATASET_CATALOG = "dataset".freeze
-
-    # The catalog of the in-memory database. It stays first on the search
-    # path: the first entry is the default database, which DuckDB cannot
-    # detach, and a read-only default database makes every CREATE without a
-    # catalog fail.
-    MEMORY_CATALOG = "memory".freeze
-
-    # The DuckDB settings that dataset_db accepts.
-    SETTINGS = %i[memory_limit temp_directory max_temp_directory_size threads].freeze
+    URL_PREFIX = %r{\Aduckdb://}i
 
     # Whether +url+ names a directory of datasets: a duckdb:// URL whose path
     # is not an existing file.
@@ -90,85 +74,41 @@ module Sequelizer
     # @param url [String] a database URL
     # @return [Boolean]
     def self.directory_url?(url)
-      url.to_s.start_with?(URL_PREFIX) && !Pathname(url.to_s.delete_prefix(URL_PREFIX)).file?
-    end
-
-    # The settings Hash in the one form that dataset_db compares: String
-    # names and String values, without the settings that are nil.
-    #
-    # @param settings [Hash{Symbol => Object}] DuckDB settings
-    # @return [Hash{String => String}]
-    def self.normalize_settings(settings)
-      settings.compact.to_h { |name, value| [ name.to_s, value.to_s ] }
+      url.to_s.match?(URL_PREFIX) && !Pathname(url.to_s.sub(URL_PREFIX, "")).file?
     end
 
     # @!attribute [r] url
     #   @return [String] the duckdb:// URL of the dataset file or directory
     # @!attribute [r] schema
     #   @return [String] the dataset's schema name
-    # @!attribute [r] settings
-    #   @return [Hash{String => String}] the DuckDB settings
-    attr_reader :url, :schema, :settings
+    attr_reader :url, :schema
 
     # @param url [String] a duckdb:// URL of a dataset file or of a directory
     #   of datasets
     # @param schema [String, Symbol] the schema that holds the dataset's tables
-    # @param settings [Hash{String => String}] DuckDB settings, already
-    #   normalized (see normalize_settings)
     # @raise [UnsupportedDatasetURLError] if +url+ is not a duckdb:// URL
-    def initialize(url:, schema:, settings: {})
-      raise UnsupportedDatasetURLError, url unless url.to_s.start_with?(URL_PREFIX)
+    def initialize(url:, schema:)
+      raise UnsupportedDatasetURLError, url unless url.to_s.match?(URL_PREFIX)
 
       @url = url.to_s
       @schema = schema.to_s
-      @settings = settings
     end
 
     # The DuckDB file that holds the dataset. It is found once, on the first
     # call.
     #
-    # @return [Pathname] the absolute path of the dataset file
+    # @return [Pathname] the real path of the dataset file
     # @raise [MissingDatasetError] if the URL's path is neither a file nor a
     #   directory, or if a directory URL has no single dataset file for the
     #   schema
     def dataset_file
-      @dataset_file ||= find_dataset_file
-    end
-
-    # Opens the connection. Every new pool connection attaches the dataset
-    # file read-only and sets its search path, in :after_connect. DuckDB keeps
-    # an ATTACH for the whole database until its last connection closes, but
-    # the search path is per connection, so both run on each connection.
-    # :after_connect gets the driver's connection, which runs only SQL
-    # strings, so it runs the SQL of sequel-duckdb's attach, not db.attach.
-    #
-    # The configuration sources (.env, environment variables and the YAML
-    # files) are ignored: the URL and the settings passed here decide the
-    # connection. Sequel::DATABASES does not hold the connection
-    # (keep_reference: false), so a connection that Sequelizer.close_dataset_dbs
-    # drops can be garbage collected.
-    #
-    # @return [Sequel::Database] the connection, already tested
-    # @raise [MissingDatasetError] if the dataset file cannot be found
-    # @raise [Sequel::DatabaseConnectionError] if DuckDB cannot attach the file
-    def connection
-      file = dataset_file
-      sqls = nil
-      after_connect = ->(conn) { sqls.each { |sql| conn.query(sql) } }
-      db = ConnectionMaker.new(url: MEMORY_URL, config: settings, after_connect: after_connect,
-                               test: false, keep_reference: false, ignore_yaml: true, ignore_env: true).connection
-      sqls = [
-        db.attach_sql(file.to_s, as: DATASET_CATALOG, read_only: true, if_not_exists: true),
-        "SET search_path = #{db.literal("#{MEMORY_CATALOG}.main,#{DATASET_CATALOG}.#{schema}")}"
-      ]
-      db.test_connection
-      db
+      @dataset_file ||= find_dataset_file.realpath
     end
 
     private
 
     def find_dataset_file
-      path = Pathname(url.delete_prefix(URL_PREFIX)).expand_path
+      path = Pathname(url.sub(URL_PREFIX, "")).expand_path
       return path if path.file?
       raise MissingDatasetError.new(path, schema, nil) unless path.directory?
 

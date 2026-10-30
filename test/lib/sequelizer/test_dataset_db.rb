@@ -16,8 +16,8 @@ class TestDatasetDb < Minitest::Test
 
   # A small GDM dataset: the patients table in schema +schema+ of the one
   # DuckDB file in <root>/<schema>/.
-  def make_dataset(schema = SCHEMA, file_name: "gdm.duckdb")
-    build_dataset_file(@root.join(schema, file_name), schema)
+  def make_dataset(schema = SCHEMA, file_name: "gdm.duckdb", rows: 2)
+    build_dataset_file(@root.join(schema, file_name), schema, rows:)
   end
 
   # Writes a DuckDB file at +file+ whose schema +schema+ holds the patients
@@ -45,56 +45,65 @@ class TestDatasetDb < Minitest::Test
     Sequelizer.dataset_db(**)
   end
 
+  def patients(schema = SCHEMA)
+    Sequel[Sequelizer.dataset_catalog(schema)][schema.to_sym][:patients]
+  end
+
   def setting(db, name)
     db.get(Sequel.function(:current_setting, name))
   end
 
-  def test_a_directory_url_reads_a_dataset_table_without_a_schema_prefix
+  def dataset_catalogs(db)
+    db.from(Sequel.function(:duckdb_databases)).where(Sequel.like(:database_name, "dataset_%"))
+      .order(:database_name).select_map(:database_name)
+  end
+
+  def test_a_table_named_with_its_schema_reads_the_dataset
     make_dataset
     db = dataset_db(url: directory_url, schema: SCHEMA)
 
-    assert_equal [ 1, 2 ], db[:patients].order(:id).select_map(:id)
+    assert_equal [ 1, 2 ], db[patients].order(:id).select_map(:id)
   end
 
   def test_a_file_url_attaches_that_file_directly
     file = make_dataset
     db = dataset_db(url: "duckdb://#{file}", schema: SCHEMA)
 
-    assert_equal 2, db[:patients].count
+    assert_equal 2, db[patients].count
   end
 
-  def test_the_same_url_and_schema_return_the_same_connection
+  def test_every_dataset_uses_the_one_database_of_the_process
     make_dataset
-
-    assert_same dataset_db(url: directory_url, schema: SCHEMA), dataset_db(url: directory_url, schema: SCHEMA.to_sym)
-  end
-
-  def test_urls_for_one_dataset_file_return_the_same_connection
-    file = make_dataset
+    make_dataset("seer", rows: 3)
     db = dataset_db(url: directory_url, schema: SCHEMA)
 
-    assert_same db, dataset_db(url: "#{directory_url}/", schema: SCHEMA)
-    assert_same db, dataset_db(url: "duckdb://#{file}", schema: SCHEMA)
+    assert_same db, dataset_db(url: directory_url, schema: "seer")
+    assert_same db, dataset_db(url: directory_url, schema: SCHEMA.to_sym)
+    assert_equal [ 2, 3 ], [ db[patients].count, db[patients("seer")].count ]
+    assert_equal %w[dataset_seer dataset_synpuf], dataset_catalogs(db)
   end
 
-  def test_other_settings_under_another_url_for_one_file_raise
+  def test_urls_for_one_dataset_file_attach_it_once
     file = make_dataset
-    dataset_db(url: directory_url, schema: SCHEMA, memory_limit: "1GiB")
-    error = assert_raises(Sequelizer::DatasetSettingsConflictError) do
-      Sequelizer.dataset_db(url: "duckdb://#{file}", schema: SCHEMA, memory_limit: "2GiB")
-    end
+    db = dataset_db(url: directory_url, schema: SCHEMA)
+    dataset_db(url: "#{directory_url}/", schema: SCHEMA)
+    dataset_db(url: "duckdb://#{file}", schema: SCHEMA)
 
-    assert_includes error.message, file.realpath.to_s.inspect
+    assert_equal %w[dataset_synpuf], dataset_catalogs(db)
   end
 
-  def test_another_schema_gets_another_connection
+  def test_a_schema_from_another_file_raises
     make_dataset
-    make_dataset("seer")
+    other = build_dataset_file(@root.join("other", SCHEMA, "gdm.duckdb"))
+    dataset_db(url: directory_url, schema: SCHEMA)
 
-    refute_same dataset_db(url: directory_url, schema: SCHEMA), dataset_db(url: directory_url, schema: "seer")
+    error = assert_raises(Sequelizer::DatasetSchemaConflictError) do
+      Sequelizer.dataset_db(url: "duckdb://#{other}", schema: SCHEMA)
+    end
+    assert_includes error.message, other.realpath.to_s
   end
 
-  def test_concurrent_calls_return_one_connection
+  def test_concurrent_calls_return_one_database
     make_dataset
     dbs = Array.new(4) { Thread.new { dataset_db(url: directory_url, schema: SCHEMA) } }.map(&:value)
 
@@ -113,81 +122,178 @@ class TestDatasetDb < Minitest::Test
     assert_equal 2, setting(db, "threads")
   end
 
+  def test_other_settings_for_any_dataset_raise
+    make_dataset
+    make_dataset("seer")
+    dataset_db(url: directory_url, schema: SCHEMA, memory_limit: "1GiB")
+    error = assert_raises(Sequelizer::DatasetSettingsConflictError) do
+      Sequelizer.dataset_db(url: directory_url, schema: "seer", memory_limit: "2GiB")
+    end
+
+    assert_includes error.message, { "memory_limit" => "1GiB" }.inspect
+    assert_includes error.message, { "memory_limit" => "2GiB" }.inspect
+  end
+
+  def test_max_connections_sets_the_pool_size
+    make_dataset
+    db = dataset_db(url: directory_url, schema: SCHEMA, max_connections: 7)
+
+    assert_equal 7, db.pool.max_size
+    error = assert_raises(Sequelizer::DatasetSettingsConflictError) do
+      Sequelizer.dataset_db(url: directory_url, schema: SCHEMA, max_connections: 5)
+    end
+    assert_includes error.message, "max_connections"
+  end
+
   def test_a_write_to_the_dataset_fails
     make_dataset
     db = dataset_db(url: directory_url, schema: SCHEMA)
 
-    insert = assert_raises(Sequel::DatabaseError) { db[:patients].insert(id: 3, gender_concept_id: 8507) }
-    delete = assert_raises(Sequel::DatabaseError) { db[Sequel.qualify(SCHEMA, :patients)].delete }
+    insert = assert_raises(Sequel::DatabaseError) { db[patients].insert(id: 3, gender_concept_id: 8507) }
+    delete = assert_raises(Sequel::DatabaseError) { db[patients].delete }
 
-    assert_match(/"INSERT" on database "dataset" which is attached in read-only mode/, insert.message)
-    assert_match(/"DELETE" on database "dataset" which is attached in read-only mode/, delete.message)
-    assert_equal 2, db[:patients].count
+    assert_match(/"INSERT" on database "dataset_synpuf" which is attached in read-only mode/, insert.message)
+    assert_match(/"DELETE" on database "dataset_synpuf" which is attached in read-only mode/, delete.message)
+    assert_equal 2, db[patients].count
   end
 
-  def test_a_create_without_a_catalog_goes_to_the_in_memory_database
+  def test_a_table_name_without_a_schema_reads_the_dataset_only_in_with_dataset
     make_dataset
     db = dataset_db(url: directory_url, schema: SCHEMA)
-    db.create_table(:scratch) { Integer :n }
-    db[:scratch].insert(n: 1)
 
-    assert_equal 1, db[Sequel.qualify(Sequel.qualify(:memory, :main), :scratch)].count
+    assert_equal 2, Sequelizer.with_dataset(url: directory_url, schema: SCHEMA) { |d| d[:patients].count }
+    error = assert_raises(Sequel::DatabaseError) { db[:patients].count }
+    assert_match(/Table with name patients does not exist/, error.message)
   end
 
-  def test_a_created_table_hides_the_dataset_table_of_the_same_name_for_every_thread
+  def test_a_lazy_dataset_that_runs_after_with_dataset_fails
+    make_dataset
+    lazy = Sequelizer.with_dataset(url: directory_url, schema: SCHEMA) { |db| db[:patients] }
+
+    assert_raises(Sequel::DatabaseError) { lazy.count }
+  end
+
+  def test_nested_with_dataset_restores_the_outer_search_path
+    make_dataset
+    make_dataset("seer", rows: 3)
+    counts = Sequelizer.with_dataset(url: directory_url, schema: SCHEMA) do |db|
+      inner = Sequelizer.with_dataset(url: directory_url, schema: "seer") { |d| d[:patients].count }
+      [ inner, db[:patients].count ]
+    end
+
+    assert_equal [ 3, 2 ], counts
+  end
+
+  def test_with_dataset_restores_the_search_path_when_the_block_raises
+    make_dataset
+    db = dataset_db(url: directory_url, schema: SCHEMA, max_connections: 1)
+    assert_raises(RuntimeError) { Sequelizer.with_dataset(url: directory_url, schema: SCHEMA, max_connections: 1) { raise "boom" } }
+
+    assert_raises(Sequel::DatabaseError) { db[:patients].count }
+  end
+
+  def test_threads_in_with_dataset_at_once_read_their_own_datasets
+    make_dataset
+    make_dataset("seer", rows: 3)
+    inside = Queue.new
+    go = Queue.new
+    read = lambda do |schema|
+      Thread.new do
+        Sequelizer.with_dataset(url: directory_url, schema:) do |db|
+          inside << schema
+          go.pop
+          db[:patients].count
+        end
+      end
+    end
+    threads = [ read.call(SCHEMA), read.call("seer") ]
+    2.times { inside.pop }
+    2.times { go << :go }
+
+    assert_equal [ 2, 3 ], threads.map(&:value)
+  end
+
+  def test_a_create_without_a_catalog_goes_to_the_in_memory_database_and_hides_the_dataset_table
     make_dataset
     db = dataset_db(url: directory_url, schema: SCHEMA)
-    db.create_table(:patients) { Integer :n }
+    Sequelizer.with_dataset(url: directory_url, schema: SCHEMA) do |d|
+      d.create_table(:patients) { Integer :n }
 
-    assert_equal 0, Thread.new { db[:patients].count }.value
-    assert_equal 2, db[Sequel.qualify(SCHEMA, :patients)].count
+      assert_equal 0, d[:patients].count
+    end
+
+    assert_equal 0, db[Sequel[:memory][:main][:patients]].count
+    assert_equal 2, db[patients].count
   end
 
-  def test_every_pool_connection_gets_the_dataset_and_the_search_path
+  def test_every_pool_connection_reads_the_attached_datasets
     make_dataset
     db = dataset_db(url: directory_url, schema: SCHEMA)
     db.disconnect
 
-    assert_equal 2, db[:patients].count
+    assert_equal 2, db[patients].count
   end
 
   def test_a_replaced_dataset_file_is_read_only_after_close_dataset_dbs
     file = make_dataset
     db = dataset_db(url: directory_url, schema: SCHEMA)
-    db[:patients].count
+    db[patients].count
     File.rename(build_dataset_file(@root.join("replacement.duckdb"), rows: 5), file)
     db.disconnect
 
-    assert_equal 2, db[:patients].count
+    assert_equal 2, db[patients].count
 
     Sequelizer.close_dataset_dbs
     fresh = dataset_db(url: directory_url, schema: SCHEMA)
 
     refute_same db, fresh
-    assert_equal 5, fresh[:patients].count
+    assert_equal 5, fresh[patients].count
   end
 
-  def test_sequel_does_not_keep_a_reference_to_a_dataset_connection
+  def test_sequel_does_not_keep_a_reference_to_the_dataset_database
     make_dataset
 
     refute_includes Sequel::DATABASES, dataset_db(url: directory_url, schema: SCHEMA)
+  end
+
+  def test_a_failed_attach_closes_the_database_when_no_dataset_is_attached
+    file = @root.join(SCHEMA, "gdm.duckdb")
+    file.dirname.mkpath
+    file.write("not a DuckDB file")
+    databases = Sequel::DATABASES.size
+
+    assert_raises(Sequel::DatabaseError) { Sequelizer.dataset_db(url: directory_url, schema: SCHEMA, threads: 1) }
+    assert_equal databases, Sequel::DATABASES.size
+
+    file.delete
+    make_dataset
+
+    # Other settings work, so the failed call left no database open.
+    assert_equal 2, dataset_db(url: directory_url, schema: SCHEMA, threads: 2)[patients].count
+  end
+
+  def test_a_failed_attach_keeps_the_other_datasets
+    make_dataset
+    db = dataset_db(url: directory_url, schema: SCHEMA)
+    broken = @root.join("broken", "gdm.duckdb")
+    broken.dirname.mkpath
+    broken.write("not a DuckDB file")
+
+    assert_raises(Sequel::DatabaseError) { Sequelizer.dataset_db(url: directory_url, schema: "broken") }
+    assert_same db, dataset_db(url: directory_url, schema: SCHEMA)
+    assert_equal 2, db[patients].count
+  end
+
+  def test_the_url_scheme_can_be_in_any_case
+    make_dataset
+
+    assert_equal 2, dataset_db(url: "DuckDB://#{@root}", schema: SCHEMA)[patients].count
   end
 
   def test_readonly_false_raises
     error = assert_raises(ArgumentError) { Sequelizer.dataset_db(url: directory_url, schema: SCHEMA, readonly: false) }
 
     assert_match(/read-write .* not supported yet/, error.message)
-  end
-
-  def test_other_settings_for_a_cached_connection_raise
-    make_dataset
-    dataset_db(url: directory_url, schema: SCHEMA, memory_limit: "1GiB")
-    error = assert_raises(Sequelizer::DatasetSettingsConflictError) do
-      Sequelizer.dataset_db(url: directory_url, schema: SCHEMA, memory_limit: "2GiB")
-    end
-
-    assert_includes error.message, { "memory_limit" => "1GiB" }.inspect
-    assert_includes error.message, { "memory_limit" => "2GiB" }.inspect
   end
 
   def test_a_url_that_is_not_duckdb_raises
@@ -224,6 +330,7 @@ class TestDatasetDb < Minitest::Test
     file = make_dataset
 
     assert Sequelizer::DuckDBDataset.directory_url?(directory_url)
+    assert Sequelizer::DuckDBDataset.directory_url?("DUCKDB://#{@root}")
     refute Sequelizer::DuckDBDataset.directory_url?("duckdb://#{file}")
     refute Sequelizer::DuckDBDataset.directory_url?("postgres://localhost/gdm")
   end

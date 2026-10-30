@@ -1,6 +1,6 @@
 require_relative "sequelizer/version"
 require_relative "sequelizer/connection_maker"
-require_relative "sequelizer/duckdb_dataset"
+require_relative "sequelizer/duckdb_datasets"
 require_relative "sequel/extensions/db_opts"
 require_relative "sequel/extensions/settable"
 
@@ -49,45 +49,41 @@ module Sequelizer
     Options.new.to_hash
   end
 
-  @dataset_dbs = {}
-  @dataset_dbs_mutex = Mutex.new
+  @duckdb_datasets = DuckDBDatasets.new
 
-  # Returns a read-only connection to one DuckDB dataset, cached per process
-  # by (dataset file, schema). The dataset file is the real path of the file
-  # that +url+ resolves to, so two URLs for one file share a connection. Every
-  # thread that asks for the same dataset gets the same Sequel::Database.
+  # Attaches one DuckDB dataset read-only and returns the process's dataset
+  # database: one in-memory DuckDB database that every dataset in the process
+  # shares. The dataset file is attached at the first call for it, under the
+  # catalog <tt>dataset_<schema></tt>, and stays attached until
+  # close_dataset_dbs. Every call returns the same Sequel::Database.
   #
-  # The connection is an in-memory DuckDB database that attaches the dataset
-  # file read-only, so a write to a dataset table fails. Its search path puts
-  # the dataset's schema after the in-memory database, so a table name without
-  # a schema reads the dataset (<tt>db[:patients]</tt>), and a CREATE without
-  # a catalog goes to the in-memory database. See DuckDBDataset.
+  # Name a dataset's tables with its schema, <tt>Sequel[:synpuf][:patients]</tt>.
+  # A table name without a schema reads a dataset only inside with_dataset.
+  # A write to a dataset table fails.
   #
-  # The in-memory database comes first on the search path, so a table created
-  # there hides the dataset table of the same name. After
-  # <tt>db.create_table(:patients)</tt>, <tt>db[:patients]</tt> reads the new
-  # table, not the dataset's. Every thread in the process shares the
-  # connection, so this applies to every thread, and two threads that create
-  # one table name use the same table. Give created tables names that the
-  # dataset does not use, or qualify dataset tables with their schema
-  # (<tt>Sequel.qualify(:synpuf, :patients)</tt>).
+  # The DuckDB settings and +max_connections+ apply once, to the one
+  # database, so memory_limit and max_temp_directory_size are limits for all
+  # the datasets together. The first call fixes them until close_dataset_dbs.
+  # A setting that is nil keeps DuckDB's default. DuckDB's default
+  # memory_limit is 80% of the memory that the container may use, for each
+  # DuckDB database. Two processes must not share one temp_directory: DuckDB
+  # gives the spill files the same names in every database.
   #
-  # The DuckDB settings apply to the in-memory database when it opens. A
-  # setting that is nil keeps DuckDB's default. DuckDB's default memory_limit
-  # is 80% of the memory that the container may use, for each DuckDB database
-  # in the process, so pass memory_limit where more than one runs.
+  # Each schema can come from one file in a process, so that schema.table
+  # names one table. The dataset file is the real path of the file that +url+
+  # resolves to, so two URLs for one file are one dataset.
   #
-  # A connection reads the dataset file that existed at its first call. The
-  # in-memory database never closes, so a file that is replaced on disk later
-  # is not read, even after +disconnect+. Call close_dataset_dbs, or restart
-  # the process, to read the new file.
+  # A file that is replaced on disk after it is attached is not read, even
+  # after +disconnect+. Call close_dataset_dbs, or restart the process, to
+  # read the new file.
   #
   # The .env file, environment variables and YAML files are not read.
   #
   # @param url [String] <tt>duckdb://<directory></tt>, a directory that holds
   #   one directory for each dataset, <tt><directory>/<schema>/</tt>, with
   #   exactly one <tt>*.duckdb</tt> file in it; or <tt>duckdb://<file></tt>,
-  #   an existing DuckDB file, which is attached directly
+  #   an existing DuckDB file, which is attached directly. The scheme can be
+  #   in any case.
   # @param schema [String, Symbol] the schema in the DuckDB file that holds the
   #   dataset's tables
   # @param readonly [Boolean] must be true; read-write connections are not
@@ -98,53 +94,82 @@ module Sequelizer
   # @param max_temp_directory_size [String, nil] DuckDB's
   #   max_temp_directory_size, for example "500GB"
   # @param threads [Integer, String, nil] DuckDB's threads
-  # @return [Sequel::Database] the cached read-only connection
+  # @param max_connections [Integer, nil] the size of the database's
+  #   connection pool, for example the number of threads that use it; nil
+  #   keeps Sequel's default of 4
+  # @return [Sequel::Database] the process's dataset database
   # @raise [ReadWriteDatasetError] if +readonly+ is false
   # @raise [UnsupportedDatasetURLError] if +url+ is not a duckdb:// URL
   # @raise [MissingDatasetError] if the URL's path is neither a file nor a
   #   directory, or if a directory URL has no single DuckDB file for +schema+
-  # @raise [DatasetSettingsConflictError] if (dataset file, schema) is cached
-  #   with other DuckDB settings
+  # @raise [DatasetSettingsConflictError] if the database is open with other
+  #   DuckDB settings or another max_connections
+  # @raise [DatasetSchemaConflictError] if +schema+ is attached from another
+  #   file
   #
   # @example
   #   db = Sequelizer.dataset_db(url: "duckdb:///data/datasets", schema: "synpuf",
   #                              memory_limit: "51GB", temp_directory: "/scratch/duckdb",
-  #                              max_temp_directory_size: "500GB")
-  #   db[:patients].count
-  def self.dataset_db(url:, schema:, readonly: true, memory_limit: nil, temp_directory: nil,
-                      max_temp_directory_size: nil, threads: nil)
-    raise ReadWriteDatasetError unless readonly
-
-    settings = DuckDBDataset.normalize_settings(memory_limit:, temp_directory:, max_temp_directory_size:, threads:)
-    dataset = DuckDBDataset.new(url:, schema:, settings:)
-    key = [ dataset.dataset_file.realpath.to_s, dataset.schema ]
-
-    @dataset_dbs_mutex.synchronize do
-      cached = @dataset_dbs[key] ||= { db: dataset.connection, settings: }
-      raise DatasetSettingsConflictError.new(*key, cached[:settings], settings) unless cached[:settings] == settings
-
-      cached[:db]
-    end
+  #                              max_temp_directory_size: "500GB", max_connections: 5)
+  #   db[Sequel[:synpuf][:patients]].count
+  def self.dataset_db(url:, schema:, **options)
+    @duckdb_datasets.attach(url:, schema:, options: dataset_options(**options)).first
   end
 
-  # Closes every cached dataset connection and empties the cache, so the next
-  # dataset_db call opens the dataset file that is on disk then. Each
-  # connection detaches its dataset file and disconnects.
+  # Attaches the dataset like dataset_db, and runs the block on one
+  # connection whose search path is <tt>memory.main</tt>, then the dataset's
+  # schema. A table name without a schema reads the dataset in the block,
+  # as ConceptQL's SQL needs (<tt>db[:patients]</tt>). The search path is
+  # restored when the block ends, so a query outside the block, or a lazy
+  # dataset that runs after it, finds no dataset table and fails.
   #
-  # Call it when no thread runs a query on a dataset connection, for example
-  # between tests, at shutdown, or after a dataset file is replaced. Do not use
-  # a Sequel::Database that dataset_db returned before the call.
+  # A CREATE without a catalog goes to the in-memory database, which comes
+  # first on the search path, so a created table hides the dataset table of
+  # the same name in the block. The in-memory database is shared by every
+  # dataset and thread in the process.
+  #
+  # @param (see dataset_db)
+  # @yieldparam db [Sequel::Database] the process's dataset database
+  # @return [Object] the block's value
+  #
+  # @example
+  #   Sequelizer.with_dataset(url: "duckdb:///data/datasets", schema: "synpuf") do |db|
+  #     db[:patients].count
+  #   end
+  def self.with_dataset(url:, schema:, **options, &)
+    @duckdb_datasets.with_dataset(url:, schema:, options: dataset_options(**options), &)
+  end
+
+  # The catalog that the dataset with +schema+ is attached as, for a table
+  # name outside with_dataset:
+  # <tt>Sequel[Sequelizer.dataset_catalog(:synpuf)][:synpuf][:patients]</tt>.
+  #
+  # @param schema [String, Symbol] the dataset's schema
+  # @return [Symbol] <tt>:dataset_<schema></tt>
+  def self.dataset_catalog(schema) = DuckDBDatasets.catalog_for(schema)
+
+  # Detaches every dataset file and closes the process's dataset database,
+  # so the next dataset_db call opens a new database with the files that are
+  # on disk then.
+  #
+  # Call it when no thread uses the dataset database, for example between
+  # tests, at shutdown, or after a dataset file is replaced. Do not use a
+  # Sequel::Database that dataset_db returned before the call.
   #
   # @return [void]
   def self.close_dataset_dbs
-    @dataset_dbs_mutex.synchronize do
-      @dataset_dbs.each_value do |cached|
-        cached[:db].detach(DuckDBDataset::DATASET_CATALOG, if_exists: true)
-        cached[:db].disconnect
-      end
-      @dataset_dbs.clear
-    end
+    @duckdb_datasets.close
   end
+
+  def self.dataset_options(readonly: true, memory_limit: nil, temp_directory: nil, max_temp_directory_size: nil,
+                           threads: nil, max_connections: nil)
+    raise ReadWriteDatasetError unless readonly
+
+    settings = { memory_limit:, temp_directory:, max_temp_directory_size:, threads: }
+               .compact.to_h { |name, value| [ name.to_s, value.to_s ] }
+    { settings:, max_connections: }
+  end
+  private_class_method :dataset_options
 
   # Instantiates and memoizes a database connection. The +db+ method instantiates
   # the connection on the first call and then memoizes itself so only a single
