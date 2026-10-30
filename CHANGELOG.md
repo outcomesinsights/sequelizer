@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0] - 2026-10-30
+
+### Breaking changes
+
+- **dataset_db:** Attach every DuckDB dataset to one database per process ([4c81a9f](https://github.com/outcomesinsights/sequelizer/commit/4c81a9fb557674ab0b539798185ec3fee9f27385)): Sequelizer::DuckDBDataset::DATASET_CATALOG and the catalog name "dataset" are gone; use Sequelizer.dataset_catalog(schema). dataset_db returns one Sequel::Database for every dataset, and an unqualified table name reads a dataset only inside with_dataset. The DuckDB settings are per process, not per dataset. DuckDBDataset#connection and DuckDBDataset.normalize_settings are removed.
+
+### Added
+
+- **dataset_db:** Add Sequelizer.close_dataset_dbs ([a309e22](https://github.com/outcomesinsights/sequelizer/commit/a309e22fa48d5492f1f3c2193f7723bb02ffa53b))
+
+### Fixed
+
+- **dataset_db:** Key the connection cache on the resolved dataset file ([50f6242](https://github.com/outcomesinsights/sequelizer/commit/50f6242a07017f4401a789d78a961213e193726c))
+- **dataset_db:** Say when the URL's path is neither a file nor a directory ([5182707](https://github.com/outcomesinsights/sequelizer/commit/51827072d29181859216cbf89d1f6121ab5630da))
+
 ## [0.4.1] - 2026-10-29
 
 ### Added
@@ -180,3 +195,4 @@ All notable changes to this project will be documented in this file.
 
 [0.4.0]: https://github.com/outcomesinsights/sequelizer/compare/v0.3.0...v0.4.0
 [0.4.1]: https://github.com/outcomesinsights/sequelizer/compare/v0.4.0...v0.4.1
+[0.5.0]: https://github.com/outcomesinsights/sequelizer/compare/v0.4.1...v0.5.0
