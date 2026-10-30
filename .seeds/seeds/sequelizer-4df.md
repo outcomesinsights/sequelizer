@@ -1,10 +1,12 @@
 ---
 id: sequelizer-4df
 title: 'dataset_db review: six findings and the rulings on them'
-status: captured
+status: resolved
 type: decision
 created_at: 2026-10-30T12:10:22.758348+00:00
-updated_at: 2026-10-30T12:10:22.758348+00:00
+updated_at: 2026-10-30T12:19:53.330406+00:00
+resolved_at: 2026-10-30T12:19:53.330395+00:00
+resolution: All six findings fixed on main at 1e6e053; beads sequelizer-ttu, -m9c, -f7a, -asi, -n5w, -dj4 closed
 tags:
   - dataset_db
   - duckdb
@@ -70,3 +72,14 @@ B USE memory.main then path: ERR ... (USE does not change where CREATE goes; the
 - Item 5: a URL whose path is neither a file nor a directory raises `MissingDatasetError` with a message that says so. jigsaw-diagram-editor rescues that class, so the class stays.
 - Item 6: pin the SHA-256 of each libduckdb asset in this repo and verify it. The copy in sequel-duckdb is not changed from here.
 - All six: Ryan said "seed and bead and fix all 6 please".
+
+UPDATE 2026-10-30: all six are fixed on main at merge 1e6e053, which is not released and not pushed. just ci passes, and 248 tests pass on Ruby 3.3, 3.4 and 4.0.
+
+- sequelizer-ttu (5182707): a URL path that is neither a file nor a directory raises MissingDatasetError with its own message.
+- sequelizer-m9c (50f6242): the cache key is the real path of the resolved dataset file and the schema.
+- sequelizer-f7a (a309e22): Sequelizer.close_dataset_dbs detaches, disconnects and empties the cache, and keep_reference: false lets a dropped connection be freed. A probe showed one open file handle on the dataset before the call and none after it.
+- sequelizer-asi (3901a13): the README and YARD docs state the hiding behavior, and a test records it.
+- sequelizer-n5w (2a7b6e8): the write test matches DuckDB's read-only message.
+- sequelizer-dj4 (92a663d): bin/install-libduckdb pins the SHA-256 of 1.5.6 (b845005f...841b, GitHub's digest, confirmed by a download) and stops on a mismatch or an unpinned version.
+
+Not done here: sequel-duckdb's copy of bin/install-libduckdb still has no checksum check.
