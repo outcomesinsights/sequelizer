@@ -16,12 +16,22 @@ module Sequelizer
     end
   end
 
-  # Raised when a directory URL has no dataset directory for the schema, or
-  # when that directory does not hold exactly one DuckDB file.
+  # Raised when the URL's path is neither a file nor a directory, when a
+  # directory URL has no dataset directory for the schema, or when that
+  # directory does not hold exactly one DuckDB file.
   class MissingDatasetError < ArgumentError
-    def initialize(directory, schema, files)
-      super("#{directory}/#{schema} must hold exactly one *.duckdb file to be the dataset #{schema}, " \
-            "but it holds #{files.size}#{": #{files.join(", ")}" unless files.empty?}")
+    # @param path [Pathname] the path in the URL
+    # @param schema [String] the dataset's schema
+    # @param files [Array<Pathname>, nil] the DuckDB files in
+    #   <tt><path>/<schema></tt>, or nil when +path+ is neither a file nor a
+    #   directory
+    def initialize(path, schema, files)
+      if files.nil?
+        super("#{path} is neither a DuckDB file nor a directory, so it cannot hold the dataset #{schema}")
+      else
+        super("#{path}/#{schema} must hold exactly one *.duckdb file to be the dataset #{schema}, " \
+              "but it holds #{files.size}#{": #{files.join(", ")}" unless files.empty?}")
+      end
     end
   end
 
@@ -110,20 +120,15 @@ module Sequelizer
       @settings = settings
     end
 
-    # The DuckDB file that holds the dataset.
+    # The DuckDB file that holds the dataset. It is found once, on the first
+    # call.
     #
     # @return [Pathname] the absolute path of the dataset file
-    # @raise [MissingDatasetError] if a directory URL has no single dataset
-    #   file for the schema
+    # @raise [MissingDatasetError] if the URL's path is neither a file nor a
+    #   directory, or if a directory URL has no single dataset file for the
+    #   schema
     def dataset_file
-      path = Pathname(url.delete_prefix(URL_PREFIX)).expand_path
-      return path unless self.class.directory_url?(url)
-
-      dir = path + schema
-      files = dir.directory? ? dir.glob("*.duckdb").sort : []
-      raise MissingDatasetError.new(path, schema, files) unless files.one?
-
-      files.first
+      @dataset_file ||= find_dataset_file
     end
 
     # Opens the connection. Every new pool connection attaches the dataset
@@ -152,6 +157,20 @@ module Sequelizer
       ]
       db.test_connection
       db
+    end
+
+    private
+
+    def find_dataset_file
+      path = Pathname(url.delete_prefix(URL_PREFIX)).expand_path
+      return path if path.file?
+      raise MissingDatasetError.new(path, schema, nil) unless path.directory?
+
+      dir = path + schema
+      files = dir.directory? ? dir.glob("*.duckdb").sort : []
+      raise MissingDatasetError.new(path, schema, files) unless files.one?
+
+      files.first
     end
   end
 end

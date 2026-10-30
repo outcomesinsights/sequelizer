@@ -146,6 +146,17 @@ class TestDatasetDb < Minitest::Test
     assert_includes error.message, "holds 0"
   end
 
+  def test_a_url_path_that_is_neither_a_file_nor_a_directory_raises
+    make_dataset
+    missing = @root.join(SCHEMA, "gdmm.duckdb")
+    error = assert_raises(Sequelizer::MissingDatasetError) do
+      Sequelizer.dataset_db(url: "duckdb://#{missing}", schema: SCHEMA)
+    end
+
+    assert_equal "#{missing} is neither a DuckDB file nor a directory, so it cannot hold the dataset #{SCHEMA}",
+                 error.message
+  end
+
   def test_a_dataset_directory_with_two_duckdb_files_raises
     make_dataset
     make_dataset(file_name: "other.duckdb")
