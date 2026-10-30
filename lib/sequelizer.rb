@@ -53,8 +53,9 @@ module Sequelizer
   @dataset_dbs_mutex = Mutex.new
 
   # Returns a read-only connection to one DuckDB dataset, cached per process
-  # by (url, schema). Every thread that asks for the same (url, schema) gets
-  # the same Sequel::Database.
+  # by (dataset file, schema). The dataset file is the real path of the file
+  # that +url+ resolves to, so two URLs for one file share a connection. Every
+  # thread that asks for the same dataset gets the same Sequel::Database.
   #
   # The connection is an in-memory DuckDB database that attaches the dataset
   # file read-only, so a write to a dataset table fails. Its search path puts
@@ -62,10 +63,24 @@ module Sequelizer
   # a schema reads the dataset (<tt>db[:patients]</tt>), and a CREATE without
   # a catalog goes to the in-memory database. See DuckDBDataset.
   #
+  # The in-memory database comes first on the search path, so a table created
+  # there hides the dataset table of the same name. After
+  # <tt>db.create_table(:patients)</tt>, <tt>db[:patients]</tt> reads the new
+  # table, not the dataset's. Every thread in the process shares the
+  # connection, so this applies to every thread, and two threads that create
+  # one table name use the same table. Give created tables names that the
+  # dataset does not use, or qualify dataset tables with their schema
+  # (<tt>Sequel.qualify(:synpuf, :patients)</tt>).
+  #
   # The DuckDB settings apply to the in-memory database when it opens. A
   # setting that is nil keeps DuckDB's default. DuckDB's default memory_limit
   # is 80% of the memory that the container may use, for each DuckDB database
   # in the process, so pass memory_limit where more than one runs.
+  #
+  # A connection reads the dataset file that existed at its first call. The
+  # in-memory database never closes, so a file that is replaced on disk later
+  # is not read, even after +disconnect+. Call close_dataset_dbs, or restart
+  # the process, to read the new file.
   #
   # The .env file, environment variables and YAML files are not read.
   #
@@ -86,10 +101,10 @@ module Sequelizer
   # @return [Sequel::Database] the cached read-only connection
   # @raise [ReadWriteDatasetError] if +readonly+ is false
   # @raise [UnsupportedDatasetURLError] if +url+ is not a duckdb:// URL
-  # @raise [MissingDatasetError] if a directory URL has no single DuckDB file
-  #   for +schema+
-  # @raise [DatasetSettingsConflictError] if (url, schema) is cached with other
-  #   DuckDB settings
+  # @raise [MissingDatasetError] if the URL's path is neither a file nor a
+  #   directory, or if a directory URL has no single DuckDB file for +schema+
+  # @raise [DatasetSettingsConflictError] if (dataset file, schema) is cached
+  #   with other DuckDB settings
   #
   # @example
   #   db = Sequelizer.dataset_db(url: "duckdb:///data/datasets", schema: "synpuf",
@@ -101,13 +116,33 @@ module Sequelizer
     raise ReadWriteDatasetError unless readonly
 
     settings = DuckDBDataset.normalize_settings(memory_limit:, temp_directory:, max_temp_directory_size:, threads:)
-    key = [ url.to_s, schema.to_s ]
+    dataset = DuckDBDataset.new(url:, schema:, settings:)
+    key = [ dataset.dataset_file.realpath.to_s, dataset.schema ]
 
     @dataset_dbs_mutex.synchronize do
-      cached = @dataset_dbs[key] ||= { db: DuckDBDataset.new(url:, schema:, settings:).connection, settings: }
+      cached = @dataset_dbs[key] ||= { db: dataset.connection, settings: }
       raise DatasetSettingsConflictError.new(*key, cached[:settings], settings) unless cached[:settings] == settings
 
       cached[:db]
+    end
+  end
+
+  # Closes every cached dataset connection and empties the cache, so the next
+  # dataset_db call opens the dataset file that is on disk then. Each
+  # connection detaches its dataset file and disconnects.
+  #
+  # Call it when no thread runs a query on a dataset connection, for example
+  # between tests, at shutdown, or after a dataset file is replaced. Do not use
+  # a Sequel::Database that dataset_db returned before the call.
+  #
+  # @return [void]
+  def self.close_dataset_dbs
+    @dataset_dbs_mutex.synchronize do
+      @dataset_dbs.each_value do |cached|
+        cached[:db].detach(DuckDBDataset::DATASET_CATALOG, if_exists: true)
+        cached[:db].disconnect
+      end
+      @dataset_dbs.clear
     end
   end
 
