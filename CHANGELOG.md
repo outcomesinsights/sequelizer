@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.1] - 2026-10-29
+
+### Added
+
+- **sequelizer:** Add Sequelizer.dataset_db, a read-only DuckDB dataset connection ([acf8ac8](https://github.com/outcomesinsights/sequelizer/commit/acf8ac8f130d3db87dd3e99374d1d44de4a214f4))
+
 ## [0.4.0] - 2026-10-25
 
 ### Breaking changes
@@ -173,3 +179,4 @@ All notable changes to this project will be documented in this file.
 - The project itself
 
 [0.4.0]: https://github.com/outcomesinsights/sequelizer/compare/v0.3.0...v0.4.0
+[0.4.1]: https://github.com/outcomesinsights/sequelizer/compare/v0.4.0...v0.4.1
