@@ -131,6 +131,15 @@ class TestDatasetDb < Minitest::Test
     assert_equal 1, db[Sequel.qualify(Sequel.qualify(:memory, :main), :scratch)].count
   end
 
+  def test_a_created_table_hides_the_dataset_table_of_the_same_name_for_every_thread
+    make_dataset
+    db = dataset_db(url: directory_url, schema: SCHEMA)
+    db.create_table(:patients) { Integer :n }
+
+    assert_equal 0, Thread.new { db[:patients].count }.value
+    assert_equal 2, db[Sequel.qualify(SCHEMA, :patients)].count
+  end
+
   def test_every_pool_connection_gets_the_dataset_and_the_search_path
     make_dataset
     db = dataset_db(url: directory_url, schema: SCHEMA)

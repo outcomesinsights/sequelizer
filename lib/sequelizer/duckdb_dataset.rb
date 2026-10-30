@@ -53,6 +53,8 @@ module Sequelizer
   # as the catalog +dataset+. The search path is <tt>memory.main</tt>, then
   # <tt>dataset.<schema></tt>, so a table name without a schema reads the
   # dataset, and a CREATE without a catalog goes to the in-memory database.
+  # A table created there hides the dataset table of the same name, for
+  # every thread that shares the connection (see Sequelizer.dataset_db).
   #
   # The URL is <tt>duckdb://<path></tt>. When +path+ is a file, it is the
   # dataset file. Otherwise +path+ is a directory of datasets, and the dataset

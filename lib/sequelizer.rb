@@ -63,6 +63,15 @@ module Sequelizer
   # a schema reads the dataset (<tt>db[:patients]</tt>), and a CREATE without
   # a catalog goes to the in-memory database. See DuckDBDataset.
   #
+  # The in-memory database comes first on the search path, so a table created
+  # there hides the dataset table of the same name. After
+  # <tt>db.create_table(:patients)</tt>, <tt>db[:patients]</tt> reads the new
+  # table, not the dataset's. Every thread in the process shares the
+  # connection, so this applies to every thread, and two threads that create
+  # one table name use the same table. Give created tables names that the
+  # dataset does not use, or qualify dataset tables with their schema
+  # (<tt>Sequel.qualify(:synpuf, :patients)</tt>).
+  #
   # The DuckDB settings apply to the in-memory database when it opens. A
   # setting that is nil keeps DuckDB's default. DuckDB's default memory_limit
   # is 80% of the memory that the container may use, for each DuckDB database
