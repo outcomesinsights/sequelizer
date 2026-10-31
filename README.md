@@ -102,6 +102,16 @@ end
 - Outside `with_dataset`, name a table with all three parts: catalog, schema and table. DuckDB does not find `synpuf.patients` or `patients` there, so a query that misses `with_dataset` fails with an error instead of reading another dataset.
 - `with_dataset` runs the block on one connection whose search path is `memory.main`, then the dataset's schema. When the block ends, the search path is what it was before. A lazy dataset that runs after the block, or a query in a thread that the block starts, uses no dataset path and fails.
 - A `CREATE` without a catalog goes to the in-memory database. Inside `with_dataset`, a table created there hides the dataset table of the same name. The in-memory database is shared by every dataset and thread in the process.
+- `with_dataset(search_path_prefix:)` puts other search path entries first, for example a read-write catalog that you attached to the dataset database. It takes one entry or a list. An entry is a catalog, which DuckDB reads as `<catalog>.main`, or `catalog.schema`. A `CREATE` without a catalog then goes to the first entry. DuckDB raises a Catalog Error before the block runs if an entry is not attached. An empty entry, or one with a comma, raises `Sequelizer::SearchPathEntryError`.
+
+```ruby
+db = Sequelizer.dataset_db(url: "duckdb:///data/datasets", schema: "synpuf")
+db.attach("/scratch/working.duckdb", as: "working")
+Sequelizer.with_dataset(url: "duckdb:///data/datasets", schema: "synpuf", search_path_prefix: "working.main") do |d|
+  d.create_table(:results) { Integer :person_id } # creates working.main.results
+end
+```
+
 - A schema name can come from only one file in a process. A second file with the same schema raises `Sequelizer::DatasetSchemaConflictError`. Two URLs for one file (`duckdb:///data/datasets`, `duckdb:///data/datasets/` and the file's own URL) are one dataset.
 - `memory_limit:`, `temp_directory:`, `max_temp_directory_size:` and `threads:` are DuckDB settings of the one database, so the limits are for all the datasets together. `max_connections:` is the size of its connection pool (Sequel's default is 4). The first call fixes all of them, and a later call with other values raises `Sequelizer::DatasetSettingsConflictError`. A setting that you do not pass keeps DuckDB's default. DuckDB's default `memory_limit` is 80% of the memory that the container may use.
 - Two processes must not share one `temp_directory`. DuckDB gives the spill files the same names in every database, so the processes corrupt each other's spills.

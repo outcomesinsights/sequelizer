@@ -44,9 +44,19 @@ module Sequelizer
     end
   end
 
+  # Raised when a with_dataset search_path_prefix entry is empty or holds a
+  # comma. DuckDB separates search path entries with commas, so it would
+  # read such an entry as two entries.
+  class SearchPathEntryError < ArgumentError
+    def initialize(entries)
+      super("each search_path_prefix entry must be one catalog or catalog.schema with no comma, " \
+            "but #{entries.inspect} is not")
+    end
+  end
+
   # Raised when a dataset's schema is already attached from another file.
-  # Callers name tables as schema.table, so two attached files with one
-  # schema name would make those names ambiguous.
+  # The catalog name comes from the schema, so two files with one schema
+  # would need one catalog.
   class DatasetSchemaConflictError < ArgumentError
     def initialize(schema, attached_file, requested_file)
       super("the schema #{schema.inspect} is already attached from #{attached_file}, so " \

@@ -10,10 +10,11 @@ module Sequelizer
   # set of spill files. Each dataset file is attached READ_ONLY once, under
   # the catalog <tt>dataset_<schema></tt>.
   #
-  # A table named with its schema (<tt>Sequel[:synpuf][:patients]</tt>)
-  # reads the dataset on any connection. A table name without a schema reads
-  # a dataset only inside with_dataset, which sets the connection's search
-  # path for the block.
+  # A table named with its catalog, schema and table
+  # (<tt>Sequel[:dataset_synpuf][:synpuf][:patients]</tt>) reads the dataset
+  # on any connection. A name with only a schema and a table, or with only a
+  # table, reads a dataset only inside with_dataset, which sets the
+  # connection's search path for the block.
   #
   # The attached files stay attached until close, so a dataset file that is
   # replaced on disk is not read until then.
@@ -71,15 +72,23 @@ module Sequelizer
     end
 
     # Attaches the dataset, holds one connection for the block, and sets the
-    # connection's search path to <tt>memory.main,<catalog>.<schema></tt>, so
-    # a table name without a schema reads the dataset. At the end of the
-    # block, the search path is what it was before.
+    # connection's search path to the +search_path_prefix+ entries, then
+    # <tt>memory.main,<catalog>.<schema></tt>, so a table name without a
+    # schema reads the dataset. At the end of the block, the search path is
+    # what it was before.
     #
+    # @param search_path_prefix [Array<String, Symbol>] DuckDB search path
+    #   entries to put first
     # @yieldparam db [Sequel::Database] the process's dataset database
     # @return [Object] the block's value
-    def with_dataset(url:, schema:, options:)
+    # @raise [SearchPathEntryError] if an entry is empty or holds a comma
+    def with_dataset(url:, schema:, options:, search_path_prefix: [])
+      prefix = search_path_prefix.map(&:to_s)
+      bad = prefix.select { |entry| entry.empty? || entry.include?(",") }
+      raise SearchPathEntryError, bad unless bad.empty?
+
       db, catalog = attach(url:, schema:, options:)
-      path = "#{MEMORY_SCHEMA},#{catalog}.#{schema}"
+      path = [ *prefix, MEMORY_SCHEMA, "#{catalog}.#{schema}" ].join(",")
 
       db.synchronize do
         previous = db.get(Sequel.function(:current_setting, "search_path"))

@@ -4,7 +4,7 @@ title: Should with_dataset put a caller's read-write catalog first on the search
 status: captured
 type: question
 created_at: 2026-10-30T16:31:51.416334+00:00
-updated_at: 2026-10-30T16:31:51.416334+00:00
+updated_at: 2026-10-31T03:23:16.919635+00:00
 ---
 
 ## Proposal (from the t_shank session, relayed by jde, 2026-10-30)
@@ -31,3 +31,20 @@ It proposes an option on `with_dataset` (for example `write_catalog:`) that puts
 - (c) Change nothing. Callers that need a different path set it inside the block, as t_shank does.
 
 Open question for (a) and (b): should Sequelizer check that the named catalog is attached, and raise a clear error if it is not?
+
+## RULED 2026-10-30
+
+Ryan: "please implement with general option". Direction (b): `with_dataset` takes `search_path_prefix:`, a list of DuckDB search path entries that go before `memory.main` and the dataset.
+
+Measured in `claude_stuff/spp-facts-20261030-202256.log` (DuckDB 1.5.6), which answers the open question:
+
+```text
+P1 SET path with a catalog that is not attached -> FAILS: Catalog Error: SET search_path: No catalog + schema named "nosuch.main" found.
+P2 SET path with an attached catalog and a missing schema -> FAILS: Catalog Error: ... "working.nosuch" found.
+P3 SET path with a bare catalog name -> OK, path becomes "working.main,memory.main"
+P4 CREATE without a catalog goes to the first entry, working.main
+P5 a space after a comma -> FAILS: No catalog + schema named " memory.main"
+P6 an empty entry -> FAILS: Parser Error: Unexpected dot - empty CatalogSearchEntry
+```
+
+So DuckDB checks the entries itself, and Sequelizer does not. Sequelizer raises only for an entry that contains a comma, because DuckDB would silently read it as two entries.
