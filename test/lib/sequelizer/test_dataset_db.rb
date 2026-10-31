@@ -58,11 +58,21 @@ class TestDatasetDb < Minitest::Test
       .order(:database_name).select_map(:database_name)
   end
 
-  def test_a_table_named_with_its_schema_reads_the_dataset
+  def test_a_table_named_with_its_catalog_schema_and_table_reads_the_dataset
     make_dataset
     db = dataset_db(url: directory_url, schema: SCHEMA)
 
     assert_equal [ 1, 2 ], db[patients].order(:id).select_map(:id)
+  end
+
+  def test_a_table_named_with_only_its_schema_reads_the_dataset_only_in_with_dataset
+    make_dataset
+    db = dataset_db(url: directory_url, schema: SCHEMA)
+    two_part = Sequel[SCHEMA.to_sym][:patients]
+
+    assert_equal 2, Sequelizer.with_dataset(url: directory_url, schema: SCHEMA) { |d| d[two_part].count }
+    error = assert_raises(Sequel::DatabaseError) { db[two_part].count }
+    assert_match(/Catalog Error/, error.message)
   end
 
   def test_a_file_url_attaches_that_file_directly

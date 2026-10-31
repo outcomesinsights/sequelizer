@@ -57,9 +57,11 @@ module Sequelizer
   # catalog <tt>dataset_<schema></tt>, and stays attached until
   # close_dataset_dbs. Every call returns the same Sequel::Database.
   #
-  # Name a dataset's tables with its schema, <tt>Sequel[:synpuf][:patients]</tt>.
-  # A table name without a schema reads a dataset only inside with_dataset.
-  # A write to a dataset table fails.
+  # Name a dataset's tables with the catalog, the schema and the table:
+  # <tt>Sequel[Sequelizer.dataset_catalog(:synpuf)][:synpuf][:patients]</tt>.
+  # A name with only a schema and a table, or with only a table, reads a
+  # dataset only inside with_dataset. Outside it, DuckDB raises a Catalog
+  # Error. A write to a dataset table fails.
   #
   # The DuckDB settings and +max_connections+ apply once, to the one
   # database, so memory_limit and max_temp_directory_size are limits for all
@@ -69,8 +71,8 @@ module Sequelizer
   # DuckDB database. Two processes must not share one temp_directory: DuckDB
   # gives the spill files the same names in every database.
   #
-  # Each schema can come from one file in a process, so that schema.table
-  # names one table. The dataset file is the real path of the file that +url+
+  # Each schema can come from one file in a process, because the catalog name
+  # comes from the schema. The dataset file is the real path of the file that +url+
   # resolves to, so two URLs for one file are one dataset.
   #
   # A file that is replaced on disk after it is attached is not read, even
@@ -111,7 +113,7 @@ module Sequelizer
   #   db = Sequelizer.dataset_db(url: "duckdb:///data/datasets", schema: "synpuf",
   #                              memory_limit: "51GB", temp_directory: "/scratch/duckdb",
   #                              max_temp_directory_size: "500GB", max_connections: 5)
-  #   db[Sequel[:synpuf][:patients]].count
+  #   db[Sequel[Sequelizer.dataset_catalog(:synpuf)][:synpuf][:patients]].count
   def self.dataset_db(url:, schema:, **options)
     @duckdb_datasets.attach(url:, schema:, options: dataset_options(**options)).first
   end

@@ -10,10 +10,11 @@ module Sequelizer
   # set of spill files. Each dataset file is attached READ_ONLY once, under
   # the catalog <tt>dataset_<schema></tt>.
   #
-  # A table named with its schema (<tt>Sequel[:synpuf][:patients]</tt>)
-  # reads the dataset on any connection. A table name without a schema reads
-  # a dataset only inside with_dataset, which sets the connection's search
-  # path for the block.
+  # A table named with its catalog, schema and table
+  # (<tt>Sequel[:dataset_synpuf][:synpuf][:patients]</tt>) reads the dataset
+  # on any connection. A name with only a schema and a table, or with only a
+  # table, reads a dataset only inside with_dataset, which sets the
+  # connection's search path for the block.
   #
   # The attached files stay attached until close, so a dataset file that is
   # replaced on disk is not read until then.
