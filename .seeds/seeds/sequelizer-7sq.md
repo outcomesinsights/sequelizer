@@ -1,10 +1,12 @@
 ---
 id: sequelizer-7sq
 title: Should with_dataset put a caller's read-write catalog first on the search path?
-status: captured
+status: resolved
 type: question
 created_at: 2026-10-30T16:31:51.416334+00:00
-updated_at: 2026-10-31T03:23:16.919635+00:00
+updated_at: 2026-10-31T03:27:04.134038+00:00
+resolved_at: 2026-10-31T03:27:04.134028+00:00
+resolution: Built as with_dataset(search_path_prefix:) in bead sequelizer-bjn (commit 4cda3f4).
 ---
 
 ## Proposal (from the t_shank session, relayed by jde, 2026-10-30)
