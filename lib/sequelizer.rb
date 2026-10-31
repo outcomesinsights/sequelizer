@@ -130,16 +130,37 @@ module Sequelizer
   # the same name in the block. The in-memory database is shared by every
   # dataset and thread in the process.
   #
+  # +search_path_prefix+ puts other DuckDB search path entries first, for
+  # example a read-write catalog that the caller attached to the dataset
+  # database. A CREATE without a catalog then goes to the first entry. An
+  # entry is a catalog (DuckDB reads +working+ as <tt>working.main</tt>) or
+  # <tt>catalog.schema</tt>. DuckDB raises a Catalog Error, before the block
+  # runs, for an entry that is not attached.
+  #
   # @param (see dataset_db)
+  # @param search_path_prefix [String, Symbol, Array<String, Symbol>] the
+  #   search path entries that come before <tt>memory.main</tt> and the
+  #   dataset, in order
   # @yieldparam db [Sequel::Database] the process's dataset database
   # @return [Object] the block's value
+  # @raise [SearchPathEntryError] if a search_path_prefix entry is empty or
+  #   holds a comma
   #
   # @example
   #   Sequelizer.with_dataset(url: "duckdb:///data/datasets", schema: "synpuf") do |db|
   #     db[:patients].count
   #   end
-  def self.with_dataset(url:, schema:, **options, &)
-    @duckdb_datasets.with_dataset(url:, schema:, options: dataset_options(**options), &)
+  #
+  # @example A read-write catalog first
+  #   db = Sequelizer.dataset_db(url: "duckdb:///data/datasets", schema: "synpuf")
+  #   db.attach("/scratch/working.duckdb", as: "working")
+  #   Sequelizer.with_dataset(url: "duckdb:///data/datasets", schema: "synpuf",
+  #                           search_path_prefix: "working.main") do |d|
+  #     d.create_table(:results) { Integer :person_id } # working.main.results
+  #   end
+  def self.with_dataset(url:, schema:, search_path_prefix: [], **options, &)
+    @duckdb_datasets.with_dataset(url:, schema:, options: dataset_options(**options),
+                                  search_path_prefix: Array(search_path_prefix), &)
   end
 
   # The catalog that the dataset with +schema+ is attached as, for a table

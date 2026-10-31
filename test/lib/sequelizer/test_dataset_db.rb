@@ -236,6 +236,60 @@ class TestDatasetDb < Minitest::Test
     assert_equal 2, db[patients].count
   end
 
+  def attach_working(db)
+    db.attach(@root.join("working.duckdb").to_s, as: "working")
+  end
+
+  def test_search_path_prefix_comes_first_so_a_create_goes_to_its_catalog
+    make_dataset
+    db = dataset_db(url: directory_url, schema: SCHEMA, max_connections: 1)
+    attach_working(db)
+    path = Sequelizer.with_dataset(url: directory_url, schema: SCHEMA, max_connections: 1,
+                                   search_path_prefix: [ "working.main" ]) do |d|
+      d.create_table(:results) { Integer :person_id }
+      d[:results].insert(person_id: d[:patients].max(:id))
+      setting(d, "search_path")
+    end
+
+    assert_equal "working.main,memory.main,dataset_synpuf.synpuf", path
+    assert_equal [ 2 ], db[Sequel[:working][:main][:results]].select_map(:person_id)
+    assert_equal "", setting(db, "search_path")
+  end
+
+  def test_search_path_prefix_takes_one_catalog_name
+    make_dataset
+    attach_working(dataset_db(url: directory_url, schema: SCHEMA))
+    path = Sequelizer.with_dataset(url: directory_url, schema: SCHEMA, search_path_prefix: :working) do |d|
+      setting(d, "search_path")
+    end
+
+    assert_equal "working.main,memory.main,dataset_synpuf.synpuf", path
+  end
+
+  def test_a_search_path_prefix_catalog_that_is_not_attached_raises_before_the_block
+    make_dataset
+    db = dataset_db(url: directory_url, schema: SCHEMA, max_connections: 1)
+    ran = false
+    error = assert_raises(Sequel::DatabaseError) do
+      Sequelizer.with_dataset(url: directory_url, schema: SCHEMA, max_connections: 1,
+                              search_path_prefix: "nosuch.main") { ran = true }
+    end
+
+    assert_match(/No catalog \+ schema named "nosuch.main" found/, error.message)
+    refute ran
+    assert_equal "", setting(db, "search_path")
+  end
+
+  def test_a_search_path_prefix_entry_with_a_comma_or_no_text_raises
+    make_dataset
+    [ "working.main,memory.main", "" ].each do |entry|
+      error = assert_raises(Sequelizer::SearchPathEntryError) do
+        Sequelizer.with_dataset(url: directory_url, schema: SCHEMA, search_path_prefix: [ entry ]) { flunk }
+      end
+      assert_includes error.message, entry.inspect
+    end
+  end
+
   def test_every_pool_connection_reads_the_attached_datasets
     make_dataset
     db = dataset_db(url: directory_url, schema: SCHEMA)
