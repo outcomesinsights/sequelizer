@@ -7,6 +7,7 @@ test:
 lint:
     bundle exec rubocop
     shellcheck $(git ls-files '*.sh' '*.bash')
+    git ls-files -z '*.zsh' | xargs -0 -n1 zsh -n
     actionlint
     zizmor --offline .
     git ls-files '*Dockerfile' '*.Dockerfile' | xargs -r hadolint
@@ -46,15 +47,13 @@ pre-push: ci
 # anything it fails the commit: re-stage its changes and commit again.
 pre-commit: fmt-check lint test hygiene seeds-check
 
-# Gator's standard seeds-check: `seeds check --against-git` compares the seed store
-# with HEAD, so a seed body rewritten in place fails the commit. It belongs at commit
-# (at push it would compare HEAD~1 with HEAD only). It skips where there is no seed
-# store, and where seeds is not installed (CI, a fresh clone).
+# Gator's standard seeds-check: `seeds check --gate` runs the violation checks and
+# compares the seed store with HEAD, so a seed body rewritten in place fails the
+# commit. An intended mass rewrite passes with SEEDS_GATE_CONFIRM=1, which only
+# --gate reads. It passes where there is no seed store, and it skips where seeds is
+# not installed (CI, a fresh clone).
 seeds-check:
-    #!/usr/bin/env sh
-    [ -d .seeds ] || exit 0
-    command -v seeds >/dev/null 2>&1 || exit 0
-    exec seeds check --against-git
+    @command -v seeds >/dev/null 2>&1 || exit 0; seeds check --gate
 
 # Content checks inherited from overcommit when it was removed (2026-09-12):
 # MergeConflicts, YamlSyntax, JsonSyntax. RuboCop and the test target were already

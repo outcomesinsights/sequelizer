@@ -8,6 +8,12 @@ just = "1"
 uv = "0"
 "aqua:numtide/treefmt" = "2"
 shfmt = "3"
+# prettier and the herb-lint pin below use mise's npm backend, which installs the package
+# and NO node: it runs with whatever node is on PATH. On a host with none it fails with
+# "exec: node: not found" (t_shank's self-hosted CI, run 40596429977, 2026-10-27), while
+# titan passes because the global mise config pins node and ubuntu-latest has node. So a
+# repo that copies either line copies this node line too (gator-ncm).
+node = "24"
 prettier = "3"
 taplo = "0"
 shellcheck = "0"

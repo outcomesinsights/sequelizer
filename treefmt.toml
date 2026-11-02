@@ -12,6 +12,8 @@ excludes = [
   "yarn.lock",
   "renv.lock",
   "*.min.*",
+  # written by `p10k configure`; shfmt drops the comments in its comment-only elif branch
+  ".devcontainer/.p10k.zsh",
   # other tools' stores: their formatters are their own business
   ".beads/**",
   ".seeds/**",
@@ -42,6 +44,14 @@ includes = ["*.rb", "*.rake", "*.gemspec", "Gemfile", "Rakefile"]
 command = "shfmt"
 options = ["-w"]
 includes = ["*.sh", "*.bash"]
+
+# --- zsh: shfmt in its zsh dialect (gator-c39). shfmt finds zsh from the extension or ----
+# the shebang; -ln zsh says it outright. Lint is `zsh -n` per file, since shellcheck cannot
+# read zsh. A .sh file with a zsh shebang is a doctor finding: rename it to .zsh.
+[formatter.shfmt-zsh]
+command = "shfmt"
+options = ["-ln", "zsh", "-w"]
+includes = ["*.zsh"]
 
 # --- Markdown: mdformat with the repo's TRACKED .mdformat.toml (gfm + frontmatter, ------
 # number = true). Without that file mdformat inherits ~/.mdformat.toml under HOME and
