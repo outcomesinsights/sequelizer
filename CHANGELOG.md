@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.5.0] - 2026-10-30
+## [0.5.0] - 2026-11-02
 
 ### Breaking changes
 
@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- **dataset_db:** Add search_path_prefix to with_dataset ([4cda3f4](https://github.com/outcomesinsights/sequelizer/commit/4cda3f4e3fd0e56426ecf3bc4497f3580eae8ed4))
 - **dataset_db:** Add Sequelizer.close_dataset_dbs ([a309e22](https://github.com/outcomesinsights/sequelizer/commit/a309e22fa48d5492f1f3c2193f7723bb02ffa53b))
 
 ### Fixed
