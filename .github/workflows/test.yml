@@ -38,6 +38,10 @@ jobs:
           fetch-depth: 0
       - name: Install DuckDB C library
         run: bin/install-libduckdb 1.5.6
+      # `lint` runs `zsh -n` on the tracked .zsh files. mise has no zsh, and the runner
+      # image may not have it (gator's lint-and-format.md, gator-c39).
+      - name: Install zsh
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends zsh
       - uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
         with:
           ruby-version: "4.0"
