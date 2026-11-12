@@ -22,8 +22,6 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = '>= 3.3.0'
 
   spec.add_development_dependency 'bundler', '>= 2.0'
-  spec.add_development_dependency 'guard', '~> 2.0'
-  spec.add_development_dependency 'guard-minitest', '~> 3.0'
   spec.add_development_dependency 'minitest', '~> 6.0'
   spec.add_development_dependency 'minitest-mock', '~> 5.27'
   spec.add_development_dependency 'pg', '~> 1.0'
